@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KAnimGui", "KAnimGui\KAnimGui.csproj", "{4CABD313-6EA6-4D54-AD58-62E4C197E23F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4CABD313-6EA6-4D54-AD58-62E4C197E23F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CABD313-6EA6-4D54-AD58-62E4C197E23F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CABD313-6EA6-4D54-AD58-62E4C197E23F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CABD313-6EA6-4D54-AD58-62E4C197E23F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6D4B5572-702A-43CF-BE70-685779F40E53}
+	EndGlobalSection
+EndGlobal
