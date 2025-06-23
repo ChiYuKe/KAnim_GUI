@@ -11,6 +11,8 @@ using System.Windows;
 using System.Windows.Controls;
 using Ookii.Dialogs.Wpf;
 using MaterialDesignThemes.Wpf;
+using KAnimGui.Windos;
+using System.Net.Http;
 
 
 namespace KAnimGui
@@ -473,6 +475,36 @@ namespace KAnimGui
             PinButton.ToolTip = tooltip;
 
         }
+        // git地址
+        private void GithubButton_Click(object sender, RoutedEventArgs e)
+        {
+            string url = "https://github.com/ChiYuKe/KAnim_GUI/tree/master/KAnimGui";
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("无法打开网页: " + ex.Message);
+            }
+
+        }
+
+       
+
+
+
+        private void TestButton_Click(object sender, RoutedEventArgs e)
+        {
+            var settings = new CustomMessageBox();
+            settings.Owner = this; // 设置所属主窗口
+            settings.Show(); // 非模态打开
+
+        }
 
 
 
@@ -491,6 +523,8 @@ namespace KAnimGui
             ScmlOutputDirTextBox.Clear();
             ScmlLogTextBox.Clear();
         }
+
+
 
 
         #endregion
