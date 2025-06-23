@@ -113,6 +113,7 @@
                     <!-- 左侧设置图标 -->
                     <Button Grid.Column="0" Width="40" Height="40"
                         Style="{StaticResource MaterialDesignIconButton}"
+                             FocusVisualStyle="{x:Null}"
                         Margin="5,5,0,0"
                         ToolTip="设置"
                         Background="#0094435D"
