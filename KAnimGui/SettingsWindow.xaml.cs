@@ -107,6 +107,15 @@ namespace KAnimGui
             this.WindowState = WindowState.Minimized;
         }
 
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                // 双击时关闭窗口
+                this.Close();
+            }
+        }
+
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
