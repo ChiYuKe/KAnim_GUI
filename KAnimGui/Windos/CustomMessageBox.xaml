@@ -1,0 +1,180 @@
+﻿<Window x:Class="KAnimGui.Windos.CustomMessageBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        
+        Title="设置 - Kanim Spriter Exporter"
+        Height="170" Width="300"
+        WindowStartupLocation="CenterOwner"
+       
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        FontFamily="Segoe UI"
+        
+        ResizeMode="NoResize"
+        SizeToContent="Manual"
+        
+        
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Background="Transparent"
+        
+        
+        MouseDown="Window_MouseDown"
+        
+        >
+    <!-- MouseDown 拖动事件 -->
+
+    <Window.Resources>
+        <!-- 复制 MainWindow 的资源 -->
+        <SolidColorBrush x:Key="PrimaryColor" Color="#FF6750A4"/>
+        <SolidColorBrush x:Key="SecondaryColor" Color="#FFE8DEF8"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#FF7E5260"/>
+
+        <Style TargetType="TabItem" BasedOn="{StaticResource MaterialDesignNavigationRailTabItem}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="16 12"/>
+            <Setter Property="Margin" Value="0 0 4 0"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryHueLightBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Grid>
+                            <Border Name="Border" 
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="0 0 0 2"
+                                    CornerRadius="4 4 0 0"
+                                    Margin="{TemplateBinding Margin}">
+                                <ContentPresenter x:Name="ContentSite"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Center"
+                                                  ContentSource="Header"
+                                                  Margin="{TemplateBinding Padding}"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Width" Value="100"/>
+        </Style>
+    </Window.Resources>
+
+
+
+    <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+        <materialDesign:Card Padding="3" Margin="1" Background="#FF94435D" UniformCornerRadius="10">
+            <Grid>
+                <materialDesign:Card Grid.Column="1" Padding="2" Background="#FFE2E1E1" UniformCornerRadius="10" VerticalAlignment="Center" Height="162">
+
+                    <!-- 父级容器分两行：上方放按钮，下方放内容卡片 -->
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- 顶部按钮 -->
+                            <RowDefinition Height="*"/>
+                            <!-- 内容卡片 -->
+                        </Grid.RowDefinitions>
+
+
+
+                        <!-- 顶部按钮区域 -->
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="230"/>
+
+                                <ColumnDefinition Width="Auto"/>
+
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 左上角按钮 -->
+                            <Button Width="20" Height="20"
+                                    Background="#FF93425C"
+                                    Foreground="White"
+                                    materialDesign:ButtonAssist.CornerRadius="10"
+                                     FocusVisualStyle="{x:Null}"
+                                    Padding="0" BorderThickness="0"
+                                    Grid.Column="0" Margin="2,2,2,0" VerticalAlignment="Top" Click="Button_Click">
+                                <materialDesign:PackIcon Kind="Github" Foreground="White" Width="14" Height="14"/>
+                            </Button>
+                            <Button Width="20" Height="20"
+                                  Background="#FF93425C"
+                                  Foreground="White"
+                                  materialDesign:ButtonAssist.CornerRadius="10"
+                                     FocusVisualStyle="{x:Null}"
+                                  Padding="0" BorderThickness="0"
+                                  Grid.Column="1" Margin="2">
+                                <materialDesign:PackIcon Kind="Star" Foreground="White" Width="14" Height="14"/>
+                            </Button>
+
+
+
+                            <!-- 右上角关闭按钮 -->
+                            <Button Width="35" Height="20"
+                                    Background="#FF93425C"
+                                    Foreground="White"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                     FocusVisualStyle="{x:Null}"
+                                    materialDesign:ButtonAssist.CornerRadius="8"
+                                    Click="CloseButton_Click"
+                                    Padding="0" BorderThickness="0"
+                                    Grid.Column="2" Margin="2">
+                                <Viewbox Stretch="Uniform" Width="20" Height="20">
+                                    <materialDesign:PackIcon Kind="Close" Foreground="White"/>
+                                </Viewbox>
+                            </Button>
+                        </Grid>
+
+                        <!-- 内容卡片部分 -->
+                        <materialDesign:Card Grid.Row="1"
+                            Padding="8"
+                            Background="White"
+                            UniformCornerRadius="10"
+                            Margin="2,6,2,2"
+                            VerticalAlignment="Stretch"
+                            Height="120">
+                            <TextBox x:Name="ReadmeTextBox"
+                            FontFamily="Consolas"
+                            FontSize="14"
+                            TextWrapping="Wrap"
+                            VerticalScrollBarVisibility="Auto"
+                            IsReadOnly="True"
+                            AcceptsReturn="True"
+                            Background="White"
+                            Foreground="Black"
+                             BorderThickness="0" 
+                            Margin="0,0,0,0"
+                            />
+
+                        </materialDesign:Card>
+                    </Grid>
+                </materialDesign:Card>
+            </Grid>
+        </materialDesign:Card>
+    </Grid>
+
+
+
+
+
+</Window>
