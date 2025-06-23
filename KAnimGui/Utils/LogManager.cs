@@ -28,7 +28,7 @@ namespace KAnimGui.Utils
                 logBox.AppendText(text + Environment.NewLine);
                 logBox.ScrollToEnd();
 
-                statusText.Text = message.Length > 30 ? message.Substring(0, 30) + "..." : message;
+                statusText.Text = message.Length > 50 ? message.Substring(0, 50) + "..." : message;
             });
         }
     }
