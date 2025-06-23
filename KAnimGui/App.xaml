@@ -8,10 +8,16 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
+                
 
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
+
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
                 <!-- 必须添加的进度条专用资源 -->
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ProgressBar.xaml"/>
+                
+                
+                
 
             </ResourceDictionary.MergedDictionaries>
 
@@ -21,10 +27,18 @@
                 <Setter Property="FontSize" Value="14"/>
             </Style>
 
+            <!-- 全局禁用所有控件的焦点虚线框 -->
+            <Style TargetType="Control">
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            </Style>
+
+
+
             <!-- 定义按钮的全局样式 -->
             <Style TargetType="Button">
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="15"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             </Style>
         </ResourceDictionary>
         
