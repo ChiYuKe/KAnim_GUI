@@ -6,55 +6,56 @@ using System.Windows.Controls;
 namespace KanimLib
 {
     /// <summary>
-    /// Contains a hierarchy of data representing the sprites used in an animation.
+    /// 包含表示动画中使用的精灵层级数据。
     /// </summary>
     public class KBuild
     {
         /// <summary>
-        /// A 4 character sequence used to identify whether a file contains build data.
+        /// 用于识别文件是否包含 build 数据的 4 字符序列。
         /// </summary>
         public const string BUILD_HEADER = @"BILD";
+
         /// <summary>
-        /// The current version number of build files included with Oxygen Not Included.
+        /// Oxygen Not Included 中随附的 build 文件的当前版本号。
         /// </summary>
         public const int CURRENT_BUILD_VERSION = 10;
 
         /// <summary>
-        /// Gets or sets the name of the animation.
+        /// 获取或设置动画的名称。
         /// </summary>
-        /// <remarks>This does not seem to be used by ONI code.</remarks>
+        /// <remarks>此字段似乎未被 ONI 代码使用。</remarks>
         [ReadOnly(true)]
         public string Name
         { get; set; } = "Uninitialized_Name";
 
         /// <summary>
-        /// Gets or sets the version of the build data.
+        /// 获取或设置 build 数据的版本号。
         /// </summary>
         [ReadOnly(true)]
         public int Version
         { get; set; } = CURRENT_BUILD_VERSION;
 
         /// <summary>
-        /// Gets or sets the number of symbols in the build data.
+        /// 获取或设置 build 数据中符号的数量。
         /// </summary>
         [ReadOnly(true)]
         public int SymbolCount
         { get; set; } = 0;
 
         /// <summary>
-        /// Gets or sets the total number of frames in the build data.
+        /// 获取或设置 build 数据中的总帧数。
         /// </summary>
         [ReadOnly(true)]
         public int FrameCount
         { get; set; } = 0;
 
         /// <summary>
-        /// A list of symbols used by this animation.
+        /// 此动画所使用的符号列表。
         /// </summary>
         public readonly List<KSymbol> Symbols = new List<KSymbol>();
 
         /// <summary>
-        /// A dictionary of names for the symbols indexed by their KHash.
+        /// 以 KHash 为索引的符号名称字典。
         /// </summary>
         public readonly Dictionary<int, string> SymbolNames = new Dictionary<int, string>();
 
@@ -62,7 +63,7 @@ namespace KanimLib
         { }
 
         /// <summary>
-        /// Gets whether the build data has changed in a way that requires the texture to be repacked.
+        /// 获取 build 数据是否发生了需要重新打包纹理的更改。
         /// </summary>
         [Browsable(false)]
         public bool NeedsRepack
@@ -85,9 +86,9 @@ namespace KanimLib
         }
 
         /// <summary>
-        /// Returns the symbol name for the given hash.
+        /// 根据给定的哈希值返回对应的符号名称。
         /// </summary>
-        /// <returns>Null if the name is not found.</returns>
+        /// <returns>找不到时返回 null。</returns>
         public string GetSymbolName(int hash)
         {
             if (SymbolNames.ContainsKey(hash))
@@ -99,9 +100,9 @@ namespace KanimLib
         }
 
         /// <summary>
-        /// Returns the symbol for the given name.
+        /// 根据名称返回对应的符号。
         /// </summary>
-        /// <returns>Null if the symbol is not found.</returns>
+        /// <returns>找不到时返回 null。</returns>
         public KSymbol GetSymbol(string name)
         {
             if (string.IsNullOrEmpty(name)) throw new ArgumentException("name");
@@ -114,6 +115,10 @@ namespace KanimLib
             return null;
         }
 
+        /// <summary>
+        /// 根据哈希值返回对应的符号。
+        /// </summary>
+        /// <returns>找不到时返回 null。</returns>
         public KSymbol GetSymbol(int hash)
         {
             foreach (var symbol in Symbols)
@@ -125,9 +130,9 @@ namespace KanimLib
         }
 
         /// <summary>
-        /// Returns the KFrame for the given name and sub-image index.
+        /// 根据符号名称和子图像索引返回对应的帧。
         /// </summary>
-        /// <returns>Null if the frame is not found.</returns>
+        /// <returns>找不到时返回 null。</returns>
         public KFrame GetFrame(string name, int index)
         {
             if (string.IsNullOrEmpty(name)) throw new ArgumentException("name");
@@ -146,6 +151,9 @@ namespace KanimLib
             return null;
         }
 
+        /// <summary>
+        /// 添加符号到符号列表，并维护相关数据。
+        /// </summary>
         internal void AddSymbol(KSymbol symbol)
         {
             symbol.Parent = this;
