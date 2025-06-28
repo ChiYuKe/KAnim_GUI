@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Ookii.Dialogs.Wpf;
 using MaterialDesignThemes.Wpf;
-using KAnimGui.Windos;
+using KAnimGui.Windows;
 using System.Net.Http;
 
 
@@ -244,14 +244,19 @@ namespace KAnimGui
             {
                 if (!AppSettings.NoSuccessPopup)
                 {
-                    MessageBox.Show("转换成功！", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                    var msgBox = new CustomMessageBox("转换成功！", "成功", PackIconKind.Information);
+                    msgBox.Owner = this; 
+                    msgBox.ShowDialog();
+
                 }
-               
+
                 TryOpenFolder(converter.ActualOutputDir);
             }
             else
             {
-                MessageBox.Show(result.ErrorMessage, "失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                var msgBox = new CustomMessageBox("转换失败", "失败", PackIconKind.CloseCircle);
+                msgBox.Owner = this; 
+                msgBox.ShowDialog();
             }
         }
 
@@ -279,15 +284,19 @@ namespace KAnimGui
             {
                 if (!AppSettings.NoSuccessPopup)
                 {
-                     MessageBox.Show("SCML转换成功！", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                    var msgBox = new CustomMessageBox("SCML转换成功！", "成功", PackIconKind.Information);
+                    msgBox.Owner = this;
+                    msgBox.ShowDialog();
+                   
                 }
                 TryOpenFolder(converter.ActualOutputDir);
             }
 
             else
             {
-                MessageBox.Show(result.ErrorMessage, "失败", MessageBoxButton.OK, MessageBoxImage.Error);
-
+                var msgBox = new CustomMessageBox($"{result.ErrorMessage}", "失败", PackIconKind.CloseCircle);
+                msgBox.Owner = this;
+                msgBox.ShowDialog();
             }
                
         }

@@ -127,7 +127,7 @@
                             Foreground="White" ToolTip="Github"  FocusVisualStyle="{x:Null}" 
                             Content="{materialDesign:PackIcon Kind=Github}" Click="GithubButton_Click"/>
                     <Button Grid.Column="3" x:Name="TestButton" Style="{StaticResource MaterialDesignIconButton}" 
-                            Foreground="White" ToolTip="实验按钮"  FocusVisualStyle="{x:Null}" 
+                            Foreground="White" ToolTip="实验功能"  FocusVisualStyle="{x:Null}" 
                             Content="{materialDesign:PackIcon Kind=TestTube}" Click="TestButton_Click"/>
 
                     <!-- PinButton 靠右 -->
