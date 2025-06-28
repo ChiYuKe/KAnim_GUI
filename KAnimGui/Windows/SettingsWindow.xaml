@@ -1,0 +1,244 @@
+﻿<Window x:Class="KAnimGui.Windows.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="设置 - Kanim Spriter Exporter"
+        Height="500" Width="300"
+        WindowStartupLocation="CenterOwner"
+      
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        FontFamily="Segoe UI"
+        
+        
+          
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Background="Transparent"
+        
+        
+        ResizeMode="NoResize"
+        SizeToContent="Manual"
+        MouseDown="Window_MouseDown"
+        
+        >
+
+    <Window.Resources>
+        <!-- 复制 MainWindow 的资源 -->
+        <SolidColorBrush x:Key="PrimaryColor" Color="#FF6750A4"/>
+        <SolidColorBrush x:Key="SecondaryColor" Color="#FFE8DEF8"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#FF7E5260"/>
+
+        <Style TargetType="TabItem" BasedOn="{StaticResource MaterialDesignNavigationRailTabItem}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="16 12"/>
+            <Setter Property="Margin" Value="0 0 4 0"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryHueLightBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Grid>
+                            <Border Name="Border" 
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="0 0 0 2"
+                                    CornerRadius="4 4 0 0"
+                                    Margin="{TemplateBinding Margin}">
+                                <ContentPresenter x:Name="ContentSite"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Center"
+                                                  ContentSource="Header"
+                                                  Margin="{TemplateBinding Padding}"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Width" Value="100"/>
+        </Style>
+
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="192*"/>
+            <ColumnDefinition Width="109*"/>
+        </Grid.ColumnDefinitions>
+        <!-- 背景卡片 -->
+        <materialDesign:Card Padding="5" Background="#FF94435D" UniformCornerRadius="10" Grid.ColumnSpan="2"/>
+        <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" Grid.ColumnSpan="2">
+            <materialDesign:Card Padding="5" Margin="3,3,3,3"   Background="#FFE2E1E1" UniformCornerRadius="10"/>
+
+            <!-- 主布局区域 -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- 顶部栏 -->
+                    <RowDefinition Height="*"/>
+                    <!-- 中部设置 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 底部按钮 -->
+                </Grid.RowDefinitions>
+
+                <!-- 顶部标题栏 -->
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 左侧图标 -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- 中间标题 -->
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 右侧按钮 -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 左侧设置图标 -->
+                    <Button Grid.Column="0" Width="40" Height="40"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                             FocusVisualStyle="{x:Null}"
+                        Margin="5,5,0,0"
+                        ToolTip="设置"
+                        Background="#0094435D"
+                        BorderThickness="0"
+                        Foreground="#FF94435D">
+                        <materialDesign:PackIcon Kind="Cog"
+                             Width="27"
+                             Height="27"
+                             Foreground="#FF94435D"/>
+                    </Button>
+
+
+                    <TextBlock Text="设置" 
+                               VerticalAlignment="Center" 
+                               Foreground="#FF94435D" 
+                               FontSize="23"               
+                               FontWeight="Bold"         
+                               Margin="-5,3,0,0" 
+                               Grid.Column="1"/>
+                </Grid>
+
+
+                <!-- 中间内容：设置卡片列表 -->
+                <ScrollViewer Grid.Row="1" Margin="10,10,10,0" FocusVisualStyle="{x:Null}" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+
+                    <!-- 外层背景卡片 -->
+                    <materialDesign:Card Padding="10" Background="White" UniformCornerRadius="10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" >
+
+                        <!-- 内部设置卡片列表 -->
+                        <StackPanel>
+
+                            <!-- 自动打开文件夹 -->
+                            <materialDesign:Card Padding="10" Margin="0,0,0,10" Background="#FF94435D" UniformCornerRadius="5">
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="EnableFeatureCheckBox" Style="{StaticResource MaterialDesignCheckBox}" VerticalAlignment="Bottom" Grid.Column="0"  FocusVisualStyle="{x:Null}"  />
+                                    <TextBlock Text="转换完成打开目标文件夹" VerticalAlignment="Center" Foreground="White" Margin="5,0,0,0" Grid.Column="1"/>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- 不弹出成功提示 -->
+                            <materialDesign:Card Padding="10" Margin="0,0,0,10" Background="#FF94435D" UniformCornerRadius="5">
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="NoSuccessPopupCheckBox" Style="{StaticResource MaterialDesignCheckBox}" VerticalAlignment="Bottom" FocusVisualStyle="{x:Null}"  Grid.Column="0"/>
+                                    <TextBlock Text="转换完成不弹出提示" VerticalAlignment="Center" Foreground="White" Margin="5,0,0,0" Grid.Column="1"/>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- 启用 txt 转 bytes -->
+                            <materialDesign:Card Padding="10" Margin="0,0,0,10" Background="#FF94435D" UniformCornerRadius="5">
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="EnableTxtToBytesCheckBox" Style="{StaticResource MaterialDesignCheckBox}" VerticalAlignment="Bottom" FocusVisualStyle="{x:Null}" Grid.Column="0"/>
+                                    <TextBlock Text="接受识别 .txt 转 .bytes" VerticalAlignment="Center" Foreground="White" Margin="5,0,0,0" Grid.Column="1"/>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- 使用自定义路径 -->
+                            <materialDesign:Card Padding="10" Margin="0,0,0,10" Background="#FF94435D" UniformCornerRadius="5">
+                                <StackPanel>
+                                    <Grid VerticalAlignment="Center" Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox x:Name="UseCustomKsePathCheckBox" Style="{StaticResource MaterialDesignCheckBox}" VerticalAlignment="Center" FocusVisualStyle="{x:Null}" Grid.Column="0" />
+                                        <TextBlock Text="使用指定 kanimal-cli.exe 路径" VerticalAlignment="Center" Foreground="White" Margin="5,0,3,0" Grid.Column="1"/>
+                                    </Grid>
+
+                                    <DockPanel>
+                                        <TextBox x:Name="CustomKsePathTextBox"
+                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                     materialDesign:HintAssist.Foreground="White"
+                                     materialDesign:HintAssist.Hint="请输入路径"
+                                     DockPanel.Dock="Left"
+                                     MinWidth="180"
+                                     SelectionBrush="White"
+                                     CaretBrush="White"
+                                     Foreground="White" />
+                                        <Button Content="浏览"
+                                    DockPanel.Dock="Right"
+                                    Margin="8,0,0,0"
+                                    Padding="10,2"
+                                    Click="BrowseKseButton_Click"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                FocusVisualStyle="{x:Null}"
+                                    Background="#FF673AB7"
+                                    Foreground="White"
+                                    BorderBrush="#FF330584" />
+                                    </DockPanel>
+                                </StackPanel>
+                            </materialDesign:Card>
+
+                        </StackPanel>
+                    </materialDesign:Card>
+                </ScrollViewer>
+
+
+                <!-- 底部操作按钮区域 -->
+                <Grid Grid.Row="2" Margin="0,10,0,10">
+                    <!-- 你可以通过 Margin.Bottom 微调整体下移 -->
+                    <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,0,10,0">
+                        <!-- 控制按钮组位置 -->
+                        <Button Content="取消" FocusVisualStyle="{x:Null}" Margin="0,0,10,0"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Click="CancelButton_Click"/>
+                        <Button Content="确定" FocusVisualStyle="{x:Null}"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Background="#FF6750A4" Foreground="White"
+                    Click="ConfirmButton_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
