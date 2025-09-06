@@ -20,6 +20,16 @@ namespace KAnimGui.Models
         public static string CustomKsePath { get; set; } = string.Empty; // 
 
 
+        public static void ApplyAll()
+        {
+            OpenFolderAfterConvert = Properties.Default.OpenFolderAfterConvert;
+            NoSuccessPopup = Properties.Default.NoSuccessPopup;
+            EnableTxtToBytes = Properties.Default.EnableTxtToBytes;
+            UseCustomKsePath = Properties.Default.UseCustomKsePath;
+            CustomKsePath = Properties.Default.CustomKsePath ?? "";
+        }
+
+
     }
 
 }

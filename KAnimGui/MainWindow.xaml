@@ -119,7 +119,7 @@
 
                     <Button Grid.Column="0" x:Name="SettingsButton" Style="{StaticResource MaterialDesignIconButton}" 
                             Foreground="White" ToolTip="设置"  FocusVisualStyle="{x:Null}" 
-                            Content="{materialDesign:PackIcon Kind=Cog}" Click="SettingsButton_Click"/>
+                            Content="{materialDesign:PackIcon Kind=Cog}" Click="SettingsButton_Click" Cursor="Hand"/>
                     <Button Grid.Column="1" x:Name="HelpButton" Style="{StaticResource MaterialDesignIconButton}" 
                             Foreground="White" ToolTip="帮助"  FocusVisualStyle="{x:Null}" 
                             Content="{materialDesign:PackIcon Kind=HelpCircle}" Click="HelpButton_Click"/>

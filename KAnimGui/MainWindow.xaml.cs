@@ -30,6 +30,9 @@ namespace KAnimGui
 
         private void InitializeApplication()
         {
+            AppSettings.ApplyAll();
+
+
             kanimLog = new LogManager(LogTextBox, StatusText);
             scmlLog = new LogManager(ScmlLogTextBox, StatusText);
 
@@ -460,7 +463,7 @@ namespace KAnimGui
 
         private void HelpButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("版本: 1.0.0\n什么？你居然点了帮助？", "帮助", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("版本: 1.0.1\n什么？你居然点了帮助？", "帮助", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
@@ -487,7 +490,7 @@ namespace KAnimGui
         // git地址
         private void GithubButton_Click(object sender, RoutedEventArgs e)
         {
-            string url = "https://github.com/ChiYuKe/KAnim_GUI/tree/master/KAnimGui";
+            string url = "https://github.com/ChiYuKe/KAnim_GUI/tree/master";
             try
             {
                 Process.Start(new ProcessStartInfo
@@ -511,7 +514,7 @@ namespace KAnimGui
         {
             // var settings = new CustomMessageBox();
             var settings = new KAnimRenderWindow();
-            settings.Owner = this; // 设置所属主窗口
+           // settings.Owner = this; // 设置所属主窗口
             settings.Show(); // 非模态打开
 
         }
@@ -538,6 +541,14 @@ namespace KAnimGui
 
 
         #endregion
+
+
+
+
+
+
+
+
 
       
     }

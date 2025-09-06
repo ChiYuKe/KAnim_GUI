@@ -138,6 +138,8 @@ namespace KAnimGui.Windows
             }
         }
 
+
+
         /// <summary>
         /// 显示当前加载的文件列表（文件名+图标）
         /// </summary>
@@ -185,6 +187,8 @@ namespace KAnimGui.Windows
 
             ContentPanel.Children.Add(stack);
         }
+
+
 
         /// <summary>
         /// 根据传入路径加载图片和数据文件
@@ -536,12 +540,6 @@ namespace KAnimGui.Windows
 
 
 
-
-
-
-
-
-
         // 右键点击时，先把点击的 TreeViewItem 选中
         private void TreeViewItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -553,7 +551,12 @@ namespace KAnimGui.Windows
         }
 
 
-        // 导出菜单点击事件,
+        /// <summary>
+        /// 导出当前选中的 Frame 或 Symbol 的贴图区域为 PNG 图片文件。
+        /// 若选择的是 Symbol，则导出其第一个 Frame 对应区域。
+        /// </summary>
+        /// <param name="sender">事件源对象，通常为菜单项或按钮。</param>
+        /// <param name="e">事件参数。</param>
         private void ExportSelectedImage_Click(object sender, RoutedEventArgs e)
         {
             var selectedItem = BuildTreeView.SelectedItem as TreeViewItem;
@@ -639,35 +642,264 @@ namespace KAnimGui.Windows
 
 
 
+        /// <summary>
+        /// 导出当前替换后的整张贴图为 PNG 文件。
+        /// </summary>
+        /// <param name="sender">事件触发对象，通常为按钮。</param>
+        /// <param name="e">事件参数。</param>
+        private void MenuExportPng_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender == null)
+            {
+                MessageBox.Show("当前没有可用的贴图");
+                return;
+            }
+
+            try
+            {
+                var saveDlg = new Microsoft.Win32.SaveFileDialog()
+                {
+                    Filter = "PNG Image|*.png",
+                    FileName = "texture.png"
+                };
+
+                if (saveDlg.ShowDialog() == true)
+                {
+                    using (var fileStream = new FileStream(saveDlg.FileName, FileMode.Create))
+                    {
+                        var encoder = new PngBitmapEncoder();
+                        encoder.Frames.Add(BitmapFrame.Create(data.Texture));
+                        encoder.Save(fileStream);
+                    }
+                    MessageBox.Show("整张贴图导出成功！");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("导出失败：" + ex.Message);
+            }
+        }
 
 
+        /// <summary>
+        /// 打开Kanim文件
+        /// </summary>
+       
+        private void MenuOpen_Click(object sender, RoutedEventArgs e)
+        {
+            // 判断当前是否有已加载文件
+            bool hasFiles = !string.IsNullOrEmpty(currentTextureFile)
+                            || !string.IsNullOrEmpty(currentAnimFile)
+                            || !string.IsNullOrEmpty(currentBuildFile);
+
+            if (hasFiles)
+            {
+                // 清空显示区域
+                ContentPanel.Children.Clear();
+
+                // 恢复默认图标和提示
+                Icon.Kind = PackIconKind.FileUpload;
+                HintText.Text = "拖放 .png、_anim、_build 文件到此处";
+
+                ContentPanel.Children.Add(Icon);
+                ContentPanel.Children.Add(HintText);
+
+                // 清空文件路径
+                currentTextureFile = null;
+                currentAnimFile = null;
+                currentBuildFile = null;
+
+                // 清空参数数据表
+                ParameterDataGrid.ItemsSource = null;
+
+                // 清空树视图
+                BuildTreeView.Items.Clear();
+
+                // 清空预览图
+                PreviewImage.Source = null;
+
+                // 清空数据
+                data = null;
+            }
+            else
+            {
+                // 打开文件选择对话框
+                var dlg = new OpenFileDialog
+                {
+                    Multiselect = true,
+                    Filter = "KAnim files|*.png;*_anim.bytes;*_build.bytes|所有文件|*.*"
+                };
+
+                if (dlg.ShowDialog() == true)
+                {
+                    // 处理选择文件路径
+                    foreach (var file in dlg.FileNames)
+                    {
+                        var filename = Path.GetFileName(file).ToLowerInvariant();
+                        if (filename.EndsWith(".png"))
+                            currentTextureFile = file;
+                        else if (filename.EndsWith("_anim.bytes"))
+                            currentAnimFile = file;
+                        else if (filename.EndsWith("_build.bytes"))
+                            currentBuildFile = file;
+                    }
+
+                    var displayFiles = new List<(string, PackIconKind)>();
+
+                    if (!string.IsNullOrEmpty(currentTextureFile))
+                        displayFiles.Add((Path.GetFileName(currentTextureFile), PackIconKind.FileImageOutline));
+                    if (!string.IsNullOrEmpty(currentAnimFile))
+                        displayFiles.Add((Path.GetFileName(currentAnimFile), PackIconKind.FileDocumentOutline));
+                    if (!string.IsNullOrEmpty(currentBuildFile))
+                        displayFiles.Add((Path.GetFileName(currentBuildFile), PackIconKind.FileDocumentOutline));
+
+                    ShowFileList(displayFiles);
+
+                    if (!string.IsNullOrEmpty(currentTextureFile) &&
+                        !string.IsNullOrEmpty(currentAnimFile) &&
+                        !string.IsNullOrEmpty(currentBuildFile))
+                    {
+                        OpenFiles(currentTextureFile, currentBuildFile, currentAnimFile);
+                    }
+                    else
+                    {
+                        MessageBox.Show("请同时选择 .png、_anim.bytes 和 _build.bytes 文件", "缺少文件", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+        }
 
 
+        /// <summary>
+        /// 替换当前选中 Frame 或 Symbol 的贴图区域为用户选择的新图片。
+        /// 用户选择的图片会被缩放到对应 Frame 大小并写入原贴图中，再刷新显示。
+        /// </summary>
+        /// <param name="sender">事件源对象，通常是按钮。</param>
+        /// <param name="e">事件参数。</param>
+        private void ReplaceSelectedImage_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedItem = BuildTreeView.SelectedItem as TreeViewItem;
+            if (selectedItem?.Tag == null)
+            {
+                MessageBox.Show("请先选择一个节点");
+                return;
+            }
+
+            var selectedObj = selectedItem.Tag;
+            KFrame? frameToReplace = null;
+
+            switch (selectedObj)
+            {
+                case KFrame frame:
+                    frameToReplace = frame;
+                    break;
+
+                case KSymbol symbol:
+                    if (symbol.Frames.Count > 0)
+                        frameToReplace = symbol.Frames[0];
+                    break;
+
+                default:
+                    MessageBox.Show("请选择一个 Frame 或 Symbol 节点");
+                    return;
+            }
+
+            if (frameToReplace == null)
+            {
+                MessageBox.Show("找不到要替换的 Frame");
+                return;
+            }
+
+            var frameRect = frameToReplace.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight);
+
+            // 打开图片选择窗口
+            var openDlg = new Microsoft.Win32.OpenFileDialog()
+            {
+                Filter = "Image Files|*.png;*.jpg;*.jpeg",
+                Title = "选择一张图片用于替换 Frame"
+            };
+
+            if (openDlg.ShowDialog() != true) return;
+
+            try
+            {
+                // 加载原图
+                var originalImage = new BitmapImage(new Uri(openDlg.FileName));
+
+                // 缩放到 Frame 区域尺寸
+                var scaled = new TransformedBitmap(originalImage, new ScaleTransform(
+                    (double)frameRect.Width / originalImage.PixelWidth,
+                    (double)frameRect.Height / originalImage.PixelHeight
+                ));
+                scaled.Freeze();
+
+                // 将原贴图转为 WriteableBitmap
+                var writeable = new WriteableBitmap(data.Texture);
+
+                int stride = frameRect.Width * 4;
+                byte[] pixels = new byte[stride * frameRect.Height];
+                scaled.CopyPixels(pixels, stride, 0);
+
+                // 写入新的像素数据
+                var int32Rect = new Int32Rect(frameRect.X, frameRect.Y, frameRect.Width, frameRect.Height);
+                writeable.WritePixels(int32Rect, pixels, stride, 0);
+
+                // 转回 BitmapImage 并赋值回去
+                data.Texture = ConvertWriteableToBitmapImage(writeable);
 
 
+                // 替换后立即刷新界面
+                UpdateTextureView(
+                    data.Texture,
+                    new[] { frameRect },
+                    new[] { frameToReplace.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight) }
+                );
+
+                MessageBox.Show("替换成功！");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("替换失败：" + ex.Message);
+            }
+        }
 
 
+        /// <summary>
+        /// 将 <see cref="WriteableBitmap"/> 转换为 <see cref="BitmapImage"/>。
+        /// </summary>
+        /// <param name="writeable">需要转换的 <see cref="WriteableBitmap"/> 实例。</param>
+        /// <returns>转换后的 <see cref="BitmapImage"/> 对象。</returns>
+        private BitmapImage ConvertWriteableToBitmapImage(WriteableBitmap writeable)
+        {
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(writeable));
+
+            using (var ms = new MemoryStream())
+            {
+                encoder.Save(ms);
+                ms.Position = 0;
+
+                var bmpImg = new BitmapImage();
+                bmpImg.BeginInit();
+                bmpImg.CacheOption = BitmapCacheOption.OnLoad;
+                bmpImg.StreamSource = ms;
+                bmpImg.EndInit();
+                bmpImg.Freeze(); 
+
+                return bmpImg;
+            }
+        }
 
 
+        /// <summary>
+        /// 关闭当前窗口
+        /// </summary>
+        private void MenuExit_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
 
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
 
         /// <summary>
         /// 双击拖放区域时触发
@@ -758,6 +990,7 @@ namespace KAnimGui.Windows
                 }
             }
         }
+
 
         /// <summary>
         /// 鼠标悬停时显示提示文本

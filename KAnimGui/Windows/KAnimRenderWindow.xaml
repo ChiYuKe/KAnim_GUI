@@ -94,10 +94,10 @@
                     UniformCornerRadius="8">
                     <Menu>
                         <MenuItem Header="文件">
-                            <MenuItem Header="打开..." />
-                            <MenuItem Header="保存帧..." />
+                            <MenuItem Header="打开..." Name="MenuOpen" Click="MenuOpen_Click" />
+                            <MenuItem Header="导出 PNG" Name="MenuExportPng" Click="MenuExportPng_Click" />
                             <Separator />
-                            <MenuItem Header="退出" />
+                            <MenuItem Header="退出" Name="MenuExit" Click="MenuExit_Click" />
                         </MenuItem>
                         <MenuItem Header="视图">
                             <MenuItem Header="背景颜色：黑色" />
@@ -188,6 +188,11 @@
                                             FontSize="16"
                                             FontWeight="Bold"
                                             Header="导出图片" />
+                                        <MenuItem
+                                            Click="ReplaceSelectedImage_Click"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Header="替换图片" />
                                     </ContextMenu>
 
                                     <Style BasedOn="{StaticResource {x:Type TreeViewItem}}" TargetType="TreeViewItem">
@@ -208,7 +213,7 @@
                         UniformCornerRadius="8">
                         <Grid>
                             <Grid.RowDefinitions>
-                              
+
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
