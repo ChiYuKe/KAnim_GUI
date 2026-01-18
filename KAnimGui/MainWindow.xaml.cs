@@ -93,7 +93,6 @@ namespace KAnimGui
             }
             else
             {
-                // 直接调用，不再需要 await
                 HandleKanimDroppedFiles(files);
             }
         }
@@ -112,55 +111,54 @@ namespace KAnimGui
         }
 
 
-        // 处理拖入的Kanim文件
+
+        /// <summary>
+        /// 处理拖入的 Kanim 相关文件（PNG, Anim, Build）
+        /// </summary>
+        /// <param name="files">文件路径数组</param>
         private void HandleKanimDroppedFiles(string[] files)
         {
             foreach (var file in files)
             {
-                var ext = Path.GetExtension(file).ToLowerInvariant();
-                var fileName = Path.GetFileName(file);
+                string fileName = Path.GetFileName(file);
+                string ext = Path.GetExtension(file).ToLowerInvariant();
 
-                if (ext == ".txt")
-                {
-                    if (!AppSettings.EnableTxtToBytes)
-                    {
-                        kanimLog.Log($"拖入txt文件被禁止，请在设置中启用.txt支持: {fileName}", true);
-                        continue;
-                    }
-
-                    if (file.EndsWith("_anim.txt", StringComparison.OrdinalIgnoreCase))
-                    {
-                        AnimPathTextBox.Text = file;
-                        kanimLog.Log($"已拖入 .txt 文件，等待转换: {fileName}", false);
-                    }
-                    else if (file.EndsWith("_build.txt", StringComparison.OrdinalIgnoreCase))
-                    {
-                        BuildPathTextBox.Text = file;
-                        kanimLog.Log($"已拖入 .txt 文件，等待转换: {fileName}", false);
-                    }
-                    else
-                    {
-                        kanimLog.Log($"不支持的txt文件格式: {fileName}", true);
-                    }
-                }
-                else if (ext == ".png")
+                // 1. 处理 PNG
+                if (ext == ".png")
                 {
                     PngPathTextBox.Text = file;
                     kanimLog.Log($"已拖入: {fileName}", false);
+                    continue;
                 }
-                else if (file.EndsWith("_anim.bytes", StringComparison.OrdinalIgnoreCase))
+
+                // 2. 处理 TXT 权限校验
+                bool isTxt = ext == ".txt";
+                if (isTxt && !AppSettings.EnableTxtToBytes)
+                {
+                    kanimLog.Log($"拖入txt文件被禁止，请在设置中启用.txt支持: {fileName}", true);
+                    continue;
+                }
+
+                // 3. 处理 Anim 和 Build 文件 (支持 .txt 和 .bytes)
+                if (file.EndsWith("_anim.bytes", StringComparison.OrdinalIgnoreCase) ||
+                    file.EndsWith("_anim.txt", StringComparison.OrdinalIgnoreCase))
                 {
                     AnimPathTextBox.Text = file;
-                    kanimLog.Log($"已拖入: {fileName}", false);
+                    string msg = isTxt ? $"已拖入 .txt 文件，等待转换: {fileName}" : $"已拖入: {fileName}";
+                    kanimLog.Log(msg, false);
                 }
-                else if (file.EndsWith("_build.bytes", StringComparison.OrdinalIgnoreCase))
+                else if (file.EndsWith("_build.bytes", StringComparison.OrdinalIgnoreCase) ||
+                         file.EndsWith("_build.txt", StringComparison.OrdinalIgnoreCase))
                 {
                     BuildPathTextBox.Text = file;
-                    kanimLog.Log($"已拖入: {fileName}", false);
+                    string msg = isTxt ? $"已拖入 .txt 文件，等待转换: {fileName}" : $"已拖入: {fileName}";
+                    kanimLog.Log(msg, false);
                 }
                 else
                 {
-                    kanimLog.Log($"不支持的文件类型: {fileName}", true);
+                    // 如果是 txt 但不是上述两种，或者是完全不支持的后缀
+                    string errorMsg = isTxt ? $"不支持的txt文件格式: {fileName}" : $"不支持的文件类型: {fileName}";
+                    kanimLog.Log(errorMsg, true);
                 }
             }
         }
