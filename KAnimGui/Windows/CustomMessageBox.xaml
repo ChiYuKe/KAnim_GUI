@@ -105,8 +105,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="230" />
-
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
 
                             </Grid.ColumnDefinitions>
@@ -114,12 +113,12 @@
                             <!--  左上角按钮  -->
                             <Button
                                 Grid.Column="0"
-                                Width="20"
-                                Height="20"
+                                Width="30"
+                                Height="30"
                                 Margin="2,2,2,0"
                                 Padding="0"
                                 VerticalAlignment="Top"
-                                materialDesign:ButtonAssist.CornerRadius="10"
+                                materialDesign:ButtonAssist.CornerRadius="100"
                                 Background="#FF93425C"
                                 BorderThickness="0"
                                 Click="Button_Click"
@@ -127,11 +126,23 @@
                                 Foreground="White">
                                 <materialDesign:PackIcon
                                     x:Name="IconPack"
-                                    Width="14"
-                                    Height="14"
+                                    Width="25"
+                                    Height="25"
                                     Foreground="White"
                                     Kind="WarningCircle" />
                             </Button>
+
+                            <TextBlock
+                                x:Name="TitleTextBlock"
+                                Grid.Column="1"
+                                Margin="5,0,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                FontFamily="Microsoft YaHei UI"
+                                FontSize="13"
+                                Foreground="#777777"
+                                Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+
 
 
 

@@ -16,7 +16,7 @@ namespace KAnimGui.Models
         public int ExitCode { get; set; }
 
         // 错误信息（失败时才有值）
-        public string ErrorMessage { get; set; }
+        public required string ErrorMessage { get; set; }
     }
 }
 

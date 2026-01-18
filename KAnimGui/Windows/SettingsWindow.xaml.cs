@@ -131,6 +131,11 @@ namespace KAnimGui.Windows
         private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
             UpdateSettings();
+            if (this.Owner is MainWindow mainWin)
+            {
+                mainWin.NotifySettingsChanged();
+            }
+
             this.Close(); // 保存后关闭窗口
         }
 

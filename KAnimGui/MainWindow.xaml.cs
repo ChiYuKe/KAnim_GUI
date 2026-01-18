@@ -36,6 +36,13 @@ namespace KAnimGui
             kanimLog = new LogManager(LogTextBox, StatusText);
             scmlLog = new LogManager(ScmlLogTextBox, StatusText);
 
+            var ksePath = KseLocator.FindExecutable();
+            if (string.IsNullOrEmpty(ksePath))
+            {
+                kanimLog.Log("警告：未找到 kanimal-cli.exe。请确保它位于程序目录或在设置中手动指定路径。", true);
+                StatusText.Text = "状态：缺少核心组件";
+            }
+
             SetDefaultOutputDirectory();
             LogTextBox.FontFamily = new System.Windows.Media.FontFamily("Consolas");
             LogTextBox.FontSize = 12;
@@ -76,7 +83,7 @@ namespace KAnimGui
 
 
 
-        private async void OnDrop(object sender, DragEventArgs e)
+        private void OnDrop(object sender, DragEventArgs e)
         {
             var files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
@@ -86,7 +93,8 @@ namespace KAnimGui
             }
             else
             {
-                await HandleKanimDroppedFiles(files);
+                // 直接调用，不再需要 await
+                HandleKanimDroppedFiles(files);
             }
         }
 
@@ -102,8 +110,10 @@ namespace KAnimGui
             }
             else scmlLog.Log("拖放的不是有效的SCML文件", true);
         }
+
+
         // 处理拖入的Kanim文件
-        private async Task HandleKanimDroppedFiles(string[] files)
+        private void HandleKanimDroppedFiles(string[] files)
         {
             foreach (var file in files)
             {
@@ -155,6 +165,33 @@ namespace KAnimGui
             }
         }
 
+        public void NotifySettingsChanged()
+        {
+            string ksePath = KseLocator.FindExecutable(); // 自动获取当前生效的路径
+
+            if (!string.IsNullOrEmpty(ksePath) && File.Exists(ksePath))
+            {
+                kanimLog.Log($"[配置] 已启用核心组件: {Path.GetFileName(ksePath)}", false);
+                StatusText.Text = "状态：就绪";
+            }
+            else
+            {
+                kanimLog.Log("[配置] 警告：当前设置的路径下未找到 kanimal-cli.exe！", true);
+                StatusText.Text = "状态：缺少核心组件";
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         #endregion
@@ -195,73 +232,95 @@ namespace KAnimGui
 
         private async void ConvertButton_Click(object sender, RoutedEventArgs e)
         {
+            // 1. 验证输入（包括检查 kanimal-cli.exe 是否存在）
             if (!ValidateKanimInputs()) return;
 
+            // 2. 更新 UI 状态为忙碌
             SetUiState(true);
 
-            // 处理 AnimPath
-            string animPath = AnimPathTextBox.Text;
-            if (Path.GetExtension(animPath).Equals(".txt", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                bool success = RenameTxtToBytes(animPath);
-                if (!success)
+                // 3. 处理 AnimPath 文件格式（.txt -> .bytes）
+                string animPath = AnimPathTextBox.Text;
+                if (Path.GetExtension(animPath).Equals(".txt", StringComparison.OrdinalIgnoreCase))
                 {
-                    scmlLog.Log("转换 .txt 为 .bytes 失败 (AnimPath)", true);
-                    SetUiState(false);
-                    return;
+                    bool success = RenameTxtToBytes(animPath);
+                    if (!success)
+                    {
+                        kanimLog.Log("转换 .txt 为 .bytes 失败 (AnimPath)", true);
+                        SetUiState(false);
+                        return;
+                    }
+                    animPath = Path.ChangeExtension(animPath, ".bytes");
+                    AnimPathTextBox.Text = animPath; // 更新界面显示
                 }
-                animPath = Path.ChangeExtension(animPath, ".bytes");
-                AnimPathTextBox.Text = animPath;
-            }
 
-            // 处理 BuildPath
-            string buildPath = BuildPathTextBox.Text;
-            if (Path.GetExtension(buildPath).Equals(".txt", StringComparison.OrdinalIgnoreCase))
-            {
-                bool success = RenameTxtToBytes(buildPath);
-                if (!success)
+                // 4. 处理 BuildPath 文件格式（.txt -> .bytes）
+                string buildPath = BuildPathTextBox.Text;
+                if (Path.GetExtension(buildPath).Equals(".txt", StringComparison.OrdinalIgnoreCase))
                 {
-                    scmlLog.Log("转换 .txt 为 .bytes 失败 (BuildPath)", true);
-                    SetUiState(false);
-                    return;
+                    bool success = RenameTxtToBytes(buildPath);
+                    if (!success)
+                    {
+                        kanimLog.Log("转换 .txt 为 .bytes 失败 (BuildPath)", true);
+                        SetUiState(false);
+                        return;
+                    }
+                    buildPath = Path.ChangeExtension(buildPath, ".bytes");
+                    BuildPathTextBox.Text = buildPath; // 更新界面显示
                 }
-                buildPath = Path.ChangeExtension(buildPath, ".bytes");
-                BuildPathTextBox.Text = buildPath;
-            }
 
-            var converter = new KanimConverter
-            {
-                PngPath = PngPathTextBox.Text,
-                AnimPath = animPath,
-                BuildPath = buildPath,
-                OutputDir = OutputDirTextBox.Text,
-                StrictOrder = StrictOrderCheckBox.IsChecked == true,
-                StrictMode = StrictModeCheckBox.IsChecked == true
-            };
-
-            var result = await converter.ConvertAsync(kanimLog.Log);
-
-            SetUiState(false);
-
-            if (result.Success)
-            {
-                if (!AppSettings.NoSuccessPopup)
+                // 5. 初始化转换器
+                var converter = new KanimConverter
                 {
-                    var msgBox = new CustomMessageBox("转换成功！", "成功", PackIconKind.Information);
-                    msgBox.Owner = this; 
+                    PngPath = PngPathTextBox.Text,
+                    AnimPath = animPath,
+                    BuildPath = buildPath,
+                    OutputDir = OutputDirTextBox.Text,
+                    StrictOrder = StrictOrderCheckBox.IsChecked == true,
+                    StrictMode = StrictModeCheckBox.IsChecked == true
+                };
+
+                // 6. 执行异步转换过程
+                var result = await converter.ConvertAsync(kanimLog.Log);
+
+                // 7. 恢复 UI 状态
+                SetUiState(false);
+
+                // 8. 根据结果显示反馈
+                if (result.Success)
+                {
+                    // 成功提示
+                    if (!AppSettings.NoSuccessPopup)
+                    {
+                        var msgBox = new CustomMessageBox("转换成功！", "成功", PackIconKind.Information);
+                        msgBox.Owner = this;
+                        msgBox.ShowDialog();
+                    }
+
+                    // 自动打开输出目录
+                    TryOpenFolder(converter.ActualOutputDir);
+                }
+                else
+                {
+                    // 失败提示：显示具体的错误信息（例如：找不到 kanimal-cli.exe）
+                    string errorDetail = string.IsNullOrEmpty(result.ErrorMessage) ? "未知原因" : result.ErrorMessage;
+                    var msgBox = new CustomMessageBox($"转换失败：{errorDetail}", "失败", PackIconKind.CloseCircle);
+                    msgBox.Owner = this;
                     msgBox.ShowDialog();
-
                 }
-
-                TryOpenFolder(converter.ActualOutputDir);
             }
-            else
+            catch (Exception ex)
             {
-                var msgBox = new CustomMessageBox("转换失败", "失败", PackIconKind.CloseCircle);
-                msgBox.Owner = this; 
+                // 捕获意外异常
+                SetUiState(false);
+                var msgBox = new CustomMessageBox($"程序运行异常：{ex.Message}", "错误", PackIconKind.AlertCircle);
+                msgBox.Owner = this;
                 msgBox.ShowDialog();
             }
         }
+
+
 
 
 
@@ -388,17 +447,36 @@ namespace KAnimGui
 
         private bool ValidateKanimInputs()
         {
-            if (string.IsNullOrWhiteSpace(PngPathTextBox.Text)) return Show("缺少PNG文件");
-            if (string.IsNullOrWhiteSpace(AnimPathTextBox.Text)) return Show("缺少Anim文件");
-            if (string.IsNullOrWhiteSpace(BuildPathTextBox.Text)) return Show("缺少Build文件");
-            if (string.IsNullOrWhiteSpace(OutputDirTextBox.Text)) return Show("缺少输出目录");
-            return true;
-
-            bool Show(string msg)
+            // 检查核心组件是否存在
+            if (string.IsNullOrEmpty(KseLocator.FindExecutable()))
             {
-                MessageBox.Show(msg, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                // 直接使用你的 CustomMessageBox 提示缺失核心组件
+                var msgBox = new CustomMessageBox("未找到核心组件 kanimal-cli.exe。\n\n 请将其放入程序目录，或在设置中手动指定路径。", "缺失核心组件", PackIconKind.CloseCircle);
+                msgBox.Owner = this;
+                msgBox.ShowDialog();
                 return false;
             }
+
+            // 检查输入框是否为空
+            if (string.IsNullOrWhiteSpace(PngPathTextBox.Text) ||
+                string.IsNullOrWhiteSpace(AnimPathTextBox.Text) ||
+                string.IsNullOrWhiteSpace(BuildPathTextBox.Text))
+            {
+                var msgBox = new CustomMessageBox("请确保 PNG、Anim 和 Build 文件路径都已正确填写。", "提示", PackIconKind.Information);
+                msgBox.Owner = this;
+                msgBox.ShowDialog();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(OutputDirTextBox.Text))
+            {
+                var msgBox = new CustomMessageBox("请选择输出目录。", "提示", PackIconKind.FolderAlert);
+                msgBox.Owner = this;
+                msgBox.ShowDialog();
+                return false;
+            }
+
+            return true;
         }
 
         private bool ValidateScmlInputs()
@@ -463,9 +541,10 @@ namespace KAnimGui
 
         private void HelpButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("版本: 1.0.1\n什么？你居然点了帮助？", "帮助", MessageBoxButton.OK, MessageBoxImage.Information);
+            var msgBox = new CustomMessageBox("当前版本为：1.0.2 \n具体可以前往git仓库了解", "帮助", PackIconKind.Information);
+            msgBox.Owner = this;
+            msgBox.ShowDialog();
         }
-
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             var settings = new SettingsWindow();
