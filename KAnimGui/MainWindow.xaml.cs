@@ -876,10 +876,11 @@ namespace KAnimGui
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            // var settings = new CustomMessageBox();
-            var settings = new KAnimRenderWindow();
-           // settings.Owner = this; // 设置所属主窗口
-            settings.Show(); // 非模态打开
+            var previewWindow = new KAnimRenderWindow
+            {
+                Owner = this
+            };
+            previewWindow.Show();
 
         }
 
