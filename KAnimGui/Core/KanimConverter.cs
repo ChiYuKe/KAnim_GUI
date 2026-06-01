@@ -2,24 +2,22 @@
 using KAnimGui.Models;
 using KAnimGui.Utils;
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace KAnimGui.Core
 {
     public class KanimConverter
     {
-        public string PngPath { get; set; }
-        public string AnimPath { get; set; }
-        public string BuildPath { get; set; }
-        public string OutputDir { get; set; }
+        public string PngPath { get; set; } = string.Empty;
+        public string AnimPath { get; set; } = string.Empty;
+        public string BuildPath { get; set; } = string.Empty;
+        public string OutputDir { get; set; } = string.Empty;
         public bool StrictOrder { get; set; }
         public bool StrictMode { get; set; }
 
         // 真实转换使用的完整输出目录（包含子文件夹）
-        public string ActualOutputDir { get; private set; }
+        public string ActualOutputDir { get; private set; } = string.Empty;
 
         public async Task<ConversionResult> ConvertAsync(Action<string, bool> log)
         {
@@ -39,69 +37,32 @@ namespace KAnimGui.Core
                 ? animFileName.Substring(0, animFileName.Length - "_anim".Length)
                 : animFileName;
 
-            var newOutputDir = Path.Combine(OutputDir, folderName);
-            Directory.CreateDirectory(newOutputDir);
-            ActualOutputDir = newOutputDir;
+            ActualOutputDir = Path.Combine(OutputDir, folderName);
+            Directory.CreateDirectory(ActualOutputDir);
 
-            // 临时替换 OutputDir 传入转换命令
-            var oldOutputDir = OutputDir;
-            OutputDir = newOutputDir;
-
-            try
-            {
-                var args = BuildArgs();
-                log($"执行命令: {ksePath} {args}", false);
-
-                var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = ksePath,
-                        Arguments = args,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.OutputDataReceived += (s, e) => log(e.Data, false);
-                process.ErrorDataReceived += (s, e) => log(e.Data, true);
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                await Task.Run(() => process.WaitForExit());
-
-                return new ConversionResult
-                {
-                    Success = process.ExitCode == 0,
-                    ExitCode = process.ExitCode,
-                    ErrorMessage = process.ExitCode == 0 ? null : $"退出代码: {process.ExitCode}"
-                };
-            }
-            finally
-            {
-                OutputDir = oldOutputDir;
-            }
+            return await CliProcessRunner.RunAsync(ksePath, BuildArgs(ActualOutputDir), log);
         }
 
-        private string BuildArgs()
+        private string[] BuildArgs(string outputDir)
         {
-            var sb = new StringBuilder("scml");
+            var args = new List<string> { "scml", PngPath };
 
             if (StrictOrder)
-                sb.Append($" \"{PngPath}\" \"{BuildPath}\" \"{AnimPath}\"");
+            {
+                args.Add("-f");
+                args.AddRange(new[] { BuildPath, AnimPath });
+            }
             else
-                sb.Append($" \"{PngPath}\" \"{AnimPath}\" \"{BuildPath}\"");
+            {
+                args.AddRange(new[] { AnimPath, BuildPath });
+            }
 
-            sb.Append($" -o \"{OutputDir}\"");
+            args.AddRange(new[] { "-o", outputDir });
 
             if (StrictMode)
-                sb.Append(" -S");
+                args.Add("-S");
 
-            return sb.ToString();
+            return args.ToArray();
         }
     }
 }

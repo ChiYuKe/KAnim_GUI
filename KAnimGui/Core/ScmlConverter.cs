@@ -2,22 +2,20 @@
 using KAnimGui.Models;
 using KAnimGui.Utils;
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace KAnimGui.Core
 {
     public class ScmlConverter
     {
-        public string ScmlPath { get; set; }
-        public string OutputDir { get; set; }
+        public string ScmlPath { get; set; } = string.Empty;
+        public string OutputDir { get; set; } = string.Empty;
         public bool Interpolate { get; set; }
         public bool Debone { get; set; }
 
         // 真实转换使用的完整输出目录（包含子文件夹）
-        public string ActualOutputDir { get; private set; }
+        public string ActualOutputDir { get; private set; } = string.Empty;
 
         public async Task<ConversionResult> ConvertAsync(Action<string, bool> log)
         {
@@ -36,66 +34,23 @@ namespace KAnimGui.Core
                 ? baseName.Substring(0, baseName.Length - "_anim".Length)
                 : baseName;
 
-            var newOutputDir = Path.Combine(OutputDir, folderName);
-            Directory.CreateDirectory(newOutputDir);
-            ActualOutputDir = newOutputDir;
+            ActualOutputDir = Path.Combine(OutputDir, folderName);
+            Directory.CreateDirectory(ActualOutputDir);
 
-            var oldOutputDir = OutputDir;
-            OutputDir = newOutputDir;
-
-            try
-            {
-                var args = BuildArgs();
-                log($"执行命令: {ksePath} {args}", false);
-
-                var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = ksePath,
-                        Arguments = args,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.OutputDataReceived += (s, e) => log(e.Data, false);
-                process.ErrorDataReceived += (s, e) => log(e.Data, true);
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                await Task.Run(() => process.WaitForExit());
-
-                return new ConversionResult
-                {
-                    Success = process.ExitCode == 0,
-                    ExitCode = process.ExitCode,
-                    ErrorMessage = process.ExitCode == 0 ? null : $"退出代码: {process.ExitCode}"
-                };
-            }
-            finally
-            {
-                OutputDir = oldOutputDir;
-            }
+            return await CliProcessRunner.RunAsync(ksePath, BuildArgs(ActualOutputDir), log);
         }
 
-        private string BuildArgs()
+        private string[] BuildArgs(string outputDir)
         {
-            var sb = new StringBuilder("kanim");
-
-            sb.Append($" \"{ScmlPath}\" -o \"{OutputDir}\"");
+            var args = new List<string> { "kanim", ScmlPath, "-o", outputDir };
 
             if (Interpolate)
-                sb.Append(" -i");
+                args.Add("-i");
 
             if (Debone)
-                sb.Append(" -b");
+                args.Add("-b");
 
-            return sb.ToString();
+            return args.ToArray();
         }
     }
 }

@@ -18,17 +18,24 @@
             </ResourceDictionary.MergedDictionaries>
 
             <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="Microsoft YaHei" />
+                <Setter Property="FontFamily" Value="Microsoft YaHei UI" />
                 <Setter Property="FontSize" Value="14" />
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
             </Style>
 
             <Style TargetType="Control">
                 <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="FontFamily" Value="Microsoft YaHei UI" />
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
             </Style>
 
             <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
-                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontFamily" Value="Microsoft YaHei UI" />
                 <Setter Property="FontSize" Value="15" />
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

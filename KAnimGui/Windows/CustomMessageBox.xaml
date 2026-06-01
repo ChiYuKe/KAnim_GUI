@@ -8,7 +8,7 @@
     Height="170"
     AllowsTransparency="True"
     Background="Transparent"
-    FontFamily="Segoe UI"
+    FontFamily="Microsoft YaHei UI"
     MouseDown="Window_MouseDown"
     ResizeMode="NoResize"
     SizeToContent="Manual"

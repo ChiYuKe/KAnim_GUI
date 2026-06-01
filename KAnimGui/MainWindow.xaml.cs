@@ -6,21 +6,21 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Ookii.Dialogs.Wpf;
 using MaterialDesignThemes.Wpf;
 using KAnimGui.Windows;
-using System.Net.Http;
 
 
 namespace KAnimGui
 {
     public partial class MainWindow : Window
     {
-        private LogManager kanimLog;
-        private LogManager scmlLog;
+        private LogManager kanimLog = null!;
+        private LogManager scmlLog = null!;
 
         public MainWindow()
         {
@@ -33,8 +33,8 @@ namespace KAnimGui
             AppSettings.ApplyAll();
 
 
-            kanimLog = new LogManager(LogTextBox, StatusText);
-            scmlLog = new LogManager(ScmlLogTextBox, StatusText);
+            kanimLog = new LogManager(LogTextBox, StatusText, "KanimToScml");
+            scmlLog = new LogManager(ScmlLogTextBox, StatusText, "ScmlToKanim");
 
             var ksePath = KseLocator.FindExecutable();
             if (string.IsNullOrEmpty(ksePath))
@@ -55,10 +55,8 @@ namespace KAnimGui
 
         private void OnDragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (TryGetDroppedFiles(e, out var files))
             {
-                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-
                 bool allowDrop;
 
                 if (MainTabControl.SelectedItem == ScmlToKanimTab)
@@ -85,7 +83,10 @@ namespace KAnimGui
 
         private void OnDrop(object sender, DragEventArgs e)
         {
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (!TryGetDroppedFiles(e, out var files))
+            {
+                return;
+            }
 
             if (MainTabControl.SelectedItem == ScmlToKanimTab)
             {
@@ -101,7 +102,7 @@ namespace KAnimGui
 
         private void HandleScmlDroppedFiles(string[] files)
         {
-            var scml = files.FirstOrDefault(f => f.EndsWith(".scml"));
+            var scml = files.FirstOrDefault(f => f.EndsWith(".scml", StringComparison.OrdinalIgnoreCase));
             if (scml != null)
             {
                 ScmlPathTextBox.Text = scml;
@@ -165,7 +166,7 @@ namespace KAnimGui
 
         public void NotifySettingsChanged()
         {
-            string ksePath = KseLocator.FindExecutable(); // 自动获取当前生效的路径
+            string? ksePath = KseLocator.FindExecutable(); // 自动获取当前生效的路径
 
             if (!string.IsNullOrEmpty(ksePath) && File.Exists(ksePath))
             {
@@ -206,10 +207,10 @@ namespace KAnimGui
                     SelectSingleFile("PNG 文件|*.png", PngPathTextBox);
                     break;
                 case "BrowseAnimButton":
-                    SelectSingleFile("Anim 文件|*_anim.bytes", AnimPathTextBox);
+                    SelectSingleFile(GetKanimFileFilter("Anim 文件", "_anim"), AnimPathTextBox);
                     break;
                 case "BrowseBuildButton":
-                    SelectSingleFile("Build 文件|*_build.bytes", BuildPathTextBox);
+                    SelectSingleFile(GetKanimFileFilter("Build 文件", "_build"), BuildPathTextBox);
                     break;
                 case "BrowseScmlButton":
                     SelectSingleFile("SCML 文件|*.scml", ScmlPathTextBox);
@@ -230,45 +231,21 @@ namespace KAnimGui
 
         private async void ConvertButton_Click(object sender, RoutedEventArgs e)
         {
-            // 1. 验证输入（包括检查 kanimal-cli.exe 是否存在）
             if (!ValidateKanimInputs()) return;
 
-            // 2. 更新 UI 状态为忙碌
             SetUiState(true);
 
             try
             {
-                // 3. 处理 AnimPath 文件格式（.txt -> .bytes）
-                string animPath = AnimPathTextBox.Text;
-                if (Path.GetExtension(animPath).Equals(".txt", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool success = RenameTxtToBytes(animPath);
-                    if (!success)
-                    {
-                        kanimLog.Log("转换 .txt 为 .bytes 失败 (AnimPath)", true);
-                        SetUiState(false);
-                        return;
-                    }
-                    animPath = Path.ChangeExtension(animPath, ".bytes");
-                    AnimPathTextBox.Text = animPath; // 更新界面显示
-                }
+                string? animPath = EnsureBytesFile(AnimPathTextBox.Text, "AnimPath");
+                if (animPath == null) return;
 
-                // 4. 处理 BuildPath 文件格式（.txt -> .bytes）
-                string buildPath = BuildPathTextBox.Text;
-                if (Path.GetExtension(buildPath).Equals(".txt", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool success = RenameTxtToBytes(buildPath);
-                    if (!success)
-                    {
-                        kanimLog.Log("转换 .txt 为 .bytes 失败 (BuildPath)", true);
-                        SetUiState(false);
-                        return;
-                    }
-                    buildPath = Path.ChangeExtension(buildPath, ".bytes");
-                    BuildPathTextBox.Text = buildPath; // 更新界面显示
-                }
+                string? buildPath = EnsureBytesFile(BuildPathTextBox.Text, "BuildPath");
+                if (buildPath == null) return;
 
-                // 5. 初始化转换器
+                AnimPathTextBox.Text = animPath;
+                BuildPathTextBox.Text = buildPath;
+
                 var converter = new KanimConverter
                 {
                     PngPath = PngPathTextBox.Text,
@@ -279,16 +256,10 @@ namespace KAnimGui
                     StrictMode = StrictModeCheckBox.IsChecked == true
                 };
 
-                // 6. 执行异步转换过程
                 var result = await converter.ConvertAsync(kanimLog.Log);
 
-                // 7. 恢复 UI 状态
-                SetUiState(false);
-
-                // 8. 根据结果显示反馈
                 if (result.Success)
                 {
-                    // 成功提示
                     if (!AppSettings.NoSuccessPopup)
                     {
                         var msgBox = new CustomMessageBox("转换成功！", "成功", PackIconKind.Information);
@@ -310,11 +281,13 @@ namespace KAnimGui
             }
             catch (Exception ex)
             {
-                // 捕获意外异常
-                SetUiState(false);
                 var msgBox = new CustomMessageBox($"程序运行异常：{ex.Message}", "错误", PackIconKind.AlertCircle);
                 msgBox.Owner = this;
                 msgBox.ShowDialog();
+            }
+            finally
+            {
+                SetUiState(false);
             }
         }
 
@@ -329,36 +302,176 @@ namespace KAnimGui
             if (!ValidateScmlInputs()) return;
 
             SetScmlUiState(true);
-            var converter = new ScmlConverter
+            try
             {
-                ScmlPath = ScmlPathTextBox.Text,
-                OutputDir = ScmlOutputDirTextBox.Text,
-                Interpolate = InterpolateCheckBox.IsChecked == true,
-                Debone = DeboneCheckBox.IsChecked == true
-            };
-
-            var result = await converter.ConvertAsync(scmlLog.Log);
-            SetScmlUiState(false);
-
-            if (result.Success)
-            {
-                if (!AppSettings.NoSuccessPopup)
+                var converter = new ScmlConverter
                 {
-                    var msgBox = new CustomMessageBox("SCML转换成功！", "成功", PackIconKind.Information);
+                    ScmlPath = ScmlPathTextBox.Text,
+                    OutputDir = ScmlOutputDirTextBox.Text,
+                    Interpolate = InterpolateCheckBox.IsChecked == true,
+                    Debone = DeboneCheckBox.IsChecked == true
+                };
+
+                var result = await converter.ConvertAsync(scmlLog.Log);
+
+                if (result.Success)
+                {
+                    if (!AppSettings.NoSuccessPopup)
+                    {
+                        var msgBox = new CustomMessageBox("SCML转换成功！", "成功", PackIconKind.Information);
+                        msgBox.Owner = this;
+                        msgBox.ShowDialog();
+
+                    }
+                    TryOpenFolder(converter.ActualOutputDir);
+                }
+                else
+                {
+                    var msgBox = new CustomMessageBox(result.ErrorMessage ?? "未知原因", "失败", PackIconKind.CloseCircle);
                     msgBox.Owner = this;
                     msgBox.ShowDialog();
-                   
                 }
-                TryOpenFolder(converter.ActualOutputDir);
             }
-
-            else
+            catch (Exception ex)
             {
-                var msgBox = new CustomMessageBox($"{result.ErrorMessage}", "失败", PackIconKind.CloseCircle);
+                var msgBox = new CustomMessageBox($"程序运行异常：{ex.Message}", "错误", PackIconKind.AlertCircle);
                 msgBox.Owner = this;
                 msgBox.ShowDialog();
             }
-               
+            finally
+            {
+                SetScmlUiState(false);
+            }
+        }
+
+        private async void BatchConvertButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new VistaFolderBrowserDialog
+            {
+                Description = "请选择包含 PNG、_anim.bytes、_build.bytes 的文件夹",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = false
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            if (!EnsureOutputDirectoryReady(OutputDirTextBox.Text))
+            {
+                return;
+            }
+
+            var fileSets = FindKanimFileSets(dialog.SelectedPath).ToList();
+            if (fileSets.Count == 0)
+            {
+                ShowMessage("没有找到可转换的 KAnim 文件组。", "批量转换", PackIconKind.Information);
+                return;
+            }
+
+            SetUiState(true);
+
+            try
+            {
+                int successCount = 0;
+                kanimLog.Log($"开始批量转换，共 {fileSets.Count} 组文件。");
+
+                foreach (var fileSet in fileSets)
+                {
+                    kanimLog.Log($"批量转换: {fileSet.Name}");
+                    string? animPath = EnsureBytesFile(fileSet.AnimPath, $"{fileSet.Name} Anim");
+                    string? buildPath = EnsureBytesFile(fileSet.BuildPath, $"{fileSet.Name} Build");
+
+                    if (animPath == null || buildPath == null)
+                    {
+                        kanimLog.Log($"{fileSet.Name} 转换失败：无法准备 .bytes 文件", true);
+                        continue;
+                    }
+
+                    var converter = new KanimConverter
+                    {
+                        PngPath = fileSet.PngPath,
+                        AnimPath = animPath,
+                        BuildPath = buildPath,
+                        OutputDir = OutputDirTextBox.Text,
+                        StrictOrder = StrictOrderCheckBox.IsChecked == true,
+                        StrictMode = StrictModeCheckBox.IsChecked == true
+                    };
+
+                    var result = await converter.ConvertAsync(kanimLog.Log);
+                    if (result.Success)
+                    {
+                        successCount++;
+                    }
+                    else
+                    {
+                        kanimLog.Log($"{fileSet.Name} 转换失败：{result.ErrorMessage ?? "未知原因"}", true);
+                    }
+                }
+
+                ShowMessage($"批量转换完成：成功 {successCount} / {fileSets.Count}", "批量转换", PackIconKind.Information);
+            }
+            finally
+            {
+                SetUiState(false);
+            }
+        }
+
+        private async void BatchConvertScmlButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Multiselect = true,
+                Filter = "SCML 文件|*.scml"
+            };
+
+            if (dialog.ShowDialog() != true || dialog.FileNames.Length == 0)
+            {
+                return;
+            }
+
+            if (!EnsureOutputDirectoryReady(ScmlOutputDirTextBox.Text))
+            {
+                return;
+            }
+
+            SetScmlUiState(true);
+
+            try
+            {
+                int successCount = 0;
+                scmlLog.Log($"开始批量转换，共 {dialog.FileNames.Length} 个 SCML 文件。");
+
+                foreach (var scmlPath in dialog.FileNames)
+                {
+                    scmlLog.Log($"批量转换: {Path.GetFileName(scmlPath)}");
+
+                    var converter = new ScmlConverter
+                    {
+                        ScmlPath = scmlPath,
+                        OutputDir = ScmlOutputDirTextBox.Text,
+                        Interpolate = InterpolateCheckBox.IsChecked == true,
+                        Debone = DeboneCheckBox.IsChecked == true
+                    };
+
+                    var result = await converter.ConvertAsync(scmlLog.Log);
+                    if (result.Success)
+                    {
+                        successCount++;
+                    }
+                    else
+                    {
+                        scmlLog.Log($"{Path.GetFileName(scmlPath)} 转换失败：{result.ErrorMessage ?? "未知原因"}", true);
+                    }
+                }
+
+                ShowMessage($"批量转换完成：成功 {successCount} / {dialog.FileNames.Length}", "批量转换", PackIconKind.Information);
+            }
+            finally
+            {
+                SetScmlUiState(false);
+            }
         }
 
      
@@ -373,7 +486,7 @@ namespace KAnimGui
             StatusText.Text = isBusy ? "转换中..." : "就绪";
 
             var names = new[] { BrowsePngButton, BrowseAnimButton, BrowseBuildButton,
-                BrowseOutputDirButton, ConvertButton, ClearButton };
+                BrowseOutputDirButton, ConvertButton, ClearButton, BatchConvertButton };
 
             foreach (var btn in names) btn.IsEnabled = !isBusy;
         }
@@ -383,7 +496,8 @@ namespace KAnimGui
             ProgressBar.IsIndeterminate = isBusy;
             StatusText.Text = isBusy ? "SCML转换中..." : "就绪";
 
-            var names = new[] { BrowseScmlButton, BrowseScmlOutputDirButton, ConvertScmlButton, ScmlClearButton };
+            var names = new[] { BrowseScmlButton, BrowseScmlOutputDirButton, ConvertScmlButton, ScmlClearButton,
+                BatchConvertScmlButton };
             foreach (var btn in names) btn.IsEnabled = !isBusy;
         }
 
@@ -404,6 +518,19 @@ namespace KAnimGui
 
         private bool IsScml(string[] files) =>
          files.Any(f => f.EndsWith(".scml", StringComparison.OrdinalIgnoreCase));
+
+        private static bool TryGetDroppedFiles(DragEventArgs e, out string[] files)
+        {
+            files = Array.Empty<string>();
+
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                return false;
+            }
+
+            files = e.Data.GetData(DataFormats.FileDrop) as string[] ?? Array.Empty<string>();
+            return files.Length > 0;
+        }
 
 
         // 判断是否是Kanim相关文件，控制拖放效果
@@ -442,6 +569,22 @@ namespace KAnimGui
             }
         }
 
+        private string? EnsureBytesFile(string path, string label)
+        {
+            if (!Path.GetExtension(path).Equals(".txt", StringComparison.OrdinalIgnoreCase))
+            {
+                return path;
+            }
+
+            if (!RenameTxtToBytes(path))
+            {
+                kanimLog.Log($"转换 .txt 为 .bytes 失败 ({label})", true);
+                return null;
+            }
+
+            return Path.ChangeExtension(path, ".bytes");
+        }
+
 
         private bool ValidateKanimInputs()
         {
@@ -460,35 +603,179 @@ namespace KAnimGui
                 string.IsNullOrWhiteSpace(AnimPathTextBox.Text) ||
                 string.IsNullOrWhiteSpace(BuildPathTextBox.Text))
             {
-                var msgBox = new CustomMessageBox("请确保 PNG、Anim 和 Build 文件路径都已正确填写。", "提示", PackIconKind.Information);
-                msgBox.Owner = this;
-                msgBox.ShowDialog();
+                ShowMessage("请确保 PNG、Anim 和 Build 文件路径都已正确填写。", "提示", PackIconKind.Information);
+                return false;
+            }
+
+            if (!ValidateKanimFileSet(PngPathTextBox.Text, AnimPathTextBox.Text, BuildPathTextBox.Text))
+            {
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(OutputDirTextBox.Text))
             {
-                var msgBox = new CustomMessageBox("请选择输出目录。", "提示", PackIconKind.FolderAlert);
-                msgBox.Owner = this;
-                msgBox.ShowDialog();
+                ShowMessage("请选择输出目录。", "提示", PackIconKind.FolderAlert);
                 return false;
             }
 
-            return true;
+            return EnsureOutputDirectoryReady(OutputDirTextBox.Text);
         }
 
         private bool ValidateScmlInputs()
         {
             if (string.IsNullOrWhiteSpace(ScmlPathTextBox.Text)) return Show("缺少SCML文件");
             if (string.IsNullOrWhiteSpace(ScmlOutputDirTextBox.Text)) return Show("缺少输出目录");
-            return true;
+            if (!ValidateExistingFile(ScmlPathTextBox.Text, ".scml", "SCML文件")) return false;
+            return EnsureOutputDirectoryReady(ScmlOutputDirTextBox.Text);
 
             bool Show(string msg)
             {
-                MessageBox.Show(msg, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowMessage(msg, "错误", PackIconKind.CloseCircle);
                 return false;
             }
         }
+
+        private bool ValidateKanimFileSet(string pngPath, string animPath, string buildPath)
+        {
+            if (!ValidateExistingFile(pngPath, ".png", "PNG文件")) return false;
+
+            var kanimExtensions = AppSettings.EnableTxtToBytes ? new[] { ".bytes", ".txt" } : new[] { ".bytes" };
+            if (!ValidateExistingFile(animPath, kanimExtensions, "Anim文件")) return false;
+            if (!ValidateExistingFile(buildPath, kanimExtensions, "Build文件")) return false;
+
+            if (!Path.GetFileNameWithoutExtension(animPath).EndsWith("_anim", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessage("Anim文件名应以 _anim 结尾。", "文件名不匹配", PackIconKind.AlertCircle);
+                return false;
+            }
+
+            if (!Path.GetFileNameWithoutExtension(buildPath).EndsWith("_build", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessage("Build文件名应以 _build 结尾。", "文件名不匹配", PackIconKind.AlertCircle);
+                return false;
+            }
+
+            var pngBase = Path.GetFileNameWithoutExtension(pngPath);
+            var animBase = TrimSuffix(Path.GetFileNameWithoutExtension(animPath), "_anim");
+            var buildBase = TrimSuffix(Path.GetFileNameWithoutExtension(buildPath), "_build");
+
+            if (!string.Equals(pngBase, animBase, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(animBase, buildBase, StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessage("PNG、Anim、Build 的基础文件名不一致，请确认是否为同一套资源。", "文件不匹配", PackIconKind.AlertCircle);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidateExistingFile(string path, string expectedExtension, string displayName) =>
+            ValidateExistingFile(path, new[] { expectedExtension }, displayName);
+
+        private bool ValidateExistingFile(string path, string[] expectedExtensions, string displayName)
+        {
+            if (!File.Exists(path))
+            {
+                ShowMessage($"{displayName}不存在：{path}", "文件不存在", PackIconKind.CloseCircle);
+                return false;
+            }
+
+            var extension = Path.GetExtension(path);
+            if (!expectedExtensions.Any(ext => extension.Equals(ext, StringComparison.OrdinalIgnoreCase)))
+            {
+                ShowMessage($"{displayName}类型不正确，应为：{string.Join(" / ", expectedExtensions)}", "文件类型错误", PackIconKind.CloseCircle);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool EnsureOutputDirectoryReady(string outputDir)
+        {
+            try
+            {
+                Directory.CreateDirectory(outputDir);
+                var probePath = Path.Combine(outputDir, $".write_test_{Guid.NewGuid():N}.tmp");
+                File.WriteAllText(probePath, string.Empty);
+                File.Delete(probePath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"输出目录不可写：{ex.Message}", "输出目录错误", PackIconKind.FolderAlert);
+                return false;
+            }
+        }
+
+        private static IEnumerable<KanimFileSet> FindKanimFileSets(string folderPath)
+        {
+            var files = Directory.EnumerateFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly).ToList();
+            var pngFiles = files
+                .Where(path => Path.GetExtension(path).Equals(".png", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(path => Path.GetFileNameWithoutExtension(path), path => path, StringComparer.OrdinalIgnoreCase);
+
+            var animFiles = files
+                .Where(IsAnimFile)
+                .GroupBy(path => TrimSuffix(Path.GetFileNameWithoutExtension(path), "_anim"), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => ChoosePreferredKanimDataFile(group), StringComparer.OrdinalIgnoreCase);
+
+            var buildFiles = files
+                .Where(IsBuildFile)
+                .GroupBy(path => TrimSuffix(Path.GetFileNameWithoutExtension(path), "_build"), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => ChoosePreferredKanimDataFile(group), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var pair in animFiles.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                var baseName = pair.Key;
+
+                if (buildFiles.TryGetValue(baseName, out var buildPath) &&
+                    pngFiles.TryGetValue(baseName, out var pngPath))
+                {
+                    yield return new KanimFileSet(baseName, pngPath, pair.Value, buildPath);
+                }
+            }
+        }
+
+        private static bool IsAnimFile(string path) =>
+            path.EndsWith("_anim.bytes", StringComparison.OrdinalIgnoreCase) ||
+            (AppSettings.EnableTxtToBytes && path.EndsWith("_anim.txt", StringComparison.OrdinalIgnoreCase));
+
+        private static bool IsBuildFile(string path) =>
+            path.EndsWith("_build.bytes", StringComparison.OrdinalIgnoreCase) ||
+            (AppSettings.EnableTxtToBytes && path.EndsWith("_build.txt", StringComparison.OrdinalIgnoreCase));
+
+        private static string ChoosePreferredKanimDataFile(IEnumerable<string> paths)
+        {
+            return paths
+                .OrderBy(path => Path.GetExtension(path).Equals(".bytes", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+                .First();
+        }
+
+        private static string GetKanimFileFilter(string title, string suffix)
+        {
+            return AppSettings.EnableTxtToBytes
+                ? $"{title}|*{suffix}.bytes;*{suffix}.txt|Bytes 文件|*{suffix}.bytes|Txt 文件|*{suffix}.txt"
+                : $"{title}|*{suffix}.bytes";
+        }
+
+        private static string TrimSuffix(string value, string suffix)
+        {
+            return value.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
+                ? value.Substring(0, value.Length - suffix.Length)
+                : value;
+        }
+
+        private void ShowMessage(string message, string title, PackIconKind iconKind)
+        {
+            var msgBox = new CustomMessageBox(message, title, iconKind)
+            {
+                Owner = this
+            };
+            msgBox.ShowDialog();
+        }
+
+        private sealed record KanimFileSet(string Name, string PngPath, string AnimPath, string BuildPath);
 
         private void SetDefaultOutputDirectory()
         {
@@ -613,9 +900,6 @@ namespace KAnimGui
             ScmlOutputDirTextBox.Clear();
             ScmlLogTextBox.Clear();
         }
-
-
-
 
         #endregion
 

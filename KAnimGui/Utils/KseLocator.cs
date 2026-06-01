@@ -8,7 +8,7 @@ public static class KseLocator
     /// 优先使用用户自定义路径（如果启用且路径有效），否则按默认规则搜索。
     /// </summary>
     /// <returns>找到的可执行文件完整路径，找不到返回 null。</returns>
-    public static string FindExecutable()
+    public static string? FindExecutable()
     {
         // 如果用户启用了自定义路径且路径非空且文件存在，则直接返回该路径
         if (AppSettings.UseCustomKsePath

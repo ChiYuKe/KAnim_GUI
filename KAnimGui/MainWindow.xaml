@@ -7,8 +7,12 @@
     Width="900"
     Height="750"
     Background="{DynamicResource MaterialDesignPaper}"
-    FontFamily="Segoe UI"
+    FontFamily="Microsoft YaHei UI"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextRenderingMode="ClearType"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
     WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
@@ -76,6 +80,34 @@
         <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
             <Setter Property="Margin" Value="5" />
             <Setter Property="Width" Value="100" />
+        </Style>
+
+        <Style
+            x:Key="PrimaryActionButton"
+            BasedOn="{StaticResource MaterialDesignRaisedButton}"
+            TargetType="Button">
+            <Setter Property="Width" Value="Auto" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="Background" Value="#FF6750A4" />
+            <Setter Property="BorderBrush" Value="#FF4B2394" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style
+            x:Key="SecondaryActionButton"
+            BasedOn="{StaticResource MaterialDesignRaisedButton}"
+            TargetType="Button">
+            <Setter Property="Width" Value="Auto" />
+            <Setter Property="MinWidth" Value="92" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Background" Value="#FFFFF7FA" />
+            <Setter Property="BorderBrush" Value="#FFFFF7FA" />
+            <Setter Property="Foreground" Value="#FF6B2742" />
         </Style>
 
 
@@ -385,29 +417,34 @@
                         </materialDesign:Card>
 
                         <!--  操作按钮  -->
-                        <StackPanel
+                        <DockPanel
                             Grid.Row="4"
-                            HorizontalAlignment="Right"
-                            Orientation="Horizontal">
+                            LastChildFill="False">
                             <Button
-                                x:Name="ClearButton"
-                                Background="#FF6750A4"
-                                BorderBrush="#FF452382"
-                                Click="ClearButton_Click"
-                                Content="清除"
+                                x:Name="BatchConvertButton"
+                                Click="BatchConvertButton_Click"
+                                Content="批量转换"
+                                DockPanel.Dock="Left"
                                 FocusVisualStyle="{x:Null}"
-                                Foreground="White"
-                                Style="{StaticResource MaterialDesignRaisedButton}" />
-                            <Button
-                                x:Name="ConvertButton"
-                                Margin="10,0,0,0"
-                                Background="#FF6750A4"
-                                BorderBrush="#FF4B2394"
-                                Click="ConvertButton_Click"
-                                Content="开始转换"
-                                FocusVisualStyle="{x:Null}"
-                                Style="{StaticResource MaterialDesignRaisedButton}" />
-                        </StackPanel>
+                                Style="{StaticResource SecondaryActionButton}" />
+                            <StackPanel
+                                HorizontalAlignment="Right"
+                                DockPanel.Dock="Right"
+                                Orientation="Horizontal">
+                                <Button
+                                    x:Name="ClearButton"
+                                    Click="ClearButton_Click"
+                                    Content="清除"
+                                    FocusVisualStyle="{x:Null}"
+                                    Style="{StaticResource SecondaryActionButton}" />
+                                <Button
+                                    x:Name="ConvertButton"
+                                    Click="ConvertButton_Click"
+                                    Content="开始转换"
+                                    FocusVisualStyle="{x:Null}"
+                                    Style="{StaticResource PrimaryActionButton}" />
+                            </StackPanel>
+                        </DockPanel>
                     </Grid>
                 </Border>
             </TabItem>
@@ -566,28 +603,34 @@
                         </materialDesign:Card>
 
                         <!--  操作按钮  -->
-                        <StackPanel
+                        <DockPanel
                             Grid.Row="3"
-                            HorizontalAlignment="Right"
-                            Orientation="Horizontal">
+                            LastChildFill="False">
                             <Button
-                                x:Name="ScmlClearButton"
-                                Background="#FF6750A4"
-                                Click="ScmlClearButton_Click"
-                                Content="清除"
+                                x:Name="BatchConvertScmlButton"
+                                Click="BatchConvertScmlButton_Click"
+                                Content="批量转换"
+                                DockPanel.Dock="Left"
                                 FocusVisualStyle="{x:Null}"
-                                Foreground="White"
-                                Style="{StaticResource MaterialDesignRaisedButton}" />
-                            <Button
-                                x:Name="ConvertScmlButton"
-                                Margin="10,0,0,0"
-                                Background="#FF6750A4"
-                                Click="ConvertScmlButton_Click"
-                                Content="开始转换"
-                                FocusVisualStyle="{x:Null}"
-                                Foreground="White"
-                                Style="{StaticResource MaterialDesignRaisedButton}" />
-                        </StackPanel>
+                                Style="{StaticResource SecondaryActionButton}" />
+                            <StackPanel
+                                HorizontalAlignment="Right"
+                                DockPanel.Dock="Right"
+                                Orientation="Horizontal">
+                                <Button
+                                    x:Name="ScmlClearButton"
+                                    Click="ScmlClearButton_Click"
+                                    Content="清除"
+                                    FocusVisualStyle="{x:Null}"
+                                    Style="{StaticResource SecondaryActionButton}" />
+                                <Button
+                                    x:Name="ConvertScmlButton"
+                                    Click="ConvertScmlButton_Click"
+                                    Content="开始转换"
+                                    FocusVisualStyle="{x:Null}"
+                                    Style="{StaticResource PrimaryActionButton}" />
+                            </StackPanel>
+                        </DockPanel>
                     </Grid>
                 </Border>
             </TabItem>

@@ -6,9 +6,13 @@
     Title="Anim Render Window"
     Width="1280"
     Height="800"
-    FontFamily="Segoe UI"
+    FontFamily="Microsoft YaHei UI"
     SizeToContent="Manual"
+    SnapsToDevicePixels="True"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextRenderingMode="ClearType"
+    UseLayoutRounding="True"
     WindowStartupLocation="CenterOwner">
     <!--  MouseDown 拖动事件  -->
 
@@ -17,6 +21,55 @@
         <SolidColorBrush x:Key="PrimaryColor" Color="#FF6750A4" />
         <SolidColorBrush x:Key="SecondaryColor" Color="#FFE8DEF8" />
         <SolidColorBrush x:Key="AccentColor" Color="#FF7E5260" />
+        <SolidColorBrush x:Key="AppBarBrush" Color="#FF94435D" />
+        <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#FF90455D" />
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFFFF" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#FFE7CED8" />
+        <SolidColorBrush x:Key="PreviewBackgroundBrush" Color="#FF969696" />
+        <SolidColorBrush x:Key="PreviewBorderBrush" Color="#FFF2DDE6" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#FF6B2742" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF6750A4" />
+        <SolidColorBrush x:Key="SoftAccentBrush" Color="#FFFFF7FA" />
+        <SolidColorBrush x:Key="GridLineBrush" Color="#FFE8DCE2" />
+        <SolidColorBrush x:Key="PanelTitleBrush" Color="#FF4F2033" />
+        <SolidColorBrush x:Key="SubtleTextBrush" Color="#FF8A5B6C" />
+        <DrawingBrush
+            x:Key="PreviewGridBrush"
+            TileMode="Tile"
+            Viewport="0,0,96,96"
+            ViewportUnits="Absolute">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="{StaticResource PreviewBackgroundBrush}">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,96,96" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#55FFFFFF" Thickness="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <GeometryGroup>
+                                <LineGeometry StartPoint="48,0" EndPoint="48,96" />
+                                <LineGeometry StartPoint="0,48" EndPoint="96,48" />
+                            </GeometryGroup>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#A5FFFFFF" Thickness="1.4" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <GeometryGroup>
+                                <LineGeometry StartPoint="0,0" EndPoint="96,0" />
+                                <LineGeometry StartPoint="0,0" EndPoint="0,96" />
+                            </GeometryGroup>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
 
         <Style BasedOn="{StaticResource MaterialDesignNavigationRailTabItem}" TargetType="TabItem">
             <Setter Property="FontSize" Value="14" />
@@ -65,206 +118,424 @@
             <Setter Property="Margin" Value="5" />
             <Setter Property="Width" Value="100" />
         </Style>
+
+        <Style x:Key="SectionTitleText" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource PanelTitleBrush}" />
+        </Style>
+
+        <Style x:Key="PanelCardStyle" TargetType="materialDesign:Card">
+            <Setter Property="Background" Value="{StaticResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="UniformCornerRadius" Value="6" />
+            <Setter Property="UseLayoutRounding" Value="True" />
+            <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp0" />
+        </Style>
     </Window.Resources>
 
 
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300" />
-            <!--  左侧控制面板  -->
-            <ColumnDefinition Width="*" />
-            <!--  右侧渲染区域  -->
-        </Grid.ColumnDefinitions>
+    <DockPanel Background="{StaticResource WorkspaceBackgroundBrush}">
+        <Border
+            DockPanel.Dock="Top"
+            Height="48"
+            Background="{StaticResource AppBarBrush}">
+            <DockPanel>
+                <TextBlock
+                    Margin="15,0"
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Left"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Foreground="White"
+                    Text="KAnim 预览器" />
+                <Menu
+                    DockPanel.Dock="Left"
+                    Padding="6,4"
+                    Background="Transparent">
+                    <Menu.Resources>
+                        <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
+                            <Setter Property="Foreground" Value="#FF222222" />
+                            <Setter Property="FontSize" Value="14" />
+                        </Style>
+                    </Menu.Resources>
+                    <MenuItem Header="文件" Foreground="White">
+                        <MenuItem Header="打开..." Name="MenuOpen" Click="MenuOpen_Click" />
+                        <MenuItem Header="导出 PNG" Name="MenuExportPng" Click="MenuExportPng_Click" />
+                        <Separator />
+                        <MenuItem Header="退出" Name="MenuExit" Click="MenuExit_Click" />
+                    </MenuItem>
+                    <MenuItem Header="视图" Foreground="White">
+                        <MenuItem Header="背景颜色：黑色" Click="PreviewBackgroundBlack_Click" />
+                        <MenuItem Header="背景颜色：白色" Click="PreviewBackgroundWhite_Click" />
+                    </MenuItem>
+                    <MenuItem Header="动画" Foreground="White">
+                        <MenuItem Header="播放/暂停" Click="PlayPause_Click" />
+                        <MenuItem Header="上一帧" Click="PreviousFrame_Click" />
+                        <MenuItem Header="下一帧" Click="NextFrame_Click" />
+                    </MenuItem>
+                </Menu>
+            </DockPanel>
+        </Border>
 
-        <!--  左侧控制面板  -->
-        <materialDesign:Card
-            Margin="5"
-            Padding="10"
-            Background="#FF90455D"
-            UniformCornerRadius="10">
-            <DockPanel Background="#00E8DEF8">
+        <Grid Margin="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="330" MinWidth="280" />
+                <ColumnDefinition Width="*" MinWidth="480" />
+                <ColumnDefinition Width="310" MinWidth="280" />
+            </Grid.ColumnDefinitions>
 
-                <!--  顶部菜单栏  -->
-                <materialDesign:Card
-                    Margin="0,0,0,10"
-                    Padding="0"
-                    Background="{DynamicResource MaterialDesignPaper}"
-                    DockPanel.Dock="Top"
-                    UniformCornerRadius="8">
-                    <Menu>
-                        <MenuItem Header="文件">
-                            <MenuItem Header="打开..." Name="MenuOpen" Click="MenuOpen_Click" />
-                            <MenuItem Header="导出 PNG" Name="MenuExportPng" Click="MenuExportPng_Click" />
-                            <Separator />
-                            <MenuItem Header="退出" Name="MenuExit" Click="MenuExit_Click" />
-                        </MenuItem>
-                        <MenuItem Header="视图">
-                            <MenuItem Header="背景颜色：黑色" />
-                            <MenuItem Header="背景颜色：白色" />
-                        </MenuItem>
-                        <MenuItem Header="动画">
-                            <MenuItem Header="播放" />
-                            <MenuItem Header="暂停" />
-                            <MenuItem Header="下一帧" />
-                        </MenuItem>
-                    </Menu>
-                </materialDesign:Card>
+            <materialDesign:Card
+                Grid.Column="0"
+                Margin="0,0,10,0"
+                Padding="12"
+                Style="{StaticResource PanelCardStyle}">
+                <DockPanel FocusVisualStyle="{x:Null}">
+                    <Border
+                        Margin="0,0,0,8"
+                        DockPanel.Dock="Top"
+                        Padding="0,0,0,6"
+                        BorderBrush="{StaticResource PanelBorderBrush}"
+                        BorderThickness="0,0,0,1">
+                        <DockPanel>
+                            <Border
+                                Width="4"
+                                Height="18"
+                                Margin="0,0,8,0"
+                                Background="{StaticResource AppBarBrush}"
+                                CornerRadius="2" />
+                            <TextBlock
+                                FocusVisualStyle="{x:Null}"
+                                Style="{StaticResource SectionTitleText}"
+                                Text="资源索引" />
+                        </DockPanel>
+                    </Border>
 
-                <!--  拖放区域  -->
+                    <TextBox
+                        x:Name="TreeSearchBox"
+                        Margin="0,0,0,8"
+                        DockPanel.Dock="Top"
+                        materialDesign:HintAssist.Hint="搜索 symbol / animation"
+                        TextChanged="TreeSearchBox_TextChanged" />
+
+                    <TreeView
+                        x:Name="BuildTreeView"
+                        Background="Transparent"
+                        Foreground="{StaticResource PanelTitleBrush}"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        SelectedItemChanged="BuildTreeView_SelectedItemChanged"
+                        Style="{StaticResource MaterialDesignTreeView}"
+                        VirtualizingPanel.IsVirtualizing="True"
+                        VirtualizingPanel.VirtualizationMode="Recycling">
+                        <TreeView.Resources>
+                            <ContextMenu
+                                x:Key="TreeViewItemContextMenu"
+                                Padding="0"
+                                Background="{StaticResource PanelBackgroundBrush}"
+                                BorderBrush="{StaticResource PanelBorderBrush}"
+                                BorderThickness="1">
+                                <MenuItem
+                                    Click="ExportSelectedImage_Click"
+                                    FontSize="14"
+                                    Header="导出图片" />
+                                <MenuItem
+                                    Click="ReplaceSelectedImage_Click"
+                                    FontSize="14"
+                                    Header="替换图片" />
+                            </ContextMenu>
+
+                            <Style BasedOn="{StaticResource {x:Type TreeViewItem}}" TargetType="TreeViewItem">
+                                <Setter Property="ContextMenu" Value="{StaticResource TreeViewItemContextMenu}" />
+                                <Setter Property="FontSize" Value="13" />
+                                <Setter Property="Padding" Value="2,3" />
+                                <EventSetter Event="PreviewMouseRightButtonDown" Handler="TreeViewItem_PreviewMouseRightButtonDown" />
+                            </Style>
+                        </TreeView.Resources>
+                    </TreeView>
+                </DockPanel>
+            </materialDesign:Card>
+
+            <Border
+                x:Name="PreviewSurface"
+                Grid.Column="1"
+                Margin="0,0,10,0"
+                AllowDrop="True"
+                Background="{StaticResource PreviewGridBrush}"
+                BorderBrush="{StaticResource PreviewBorderBrush}"
+                BorderThickness="3"
+                CornerRadius="8"
+                Drop="Card_Drop"
+                SnapsToDevicePixels="True"
+                UseLayoutRounding="True">
+                <Grid
+                    x:Name="PreviewViewport"
+                    ClipToBounds="True"
+                    MouseLeftButtonDown="PreviewViewport_MouseLeftButtonDown"
+                    MouseLeftButtonUp="PreviewViewport_MouseLeftButtonUp"
+                    MouseMove="PreviewViewport_MouseMove"
+                    MouseWheel="PreviewViewport_MouseWheel">
+                    <Image
+                        x:Name="PreviewImage"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        RenderOptions.BitmapScalingMode="LowQuality"
+                        RenderOptions.CachingHint="Cache"
+                        Stretch="Uniform">
+                        <Image.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="PreviewScaleTransform" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="PreviewTranslateTransform" X="0" Y="0" />
+                            </TransformGroup>
+                        </Image.RenderTransform>
+                    </Image>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
                 <materialDesign:Card
                     x:Name="DropCard"
-                    Height="85"
+                    Grid.Row="0"
+                    MinHeight="112"
                     Margin="0,0,0,10"
-                    Padding="10"
+                    Padding="12"
                     AllowDrop="True"
-                    Background="{DynamicResource MaterialDesignPaper}"
-                    DockPanel.Dock="Top"
                     DragEnter="Card_DragEnter"
                     DragLeave="Card_DragLeave"
                     Drop="Card_Drop"
                     MouseDoubleClick="DropCard_MouseDoubleClick"
                     MouseEnter="DropCard_MouseEnter"
-                    UniformCornerRadius="8">
-                    <StackPanel
-                        x:Name="ContentPanel"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                        <materialDesign:PackIcon
-                            x:Name="Icon"
-                            Width="32"
-                            Height="32"
+                    Style="{StaticResource PanelCardStyle}">
+                    <DockPanel>
+                        <DockPanel
                             Margin="0,0,0,8"
-                            Kind="FileUpload" />
-                        <TextBlock
-                            x:Name="HintText"
-                            HorizontalAlignment="Center"
-                            FontSize="14"
-                            Foreground="{DynamicResource MaterialDesignBody}"
-                            Text="拖放 .png、_anim、_build 文件到此处" />
-                    </StackPanel>
+                            DockPanel.Dock="Top">
+                            <Border
+                                Width="4"
+                                Height="18"
+                                Margin="0,0,8,0"
+                                Background="{StaticResource AppBarBrush}"
+                                CornerRadius="2" />
+                            <TextBlock
+                                Style="{StaticResource SectionTitleText}"
+                                Text="文件" />
+                        </DockPanel>
+                        <StackPanel
+                            x:Name="ContentPanel"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                x:Name="UploadIcon"
+                                Width="28"
+                                Height="28"
+                                Margin="0,0,10,0"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource AppBarBrush}"
+                                Kind="FileUpload" />
+                            <TextBlock
+                                x:Name="HintText"
+                                MaxWidth="230"
+                                VerticalAlignment="Center"
+                                FontSize="13"
+                                Foreground="{StaticResource MutedTextBrush}"
+                                Text="拖放 .png、_anim、_build 文件到此处"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DockPanel>
                 </materialDesign:Card>
 
-                <!--  主体内容区：结构树 和 参数信息  -->
-                <Grid Margin="0,10,0,0" DockPanel.Dock="Top">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <!--  符号结构树  -->
-                    <materialDesign:Card
-                        Grid.Row="0"
-                        Height="318"
-                        Margin="0,0,0,10"
-                        Padding="10"
-                        Background="{DynamicResource MaterialDesignPaper}"
-                        UniformCornerRadius="8">
-                        <StackPanel FocusVisualStyle="{x:Null}">
+                <materialDesign:Card
+                    Grid.Row="1"
+                    Margin="0,0,0,10"
+                    Padding="1"
+                    Style="{StaticResource PanelCardStyle}">
+                    <DockPanel>
+                        <DockPanel
+                            Margin="12,10,12,8"
+                            DockPanel.Dock="Top"
+                            LastChildFill="True">
+                            <Border
+                                Width="4"
+                                Height="18"
+                                Margin="0,0,8,0"
+                                Background="{StaticResource AppBarBrush}"
+                                CornerRadius="2" />
                             <TextBlock
-                                Margin="0,0,0,10"
+                                Style="{StaticResource SectionTitleText}"
+                                Text="属性" />
+                        </DockPanel>
+                        <TabControl Background="Transparent">
+                            <TabItem Header="属性">
+                                <DataGrid
+                                    x:Name="ParameterDataGrid"
+                                    AutoGenerateColumns="False"
+                                    CanUserResizeColumns="False"
+                                    CanUserResizeRows="False"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    GridLinesVisibility="Horizontal"
+                                    HorizontalGridLinesBrush="{StaticResource GridLineBrush}"
+                                    HeadersVisibility="Column"
+                                    IsReadOnly="True"
+                                    RowBackground="{StaticResource PanelBackgroundBrush}"
+                                    AlternatingRowBackground="{StaticResource SoftAccentBrush}"
+                                    Foreground="{StaticResource PanelTitleBrush}"
+                                    SelectionMode="Single"
+                                    SelectionUnit="Cell"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn
+                                            Width="*"
+                                            Binding="{Binding Key}"
+                                            Header="参数名" />
+                                        <DataGridTextColumn
+                                            Width="*"
+                                            Binding="{Binding Value}"
+                                            Header="属性值" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </TabItem>
+                            <TabItem Header="帧">
+                                <ListBox
+                                    x:Name="FrameListBox"
+                                    BorderThickness="0"
+                                    DisplayMemberPath="Title"
+                                    SelectionChanged="FrameListBox_SelectionChanged" />
+                            </TabItem>
+                            <TabItem Header="元素">
+                                <ListBox
+                                    x:Name="ElementListBox"
+                                    BorderThickness="0"
+                                    DisplayMemberPath="Title"
+                                    SelectionChanged="ElementListBox_SelectionChanged" />
+                            </TabItem>
+                        </TabControl>
+                    </DockPanel>
+                </materialDesign:Card>
+
+                <materialDesign:Card
+                    Grid.Row="2"
+                    Padding="12"
+                    Style="{StaticResource PanelCardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <DockPanel
+                            Grid.Row="0"
+                            Margin="0,0,0,8">
+                            <Border
+                                Width="4"
+                                Height="18"
+                                Margin="0,0,8,0"
+                                Background="{StaticResource AppBarBrush}"
+                                CornerRadius="2" />
+                            <TextBlock
+                                Style="{StaticResource SectionTitleText}"
+                                Text="动画" />
+                        </DockPanel>
+
+                        <ComboBox
+                            x:Name="AnimationComboBox"
+                            Grid.Row="1"
+                            Margin="0,0,0,8"
+                            DisplayMemberPath="Name"
+                            SelectionChanged="AnimationComboBox_SelectionChanged"
+                            Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                            materialDesign:HintAssist.Hint="动画" />
+
+                        <StackPanel
+                            Grid.Row="2"
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal">
+                            <Button
+                                x:Name="PreviousFrameButton"
+                                Click="PreviousFrame_Click"
+                                Content="{materialDesign:PackIcon Kind=SkipPrevious}"
                                 FocusVisualStyle="{x:Null}"
-                                FontSize="16"
-                                FontWeight="Bold"
-                                Text="符号索引树" />
-
-                            <TreeView
-                                x:Name="BuildTreeView"
-                                Height="270"
-                                Background="#00DEDBDB"
-                                ItemsSource="{Binding BuildNodes}"
-                                ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                                SelectedItemChanged="BuildTreeView_SelectedItemChanged"
-                                Style="{StaticResource MaterialDesignTreeView}">
-                                <TreeView.Resources>
-                                    <ContextMenu
-                                        x:Key="TreeViewItemContextMenu"
-                                        Padding="0"
-                                        Background="#FFFFFFFF"
-                                        BorderBrush="#FF90455D"
-                                        BorderThickness="52">
-                                        <MenuItem
-                                            Click="ExportSelectedImage_Click"
-                                            FontSize="16"
-                                            FontWeight="Bold"
-                                            Header="导出图片" />
-                                        <MenuItem
-                                            Click="ReplaceSelectedImage_Click"
-                                            FontSize="16"
-                                            FontWeight="Bold"
-                                            Header="替换图片" />
-                                    </ContextMenu>
-
-                                    <Style BasedOn="{StaticResource {x:Type TreeViewItem}}" TargetType="TreeViewItem">
-                                        <Setter Property="ContextMenu" Value="{StaticResource TreeViewItemContextMenu}" />
-                                        <EventSetter Event="PreviewMouseRightButtonDown" Handler="TreeViewItem_PreviewMouseRightButtonDown" />
-                                    </Style>
-                                </TreeView.Resources>
-                            </TreeView>
+                                Foreground="{StaticResource PrimaryColor}"
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                ToolTip="上一帧" />
+                            <Button
+                                x:Name="PlayPauseButton"
+                                Click="PlayPause_Click"
+                                Content="{materialDesign:PackIcon Kind=Play}"
+                                FocusVisualStyle="{x:Null}"
+                                Foreground="{StaticResource PrimaryColor}"
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                ToolTip="播放/暂停" />
+                            <Button
+                                x:Name="NextFrameButton"
+                                Click="NextFrame_Click"
+                                Content="{materialDesign:PackIcon Kind=SkipNext}"
+                                FocusVisualStyle="{x:Null}"
+                                Foreground="{StaticResource PrimaryColor}"
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                ToolTip="下一帧" />
                         </StackPanel>
-                    </materialDesign:Card>
 
-                    <!--  参数信息 Card  -->
-                    <materialDesign:Card
-                        Grid.Row="1"
-                        Margin="0"
-                        Padding="1"
-                        Background="{DynamicResource MaterialDesignPaper}"
-                        UniformCornerRadius="8">
-                        <Grid>
-                            <Grid.RowDefinitions>
+                        <TextBlock
+                            x:Name="FrameStatusText"
+                            Grid.Row="3"
+                            HorizontalAlignment="Center"
+                            Margin="0,6,0,0"
+                            Foreground="{StaticResource MutedTextBrush}"
+                            Text="未加载动画" />
 
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
+                        <Slider
+                            x:Name="FrameSlider"
+                            Grid.Row="4"
+                            Margin="0,8,0,4"
+                            IsSnapToTickEnabled="True"
+                            Minimum="0"
+                            TickFrequency="1"
+                            ValueChanged="FrameSlider_ValueChanged" />
 
-                            <DataGrid
-                                x:Name="ParameterDataGrid"
-                                Grid.Row="1"
-                                AutoGenerateColumns="False"
-                                CanUserResizeColumns="False"
-                                CanUserResizeRows="False"
-                                GridLinesVisibility="Horizontal"
-                                HeadersVisibility="Column"
-                                IsReadOnly="True"
-                                SelectionMode="Single"
-                                SelectionUnit="Cell"
-                                VerticalScrollBarVisibility="Auto">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn
-                                        Width="*"
-                                        Binding="{Binding Key}"
-                                        Header="参数名" />
-                                    <DataGridTextColumn
-                                        Width="*"
-                                        Binding="{Binding Value}"
-                                        Header="属性值" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </Grid>
-                    </materialDesign:Card>
-
-
-
-
-                </Grid>
-            </DockPanel>
-        </materialDesign:Card>
-
-        <!--  图片预览  -->
-        <Border
-            Grid.Column="1"
-            Margin="10"
-            AllowDrop="True"
-            Background="#FF8A8A8A"
-            CornerRadius="8"
-            Drop="Card_Drop">
-            <Image
-                x:Name="PreviewImage"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Stretch="Uniform" />
-        </Border>
-    </Grid>
+                        <WrapPanel
+                            Grid.Row="5"
+                            Margin="0,8,0,0">
+                            <CheckBox
+                                x:Name="ShowOriginCheckBox"
+                                Margin="0,0,8,0"
+                                Checked="OverlayOption_Changed"
+                                Content="原点"
+                                IsChecked="True"
+                                Unchecked="OverlayOption_Changed" />
+                            <CheckBox
+                                x:Name="ShowBoundsCheckBox"
+                                Margin="0,0,8,0"
+                                Checked="OverlayOption_Changed"
+                                Content="盒"
+                                Unchecked="OverlayOption_Changed" />
+                            <CheckBox
+                                x:Name="HighlightElementCheckBox"
+                                Checked="OverlayOption_Changed"
+                                Content="高亮"
+                                IsChecked="True"
+                                Unchecked="OverlayOption_Changed" />
+                        </WrapPanel>
+                    </Grid>
+                </materialDesign:Card>
+            </Grid>
+        </Grid>
+    </DockPanel>
 
 
 
