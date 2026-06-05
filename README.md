@@ -32,6 +32,10 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 
 如果发布包里没有自带 `kanimal-cli.exe`，请把它放到 `KAnimGui.exe` 同目录，或在设置里指定完整路径。
 
+## 兼容性说明
+
+本项目是面向 Oxygen Not Included KAnim 资源格式的独立辅助工具，不包含、分发或替换游戏本体源码与素材。项目中的格式解析和预览逻辑用于资源兼容与 Mod 制作辅助；Oxygen Not Included、Klei 以及相关名称和素材权利归其各自所有者所有。
+
 ## 下载与运行
 
 1. 从 Release 下载 `KAnimGui-win-x64.zip`
@@ -145,4 +149,3 @@ dotnet publish KAnimGui/KAnimGui.csproj -c Release -r win-x64 --self-contained t
 
 - [skairunner/kanimal-SE](https://github.com/skairunner/kanimal-SE)：核心 KAnim/SCML 转换命令
 - [romen-h/kanim-explorer](https://github.com/romen-h/kanim-explorer)：KAnim 预览和结构检查方向的参考
-

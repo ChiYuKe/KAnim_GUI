@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KAnimGui.Core
@@ -12,7 +13,8 @@ namespace KAnimGui.Core
         public static async Task<ConversionResult> RunAsync(
             string executablePath,
             IEnumerable<string> arguments,
-            Action<string, bool> log)
+            Action<string, bool> log,
+            CancellationToken cancellationToken = default)
         {
             var argumentList = arguments.ToArray();
             log($"执行命令: \"{executablePath}\" {string.Join(" ", argumentList.Select(QuoteArgument))}", false);
@@ -43,13 +45,23 @@ namespace KAnimGui.Core
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
-                await process.WaitForExitAsync();
+                await process.WaitForExitAsync(cancellationToken);
 
                 return new ConversionResult
                 {
                     Success = process.ExitCode == 0,
                     ExitCode = process.ExitCode,
                     ErrorMessage = process.ExitCode == 0 ? null : $"退出代码: {process.ExitCode}"
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                TryKill(process);
+                return new ConversionResult
+                {
+                    Success = false,
+                    ExitCode = -1,
+                    ErrorMessage = "转换已取消"
                 };
             }
             catch (Exception ex)
@@ -60,6 +72,21 @@ namespace KAnimGui.Core
                     ExitCode = -1,
                     ErrorMessage = $"启动转换进程失败: {ex.Message}"
                 };
+            }
+        }
+
+        private static void TryKill(Process process)
+        {
+            try
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+            }
+            catch
+            {
+                // 取消时清理进程失败不应覆盖原始取消结果。
             }
         }
 

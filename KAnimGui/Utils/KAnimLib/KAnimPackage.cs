@@ -11,15 +11,15 @@ namespace KanimLib
         /// <summary>
         /// The texture data.
         /// </summary>
-        public BitmapImage Texture;
+        public BitmapImage? Texture;
         /// <summary>
         /// The symbol data.
         /// </summary>
-        public KBuild Build;
+        public KBuild? Build;
         /// <summary>
         /// The animation data.
         /// </summary>
-        public KAnim Anim;
+        public KAnim? Anim;
 
         /// <summary>
         /// Gets whether this package has texture data.

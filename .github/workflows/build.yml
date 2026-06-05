@@ -1,0 +1,39 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore KAnimGui.sln
+
+      - name: Build
+        run: dotnet build KAnimGui.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test KAnimGui.sln --configuration Release --no-build
+
+      - name: Publish win-x64
+        run: dotnet publish KAnimGui/KAnimGui.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false --output artifacts/KAnimGui-win-x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KAnimGui-win-x64
+          path: artifacts/KAnimGui-win-x64

@@ -17,7 +17,7 @@ namespace KanimLib
 
         [Browsable(false)]
         public KAnimBank Parent
-        { get; internal set; }
+        { get; internal set; } = null!;
 
         public float X
         { get; set; } = float.NaN;

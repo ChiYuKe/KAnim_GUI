@@ -20,11 +20,11 @@ namespace KanimLib
 
         [Browsable(false)]
         public KAnim Parent
-        { get; internal set; }
+        { get; internal set; } = null!;
 
         [ReadOnly(true)]
         public string Name
-        { get; set; }
+        { get; set; } = string.Empty;
 
         [ReadOnly(true)]
         public int Hash

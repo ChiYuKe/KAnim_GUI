@@ -40,7 +40,7 @@ namespace KanimLib
 
         [Browsable(false)]
         public KAnimFrame Parent
-        { get; internal set; }
+        { get; internal set; } = null!;
 
         [ReadOnly(true)]
         public int SymbolHash

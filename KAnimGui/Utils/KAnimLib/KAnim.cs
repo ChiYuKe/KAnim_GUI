@@ -31,7 +31,7 @@ namespace KanimLib
 
         public readonly Dictionary<int, string> SymbolNames = new Dictionary<int, string>();
 
-        public KAnimBank GetBank(string name)
+        public KAnimBank? GetBank(string name)
         {
             foreach (var bank in Banks)
             {

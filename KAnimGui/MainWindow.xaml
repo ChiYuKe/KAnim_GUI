@@ -438,6 +438,13 @@
                                     FocusVisualStyle="{x:Null}"
                                     Style="{StaticResource SecondaryActionButton}" />
                                 <Button
+                                    x:Name="CancelKanimButton"
+                                    Click="CancelKanimButton_Click"
+                                    Content="取消"
+                                    FocusVisualStyle="{x:Null}"
+                                    IsEnabled="False"
+                                    Style="{StaticResource SecondaryActionButton}" />
+                                <Button
                                     x:Name="ConvertButton"
                                     Click="ConvertButton_Click"
                                     Content="开始转换"
@@ -622,6 +629,13 @@
                                     Click="ScmlClearButton_Click"
                                     Content="清除"
                                     FocusVisualStyle="{x:Null}"
+                                    Style="{StaticResource SecondaryActionButton}" />
+                                <Button
+                                    x:Name="CancelScmlButton"
+                                    Click="CancelScmlButton_Click"
+                                    Content="取消"
+                                    FocusVisualStyle="{x:Null}"
+                                    IsEnabled="False"
                                     Style="{StaticResource SecondaryActionButton}" />
                                 <Button
                                     x:Name="ConvertScmlButton"

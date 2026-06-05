@@ -89,7 +89,7 @@ namespace KanimLib
         /// 根据给定的哈希值返回对应的符号名称。
         /// </summary>
         /// <returns>找不到时返回 null。</returns>
-        public string GetSymbolName(int hash)
+        public string? GetSymbolName(int hash)
         {
             if (SymbolNames.ContainsKey(hash))
             {
@@ -103,7 +103,7 @@ namespace KanimLib
         /// 根据名称返回对应的符号。
         /// </summary>
         /// <returns>找不到时返回 null。</returns>
-        public KSymbol GetSymbol(string name)
+        public KSymbol? GetSymbol(string name)
         {
             if (string.IsNullOrEmpty(name)) throw new ArgumentException("name");
 
@@ -119,7 +119,7 @@ namespace KanimLib
         /// 根据哈希值返回对应的符号。
         /// </summary>
         /// <returns>找不到时返回 null。</returns>
-        public KSymbol GetSymbol(int hash)
+        public KSymbol? GetSymbol(int hash)
         {
             foreach (var symbol in Symbols)
             {
@@ -133,7 +133,7 @@ namespace KanimLib
         /// 根据符号名称和子图像索引返回对应的帧。
         /// </summary>
         /// <returns>找不到时返回 null。</returns>
-        public KFrame GetFrame(string name, int index)
+        public KFrame? GetFrame(string name, int index)
         {
             if (string.IsNullOrEmpty(name)) throw new ArgumentException("name");
 

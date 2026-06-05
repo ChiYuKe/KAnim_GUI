@@ -384,20 +384,20 @@ namespace KanimLib
 
             if (pkg.HasBuild)
             {
-                foreach (var symbol in pkg.Build.Symbols)
+                foreach (var symbol in pkg.Build!.Symbols)
                 {
                     if (symbol.Hash != oldHash) continue;
 
                     symbol.Hash = newHash;
                 }
 
-                pkg.Build.SymbolNames.Remove(oldHash);
+                pkg.Build!.SymbolNames.Remove(oldHash);
                 pkg.Build.SymbolNames.Add(newHash, newSymbolName);
             }
 
             if (pkg.HasAnim)
             {
-                foreach (var bank in pkg.Anim.Banks)
+                foreach (var bank in pkg.Anim!.Banks)
                 {
                     foreach (var frame in bank.Frames)
                     {
@@ -410,7 +410,7 @@ namespace KanimLib
                     }
                 }
 
-                pkg.Anim.SymbolNames.Remove(oldHash);
+                pkg.Anim!.SymbolNames.Remove(oldHash);
                 pkg.Anim.SymbolNames.Add(newHash, newSymbolName);
             }
         }
@@ -431,7 +431,7 @@ namespace KanimLib
 
             foreach (string symbolName in symbolsToDuplicate)
             {
-                KSymbol original = pkg.Build.GetSymbol(symbolName);
+                KSymbol? original = pkg.Build!.GetSymbol(symbolName);
                 if (original != null)
                 {
                     string duplicatedName = prefix + symbolName + suffix;
@@ -448,23 +448,25 @@ namespace KanimLib
                     }
                     pkg.Build.AddSymbol(duplicated);
                     originalHashToDupeHash[original.Hash] = duplicated.Hash;
-                    pkg.Anim.SymbolNames[duplicated.Hash] = duplicated.Name;
+                    pkg.Anim!.SymbolNames[duplicated.Hash] = duplicated.Name;
                 }
             }
 
             foreach (string targetBank in targetBanks)
             {
-                KAnimBank bank = pkg.Anim.GetBank(targetBank);
+                KAnimBank? bank = pkg.Anim!.GetBank(targetBank);
+                if (bank == null) continue;
 
                 foreach (var animFrame in bank.Frames)
                 {
                     foreach (string symbolName in symbolsToDuplicate)
                     {
-                        KSymbol originalSymbol = pkg.Build.GetSymbol(symbolName);
+                        KSymbol? originalSymbol = pkg.Build!.GetSymbol(symbolName);
+                        if (originalSymbol == null) continue;
                         LinkedList<KAnimElement> tempElements = new LinkedList<KAnimElement>(animFrame.Elements);
 
-                        LinkedListNode<KAnimElement> currentElement = tempElements.First;
-                        do
+                        LinkedListNode<KAnimElement>? currentElement = tempElements.First;
+                        while (currentElement != null)
                         {
                             if (currentElement.Value.SymbolHash == originalSymbol.Hash)
                             {
@@ -504,7 +506,7 @@ namespace KanimLib
                                 }
                             }
                             currentElement = currentElement.Next;
-                        } while (currentElement != null);
+                        }
 
                         animFrame.Elements.Clear();
                         animFrame.Elements.AddRange(tempElements);

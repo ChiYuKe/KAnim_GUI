@@ -40,7 +40,7 @@ namespace KanimLib
             return sym;
         }
 
-        public KFrame GetFrame(int index)
+        public KFrame? GetFrame(int index)
         {
             foreach (var frame in Frames)
             {
@@ -55,9 +55,9 @@ namespace KanimLib
 
         [Browsable(false)]
         public KBuild Parent
-        { get; internal set; }
+        { get; internal set; } = null!;
 
-        private string name = null;
+        private string? name;
 
         [ReadOnly(true)]
         public string Name

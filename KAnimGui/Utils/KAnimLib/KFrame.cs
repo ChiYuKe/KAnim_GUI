@@ -43,7 +43,7 @@ namespace KanimLib
         /// </summary>
         [Browsable(false)]
         public KSymbol Parent
-        { get; internal set; }
+        { get; internal set; } = null!;
 
         [RefreshProperties(RefreshProperties.All)]
         public int SpriteWidth

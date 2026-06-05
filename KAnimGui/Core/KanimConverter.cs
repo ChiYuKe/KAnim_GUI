@@ -3,6 +3,7 @@ using KAnimGui.Models;
 using KAnimGui.Utils;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KAnimGui.Core
@@ -19,7 +20,7 @@ namespace KAnimGui.Core
         // 真实转换使用的完整输出目录（包含子文件夹）
         public string ActualOutputDir { get; private set; } = string.Empty;
 
-        public async Task<ConversionResult> ConvertAsync(Action<string, bool> log)
+        public async Task<ConversionResult> ConvertAsync(Action<string, bool> log, CancellationToken cancellationToken = default)
         {
             var ksePath = KseLocator.FindExecutable();
             if (string.IsNullOrEmpty(ksePath))
@@ -40,10 +41,10 @@ namespace KAnimGui.Core
             ActualOutputDir = Path.Combine(OutputDir, folderName);
             Directory.CreateDirectory(ActualOutputDir);
 
-            return await CliProcessRunner.RunAsync(ksePath, BuildArgs(ActualOutputDir), log);
+            return await CliProcessRunner.RunAsync(ksePath, BuildArguments(ActualOutputDir), log, cancellationToken);
         }
 
-        private string[] BuildArgs(string outputDir)
+        public string[] BuildArguments(string outputDir)
         {
             var args = new List<string> { "scml", PngPath };
 

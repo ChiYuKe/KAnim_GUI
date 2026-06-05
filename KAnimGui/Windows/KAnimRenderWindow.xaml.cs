@@ -20,12 +20,12 @@ namespace KAnimGui.Windows
     public partial class KAnimRenderWindow : Window
     {
         // 当前加载的数据包，包含纹理、build、anim
-        private KAnimPackage data;
+        private KAnimPackage? data;
 
         // 当前打开的文件路径（纹理、动画、构建文件）
-        private string currentTextureFile = null;
-        private string currentAnimFile = null;
-        private string currentBuildFile = null;
+        private string? currentTextureFile;
+        private string? currentAnimFile;
+        private string? currentBuildFile;
 
         // 用于绘制文本的字体和大小
         private Typeface _typeface = new Typeface("Microsoft YaHei UI");
@@ -53,8 +53,8 @@ namespace KAnimGui.Windows
 
         public class KeyValueItem
         {
-            public string Key { get; set; }
-            public string Value { get; set; }
+            public string Key { get; set; } = string.Empty;
+            public string Value { get; set; } = string.Empty;
         }
 
         public sealed class FrameListItem
@@ -290,9 +290,9 @@ namespace KAnimGui.Windows
         /// </summary>
         private void OpenFiles(string textureFile, string buildFile, string animFile)
         {
-            BitmapImage texture = null;
-            KBuild build = null;
-            KAnim anim = null;
+            BitmapImage? texture = null;
+            KBuild? build = null;
+            KAnim? anim = null;
 
             // 加载 PNG 纹理图
             if (!string.IsNullOrEmpty(textureFile) && File.Exists(textureFile))
@@ -329,7 +329,7 @@ namespace KAnimGui.Windows
         /// <summary>
         /// 更新界面显示：保存数据包，更新预览和树视图
         /// </summary>
-        private void OpenData(BitmapImage texture, KBuild build, KAnim anim)
+        private void OpenData(BitmapImage? texture, KBuild? build, KAnim? anim)
         {
             data = new KAnimPackage
             {
@@ -355,6 +355,7 @@ namespace KAnimGui.Windows
         {
             var selectedItem = BuildTreeView.SelectedItem as TreeViewItem;
             if (selectedItem == null) return;
+            if (data == null) return;
 
             if (selectedItem.Tag is TreeNodeTag nodeTag)
             {
@@ -405,7 +406,7 @@ namespace KAnimGui.Windows
                     {
                         foreach (KAnimElement element in animFrame.Elements)
                         {
-                            KSymbol symbol = data.Build.GetSymbol(element.SymbolHash);
+                            KSymbol? symbol = data.Build.GetSymbol(element.SymbolHash);
                             if (symbol != null)
                             {
                                 if (symbol.FrameCount > element.FrameNumber)
@@ -423,7 +424,7 @@ namespace KAnimGui.Windows
                     showTextureView = false;
                     if (data.Texture != null && data.Build != null)
                     {
-                        KSymbol symbol = data.Build.GetSymbol(element.SymbolHash);
+                        KSymbol? symbol = data.Build.GetSymbol(element.SymbolHash);
                         if (symbol != null)
                         {
                             if (symbol.FrameCount > element.FrameNumber)
@@ -1316,10 +1317,13 @@ namespace KAnimGui.Windows
                 case KFrame frame:
                     list.Add(new KeyValueItem { Key = "Frame 索引", Value = frame.Index.ToString() });
                     list.Add(new KeyValueItem { Key = "持续时间(ms)", Value = frame.Duration.ToString() });
-                    var rect = frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight);
-                    list.Add(new KeyValueItem { Key = "纹理区域", Value = $"{rect.X},{rect.Y},{rect.Width},{rect.Height}" });
-                    var pivot = frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight);
-                    list.Add(new KeyValueItem { Key = "锚点", Value = $"{pivot.X:F2},{pivot.Y:F2}" });
+                    if (data?.Texture != null)
+                    {
+                        var rect = frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight);
+                        list.Add(new KeyValueItem { Key = "纹理区域", Value = $"{rect.X},{rect.Y},{rect.Width},{rect.Height}" });
+                        var pivot = frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight);
+                        list.Add(new KeyValueItem { Key = "锚点", Value = $"{pivot.X:F2},{pivot.Y:F2}" });
+                    }
                     break;
 
 
@@ -1362,7 +1366,7 @@ namespace KAnimGui.Windows
         /// <summary>
         /// 绘制图片预览，显示纹理和选中帧的红色框及绿色锚点
         /// </summary>
-        private void UpdateTextureView(BitmapImage img, Rectangle[] frames = null, PointF[] pivots = null)
+        private void UpdateTextureView(BitmapImage? img, Rectangle[]? frames = null, PointF[]? pivots = null)
         {
             if (img == null)
             {
@@ -1461,28 +1465,29 @@ namespace KAnimGui.Windows
                 return;
             }
 
+            var texture = data?.Texture;
+            if (texture == null)
+            {
+                MessageBox.Show("当前没有可用的贴图");
+                return;
+            }
+
             List<Rectangle> frames = new List<Rectangle>();
             List<PointF> pivots = new List<PointF>();
 
             switch (selectedObj)
             {
                 case KSymbol symbol:
-                    if (data.Texture != null)
+                    foreach (var frame in symbol.Frames)
                     {
-                        foreach (var frame in symbol.Frames)
-                        {
-                            frames.Add(frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                            pivots.Add(frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                        }
+                        frames.Add(frame.GetTextureRectangle(texture.PixelWidth, texture.PixelHeight));
+                        pivots.Add(frame.GetPivotPoint(texture.PixelWidth, texture.PixelHeight));
                     }
                     break;
 
                 case KFrame frame:
-                    if (data.Texture != null)
-                    {
-                        frames.Add(frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                        pivots.Add(frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                    }
+                    frames.Add(frame.GetTextureRectangle(texture.PixelWidth, texture.PixelHeight));
+                    pivots.Add(frame.GetPivotPoint(texture.PixelWidth, texture.PixelHeight));
                     break;
 
                 case KBuild build:
@@ -1505,8 +1510,7 @@ namespace KAnimGui.Windows
 
             try
             {
-                var bitmapSource = data.Texture;
-                var cropped = new CroppedBitmap(bitmapSource, new Int32Rect(rect.X, rect.Y, rect.Width, rect.Height));
+                var cropped = new CroppedBitmap(texture, new Int32Rect(rect.X, rect.Y, rect.Width, rect.Height));
 
                 var saveDlg = new Microsoft.Win32.SaveFileDialog()
                 {
@@ -1540,7 +1544,8 @@ namespace KAnimGui.Windows
         /// <param name="e">事件参数。</param>
         private void MenuExportPng_Click(object sender, RoutedEventArgs e)
         {
-            if (sender == null)
+            var texture = data?.Texture;
+            if (texture == null)
             {
                 MessageBox.Show("当前没有可用的贴图");
                 return;
@@ -1559,7 +1564,7 @@ namespace KAnimGui.Windows
                     using (var fileStream = new FileStream(saveDlg.FileName, FileMode.Create))
                     {
                         var encoder = new PngBitmapEncoder();
-                        encoder.Frames.Add(BitmapFrame.Create(data.Texture));
+                        encoder.Frames.Add(BitmapFrame.Create(texture));
                         encoder.Save(fileStream);
                     }
                     MessageBox.Show("整张贴图导出成功！");
@@ -1701,7 +1706,14 @@ namespace KAnimGui.Windows
                 return;
             }
 
-            var frameRect = frameToReplace.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight);
+            var texture = data?.Texture;
+            if (data == null || texture == null)
+            {
+                MessageBox.Show("当前没有可用的贴图");
+                return;
+            }
+
+            var frameRect = frameToReplace.GetTextureRectangle(texture.PixelWidth, texture.PixelHeight);
 
             // 打开图片选择窗口
             var openDlg = new Microsoft.Win32.OpenFileDialog()
@@ -1725,7 +1737,7 @@ namespace KAnimGui.Windows
                 scaled.Freeze();
 
                 // 将原贴图转为 WriteableBitmap
-                var writeable = new WriteableBitmap(data.Texture);
+                var writeable = new WriteableBitmap(texture);
 
                 int stride = frameRect.Width * 4;
                 byte[] pixels = new byte[stride * frameRect.Height];
