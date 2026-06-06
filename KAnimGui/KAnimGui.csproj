@@ -15,8 +15,7 @@
 
   <ItemGroup>
     <Content Include="home.ico" />
-    <EmbeddedResource Include="..\artifacts\ONIResourceBridge-clean.zip">
-      <Link>ONIResourceBridge-clean.zip</Link>
+    <EmbeddedResource Include="Resources\ONIResourceBridge-clean.zip">
       <LogicalName>KAnimGui.ONIResourceBridge-clean.zip</LogicalName>
     </EmbeddedResource>
   </ItemGroup>

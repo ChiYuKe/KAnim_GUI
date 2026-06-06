@@ -30,7 +30,7 @@ jobs:
         run: dotnet test KAnimGui.sln --configuration Release --no-build
 
       - name: Publish win-x64
-        run: dotnet publish KAnimGui/KAnimGui.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false --output artifacts/KAnimGui-win-x64
+        run: dotnet publish KAnimGui/KAnimGui.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false --output artifacts/KAnimGui-win-x64
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

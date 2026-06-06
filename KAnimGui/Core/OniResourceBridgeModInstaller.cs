@@ -89,7 +89,7 @@ namespace KAnimGui.Core
                 return outputPath;
             }
 
-            string devPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "artifacts", BundledZipName));
+            string devPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Resources", BundledZipName));
             return devPath;
         }
     }
