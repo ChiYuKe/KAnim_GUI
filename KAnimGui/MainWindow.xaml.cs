@@ -533,11 +533,41 @@ namespace KAnimGui
 
         private void TryOpenFolder(string folderPath)
         {
-            if (AppSettings.OpenFolderAfterConvert)
+            if (!AppSettings.OpenFolderAfterConvert)
+            {
+                return;
+            }
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(folderPath))
+                {
+                    return;
+                }
+
+                var fullPath = Path.GetFullPath(folderPath);
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = fullPath,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch
             {
                 try
                 {
-                    System.Diagnostics.Process.Start("explorer.exe", folderPath);
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        Arguments = $"\"{Path.GetFullPath(folderPath)}\"",
+                        UseShellExecute = false
+                    });
                 }
                 catch (Exception ex)
                 {
