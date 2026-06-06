@@ -178,6 +178,9 @@
                         <MenuItem Header="上一帧" Click="PreviousFrame_Click" />
                         <MenuItem Header="下一帧" Click="NextFrame_Click" />
                     </MenuItem>
+                    <MenuItem Header="诊断" Foreground="White">
+                        <MenuItem Header="诊断当前包" Click="DiagnosePackage_Click" />
+                    </MenuItem>
                 </Menu>
             </DockPanel>
         </Border>

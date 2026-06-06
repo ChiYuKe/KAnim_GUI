@@ -1,6 +1,6 @@
 # KAnim GUI
 
-KAnim GUI 是一个面向 Oxygen Not Included 动画资源的 Windows 图形工具。它把 `kanimal-cli.exe` 的常用转换命令包装成可拖放、可批量处理、带日志和预览器的桌面界面。
+KAnim GUI 是一个面向 Oxygen Not Included 动画资源的 Windows 图形工具。它提供可拖放、可批量处理、带日志和预览器的桌面界面，并内置常用 KAnim/SCML 转换内核。
 
 <p align="center">
   <img src="https://github.com/ChiYuKe/ONI-Kanimal_GUI/blob/main/Assets/hqbase.png" width="180" height="180" alt="ONI">
@@ -16,12 +16,14 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 - 拖放导入：直接把资源文件拖进窗口
 - 自动日志：转换过程自动写入 log 文件，便于排查失败原因
 - KAnim 预览器：查看 build/symbol/frame/animation 结构，播放动画并检查帧元素
+- 内置解码/诊断/转换：直接读取 `_anim.bytes` / `_build.bytes`，支持 KAnim 与 SCML 双向转换，并检查引用、计数、UV、颜色和矩阵异常
 - 预览辅助：帧跳转、元素高亮、原点/包围盒显示、缩放和平移
 - `.txt` 兼容：可选将 `_anim.txt` / `_build.txt` 自动复制为 `.bytes`
 
 ## 依赖
 
-本工具本身是 GUI 外壳，实际格式转换依赖 [kanimal-SE](https://github.com/skairunner/kanimal-SE) 的 `kanimal-cli.exe`。
+本工具内置了 KAnim 解码、诊断、`KAnim -> SCML` 和 `SCML -> KAnim` 导出内核；如果找到 [kanimal-SE](https://github.com/skairunner/kanimal-SE) 的 `kanimal-cli.exe`，仍会优先沿用 CLI 输出。
+如果未找到 `kanimal-cli.exe`，两种转换都会自动回退到内置内核。当前内置 `SCML -> KAnim` 不支持插值和去骨骼选项；需要这些高级处理时请配置 `kanimal-cli.exe`。
 
 程序会按以下顺序查找 `kanimal-cli.exe`：
 
@@ -30,7 +32,9 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 3. 程序所在目录
 4. 系统 `PATH`
 
-如果发布包里没有自带 `kanimal-cli.exe`，请把它放到 `KAnimGui.exe` 同目录，或在设置里指定完整路径。
+如果发布包里没有自带 `kanimal-cli.exe`，普通双向转换仍可使用内置内核；如需 CLI 的严格兼容或高级处理，请把它放到 `KAnimGui.exe` 同目录，或在设置里指定完整路径。
+
+内置 `KAnim -> SCML` 导出会尽量兼容 `kanimal-cli.exe` 的坐标、角度、缩放、pivot 和帧时间；当动画引用当前 build 不包含的外部 symbol/frame 时，会写入透明 1x1 占位图并在诊断报告中标出。
 
 ## 兼容性说明
 
@@ -40,8 +44,7 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 
 1. 从 Release 下载 `KAnimGui-win-x64.zip`
 2. 解压到任意目录
-3. 准备 `kanimal-cli.exe`
-4. 运行 `KAnimGui.exe`
+3. 运行 `KAnimGui.exe`
 
 发布包为 `win-x64` 自包含版本，通常不需要额外安装 .NET Runtime。
 
@@ -89,10 +92,11 @@ example_build.bytes
 - 原点和包围盒叠加显示
 - 鼠标滚轮缩放、左键拖动平移、双击恢复视图
 - 导出或替换选中的 Symbol/Frame 图片
+- 诊断当前 KAnim 包并生成结构报告
 
 ## 日志
 
-转换日志会显示在界面中，并自动写入本地 log 文件。日志里会包含实际执行的 `kanimal-cli.exe` 命令和标准输出/错误输出。
+转换日志会显示在界面中，并自动写入本地 log 文件。使用 CLI 时，日志里会包含实际执行的 `kanimal-cli.exe` 命令和标准输出/错误输出；使用内置内核时，日志会显示内置导出的目标文件。
 
 如果转换失败，优先查看日志中的：
 
@@ -105,7 +109,7 @@ example_build.bytes
 
 ### 提示找不到 kanimal-cli.exe
 
-把 `kanimal-cli.exe` 放到 `KAnimGui.exe` 同目录，或打开设置并指定它的路径。
+普通转换会自动使用内置内核；如果需要 SCML 插值、去骨骼或完全沿用 kanimal-SE 行为，把 `kanimal-cli.exe` 放到 `KAnimGui.exe` 同目录，或打开设置并指定它的路径。
 
 ### 批量转换找不到文件组
 

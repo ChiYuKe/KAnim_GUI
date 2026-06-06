@@ -43,8 +43,8 @@ namespace KAnimGui
             var ksePath = KseLocator.FindExecutable();
             if (string.IsNullOrEmpty(ksePath))
             {
-                kanimLog.Log("警告：未找到 kanimal-cli.exe。请确保它位于程序目录或在设置中手动指定路径。", true);
-                StatusText.Text = "状态：缺少核心组件";
+                kanimLog.Log("未找到 kanimal-cli.exe；KAnim -> SCML 将使用内置内核，SCML -> KAnim 需要在设置中指定 kanimal-cli.exe。", false);
+                StatusText.Text = "状态：内置内核就绪";
             }
 
             SetDefaultOutputDirectory();
@@ -179,8 +179,8 @@ namespace KAnimGui
             }
             else
             {
-                kanimLog.Log("[配置] 警告：当前设置的路径下未找到 kanimal-cli.exe！", true);
-                StatusText.Text = "状态：缺少核心组件";
+                kanimLog.Log("[配置] 未找到 kanimal-cli.exe；KAnim -> SCML 将使用内置内核，SCML -> KAnim 暂不可用。", false);
+                StatusText.Text = "状态：内置内核就绪";
             }
         }
 
@@ -612,16 +612,6 @@ namespace KAnimGui
 
         private bool ValidateKanimInputs()
         {
-            // 检查核心组件是否存在
-            if (string.IsNullOrEmpty(KseLocator.FindExecutable()))
-            {
-                // 直接使用你的 CustomMessageBox 提示缺失核心组件
-                var msgBox = new CustomMessageBox("未找到核心组件 kanimal-cli.exe。\n\n 请将其放入程序目录，或在设置中手动指定路径。", "缺失核心组件", PackIconKind.CloseCircle);
-                msgBox.Owner = this;
-                msgBox.ShowDialog();
-                return false;
-            }
-
             // 检查输入框是否为空
             if (string.IsNullOrWhiteSpace(PngPathTextBox.Text) ||
                 string.IsNullOrWhiteSpace(AnimPathTextBox.Text) ||

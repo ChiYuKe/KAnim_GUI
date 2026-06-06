@@ -208,8 +208,8 @@ namespace KanimLib
                 KAnim anim = new KAnim();
 
                 anim.Version = reader.ReadInt32();
-                anim.FrameCount = reader.ReadInt32();
                 anim.ElementCount = reader.ReadInt32();
+                anim.FrameCount = reader.ReadInt32();
                 anim.BankCount = reader.ReadInt32();
 
                 for (int a = 0; a < anim.BankCount; a++)
@@ -310,8 +310,8 @@ namespace KanimLib
                     writer.Write(Encoding.ASCII.GetBytes(ANIM_HEADER));
 
                     writer.Write(anim.Version);
-                    writer.Write(anim.FrameCount);
                     writer.Write(anim.ElementCount);
+                    writer.Write(anim.FrameCount);
                     writer.Write(anim.BankCount);
 
                     for (int b = 0; b < anim.BankCount; b++)

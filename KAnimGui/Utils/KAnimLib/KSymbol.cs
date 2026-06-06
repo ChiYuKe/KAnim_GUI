@@ -44,9 +44,13 @@ namespace KanimLib
         {
             foreach (var frame in Frames)
             {
-                if (frame.Index == index)
+                var duration = frame.Duration > 0 ? frame.Duration : 1;
+                if (index >= frame.Index && index < frame.Index + duration)
+                {
                     return frame;
+                }
             }
+
             return null;
         }
 

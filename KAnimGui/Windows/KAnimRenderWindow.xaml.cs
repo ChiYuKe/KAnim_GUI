@@ -14,6 +14,7 @@ using MaterialDesignThemes.Wpf;
 using Brushes = System.Windows.Media.Brushes;
 using Brush = System.Windows.Media.Brush;
 using System.Collections.ObjectModel;
+using KAnimGui.KAnimCore;
 
 namespace KAnimGui.Windows
 {
@@ -290,40 +291,8 @@ namespace KAnimGui.Windows
         /// </summary>
         private void OpenFiles(string textureFile, string buildFile, string animFile)
         {
-            BitmapImage? texture = null;
-            KBuild? build = null;
-            KAnim? anim = null;
-
-            // 加载 PNG 纹理图
-            if (!string.IsNullOrEmpty(textureFile) && File.Exists(textureFile))
-            {
-                texture = new BitmapImage();
-                texture.BeginInit();
-                texture.CacheOption = BitmapCacheOption.OnLoad;
-                texture.UriSource = new Uri(textureFile, UriKind.Absolute);
-                texture.EndInit();
-            }
-
-            // 读取 build 数据
-            if (!string.IsNullOrEmpty(buildFile) && File.Exists(buildFile))
-            {
-                build = KAnimUtils.ReadBuild(buildFile);
-            }
-
-            // 读取 anim 数据
-            if (!string.IsNullOrEmpty(animFile) && File.Exists(animFile))
-            {
-                anim = KAnimUtils.ReadAnim(animFile);
-
-                // 修复字符串索引等信息
-                if (build != null)
-                {
-                    anim.RepairStringsFromBuild(build);
-                }
-            }
-
-            // 把读取的数据传给界面更新显示
-            OpenData(texture, build, anim);
+            var package = KAnimDecoder.LoadPackage(textureFile, buildFile, animFile);
+            OpenData(package.Texture, package.Build, package.Anim);
         }
 
         /// <summary>
@@ -406,15 +375,11 @@ namespace KAnimGui.Windows
                     {
                         foreach (KAnimElement element in animFrame.Elements)
                         {
-                            KSymbol? symbol = data.Build.GetSymbol(element.SymbolHash);
-                            if (symbol != null)
+                            var frame = KAnimBuildResolver.ResolveFrame(data.Build, element);
+                            if (frame != null)
                             {
-                                if (symbol.FrameCount > element.FrameNumber)
-                                {
-                                    KFrame frame = symbol.Frames[element.FrameNumber];
-                                    frames.Add(frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                                    pivots.Add(frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                                }
+                                frames.Add(frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight));
+                                pivots.Add(frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight));
                             }
                         }
                     }
@@ -424,15 +389,11 @@ namespace KAnimGui.Windows
                     showTextureView = false;
                     if (data.Texture != null && data.Build != null)
                     {
-                        KSymbol? symbol = data.Build.GetSymbol(element.SymbolHash);
-                        if (symbol != null)
+                        var frame = KAnimBuildResolver.ResolveFrame(data.Build, element);
+                        if (frame != null)
                         {
-                            if (symbol.FrameCount > element.FrameNumber)
-                            {
-                                KFrame frame = symbol.Frames[element.FrameNumber];
-                                frames.Add(frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                                pivots.Add(frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight));
-                            }
+                            frames.Add(frame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight));
+                            pivots.Add(frame.GetPivotPoint(data.Texture.PixelWidth, data.Texture.PixelHeight));
                         }
                     }
                     break;
@@ -1124,13 +1085,12 @@ namespace KAnimGui.Windows
                 return Rect.Empty;
             }
 
-            var symbol = data.Build.GetSymbol(element.SymbolHash);
-            if (symbol == null || element.FrameNumber < 0 || element.FrameNumber >= symbol.Frames.Count)
+            var buildFrame = KAnimBuildResolver.ResolveFrame(data.Build, element);
+            if (buildFrame == null)
             {
                 return Rect.Empty;
             }
 
-            var buildFrame = symbol.Frames[element.FrameNumber];
             var localRect = GetBuildFrameLocalRect(buildFrame);
             var matrix = CreateExplorerElementMatrix(element, buildFrame);
 
@@ -1154,13 +1114,12 @@ namespace KAnimGui.Windows
                 return;
             }
 
-            var symbol = data.Build.GetSymbol(element.SymbolHash);
-            if (symbol == null || element.FrameNumber < 0 || element.FrameNumber >= symbol.Frames.Count)
+            var buildFrame = KAnimBuildResolver.ResolveFrame(data.Build, element);
+            if (buildFrame == null)
             {
                 return;
             }
 
-            var buildFrame = symbol.Frames[element.FrameNumber];
             var sourceRect = buildFrame.GetTextureRectangle(data.Texture.PixelWidth, data.Texture.PixelHeight);
             if (sourceRect.Width <= 0 || sourceRect.Height <= 0)
             {
@@ -1224,13 +1183,12 @@ namespace KAnimGui.Windows
                 return;
             }
 
-            var symbol = data.Build.GetSymbol(element.SymbolHash);
-            if (symbol == null || element.FrameNumber < 0 || element.FrameNumber >= symbol.Frames.Count)
+            var buildFrame = KAnimBuildResolver.ResolveFrame(data.Build, element);
+            if (buildFrame == null)
             {
                 return;
             }
 
-            var buildFrame = symbol.Frames[element.FrameNumber];
             var localRect = GetBuildFrameLocalRect(buildFrame);
             var highlightPen = new System.Windows.Media.Pen(new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 216, 0)), 3 / scale);
             var fill = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 255, 216, 0));
@@ -1663,6 +1621,19 @@ namespace KAnimGui.Windows
                     }
                 }
             }
+        }
+
+        private void DiagnosePackage_Click(object sender, RoutedEventArgs e)
+        {
+            if (data == null || !data.HasAnyData)
+            {
+                MessageBox.Show("请先打开一组 KAnim 文件。", "KAnim 诊断", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var diagnostics = KAnimDiagnostics.Analyze(data);
+            var report = KAnimDiagnostics.FormatReport(data, diagnostics);
+            MessageBox.Show(report, "KAnim 诊断", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
 

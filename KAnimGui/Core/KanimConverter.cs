@@ -1,5 +1,6 @@
 ﻿// KanimConverter.cs
 using KAnimGui.Models;
+using KAnimGui.KAnimCore;
 using KAnimGui.Utils;
 using System;
 using System.IO;
@@ -22,16 +23,6 @@ namespace KAnimGui.Core
 
         public async Task<ConversionResult> ConvertAsync(Action<string, bool> log, CancellationToken cancellationToken = default)
         {
-            var ksePath = KseLocator.FindExecutable();
-            if (string.IsNullOrEmpty(ksePath))
-            {
-                return new ConversionResult
-                {
-                    Success = false,
-                    ErrorMessage = "找不到 kanimal-cli.exe"
-                };
-            }
-
             // 计算转换结果目录：在 OutputDir 下以 AnimPath 文件名前缀去除 "_anim" 创建子文件夹
             var animFileName = Path.GetFileNameWithoutExtension(AnimPath);
             var folderName = animFileName.EndsWith("_anim", StringComparison.OrdinalIgnoreCase)
@@ -41,7 +32,38 @@ namespace KAnimGui.Core
             ActualOutputDir = Path.Combine(OutputDir, folderName);
             Directory.CreateDirectory(ActualOutputDir);
 
+            var ksePath = KseLocator.FindExecutable();
+            if (string.IsNullOrEmpty(ksePath))
+            {
+                return ConvertWithBuiltInExporter(log);
+            }
+
             return await CliProcessRunner.RunAsync(ksePath, BuildArguments(ActualOutputDir), log, cancellationToken);
+        }
+
+        private ConversionResult ConvertWithBuiltInExporter(Action<string, bool> log)
+        {
+            try
+            {
+                log("未找到 kanimal-cli.exe，改用内置 KAnim 解码/SCML 导出内核。", false);
+                var scmlPath = KAnimToScmlExporter.Export(PngPath, BuildPath, AnimPath, ActualOutputDir);
+                log($"内置内核导出完成: {scmlPath}", false);
+
+                return new ConversionResult
+                {
+                    Success = true,
+                    ExitCode = 0
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ConversionResult
+                {
+                    Success = false,
+                    ExitCode = -1,
+                    ErrorMessage = $"内置内核导出失败: {ex.Message}"
+                };
+            }
         }
 
         public string[] BuildArguments(string outputDir)
