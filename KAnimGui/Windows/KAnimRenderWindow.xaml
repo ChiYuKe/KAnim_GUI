@@ -439,6 +439,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <DockPanel
@@ -511,9 +512,34 @@
                             TickFrequency="1"
                             ValueChanged="FrameSlider_ValueChanged" />
 
-                        <WrapPanel
+                        <Grid
                             Grid.Row="5"
-                            Margin="0,8,0,0">
+                            Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                x:Name="PlaybackSpeedText"
+                                Width="72"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource MutedTextBrush}"
+                                Text="速度 1.00x" />
+                            <Slider
+                                x:Name="PlaybackSpeedSlider"
+                                Grid.Column="1"
+                                IsSnapToTickEnabled="False"
+                                LargeChange="0.1"
+                                Maximum="2"
+                                Minimum="0.1"
+                                SmallChange="0.05"
+                                Value="1"
+                                ValueChanged="PlaybackSpeedSlider_ValueChanged" />
+                        </Grid>
+
+                        <WrapPanel
+                            Grid.Row="6"
+                            Margin="0,6,0,0">
                             <CheckBox
                                 x:Name="ShowOriginCheckBox"
                                 Margin="0,0,8,0"

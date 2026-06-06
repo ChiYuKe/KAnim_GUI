@@ -32,14 +32,20 @@ namespace KAnimGui.Windows
         private Typeface _typeface = new Typeface("Microsoft YaHei UI");
         private double _fontSize = 14;
         private const int AnimationCanvasSize = 768;
+        private const int MaxCachedAnimationFrames = 8;
+        private const int MaxCachedElementImages = 256;
         private readonly DispatcherTimer playbackTimer = new DispatcherTimer(DispatcherPriority.Render);
         private KAnimBank? currentBank;
         private int currentFrameIndex;
         private bool isPlaying;
         private bool isUpdatingFrameSelection;
+        private bool isInitializingAnimationSelection;
+        private double playbackSpeedMultiplier = 1.0;
         private DateTime lastPlaybackStatusUpdate = DateTime.MinValue;
-        private readonly Dictionary<KAnimBank, List<BitmapSource>> animationFrameCache = new();
+        private readonly Dictionary<KAnimBank, List<BitmapSource?>> animationFrameCache = new();
+        private readonly Queue<(KAnimBank Bank, int FrameIndex)> animationFrameCacheOrder = new();
         private readonly Dictionary<string, BitmapSource> elementImageCache = new();
+        private readonly Queue<string> elementImageCacheOrder = new();
         private string treeSearchText = string.Empty;
         private int selectedElementIndex = -1;
         private bool isPanningPreview;
@@ -289,10 +295,47 @@ namespace KAnimGui.Windows
         /// <summary>
         /// 根据传入路径加载图片和数据文件
         /// </summary>
-        private void OpenFiles(string textureFile, string buildFile, string animFile)
+        public void OpenFiles(string textureFile, string buildFile, string animFile)
         {
+            currentTextureFile = textureFile;
+            currentBuildFile = buildFile;
+            currentAnimFile = animFile;
+            ShowFileList(new List<(string, PackIconKind)>
+            {
+                (Path.GetFileName(currentTextureFile), PackIconKind.FileImageOutline),
+                (Path.GetFileName(currentAnimFile), PackIconKind.FileDocumentOutline),
+                (Path.GetFileName(currentBuildFile), PackIconKind.FileDocumentOutline)
+            });
+
             var package = KAnimDecoder.LoadPackage(textureFile, buildFile, animFile);
             OpenData(package.Texture, package.Build, package.Anim);
+        }
+
+        public void OpenFilesAndPlay(string textureFile, string buildFile, string animFile)
+        {
+            OpenFiles(textureFile, buildFile, animFile);
+            StartPlayback();
+            Activate();
+        }
+
+        public async Task OpenFilesAndPlayAsync(string textureFile, string buildFile, string animFile)
+        {
+            currentTextureFile = textureFile;
+            currentBuildFile = buildFile;
+            currentAnimFile = animFile;
+            ShowFileList(new List<(string, PackIconKind)>
+            {
+                (Path.GetFileName(currentTextureFile), PackIconKind.FileImageOutline),
+                (Path.GetFileName(currentAnimFile), PackIconKind.FileDocumentOutline),
+                (Path.GetFileName(currentBuildFile), PackIconKind.FileDocumentOutline)
+            });
+
+            StopPlayback();
+            FrameStatusText.Text = "正在加载预览...";
+            var package = await Task.Run(() => KAnimDecoder.LoadPackage(textureFile, buildFile, animFile));
+            OpenData(package.Texture, package.Build, package.Anim);
+            StartPlayback();
+            Activate();
         }
 
         /// <summary>
@@ -473,51 +516,26 @@ namespace KAnimGui.Windows
                 foreach (var bank in data.Anim.Banks.OrderBy(b => b.Name, StringComparer.OrdinalIgnoreCase))
                 {
                     var bankMatches = TreeMatches(bank.Name);
+                    var shouldShowBank = bankMatches || string.IsNullOrWhiteSpace(treeSearchText) || bank.Frames.Any(FrameContainsMatchingElement);
+                    if (!shouldShowBank)
+                    {
+                        continue;
+                    }
+
                     var bankNode = CreateTreeItem(
                         $"{bank.Name}  ({bank.FrameCount} frames, {bank.Rate:0.##} fps)",
                         bank,
                         PackIconKind.MovieOpenPlayOutline,
                         "Bank");
 
-                    for (int i = 0; i < bank.Frames.Count; i++)
+                    if (bank.Frames.Count > 0)
                     {
-                        var frame = bank.Frames[i];
-                        if (!bankMatches && !FrameContainsMatchingElement(frame))
-                        {
-                            continue;
-                        }
-
-                        var frameNode = CreateTreeItem(
-                            $"Frame {i}  ({frame.Elements.Count} elements)",
-                            new TreeNodeTag(frame, "AnimFrame", bank, i),
-                            PackIconKind.LayersOutline,
-                            "AnimFrame");
-
-                        for (int j = 0; j < frame.Elements.Count; j++)
-                        {
-                            var element = frame.Elements[j];
-                            var symbolName = data.Build?.GetSymbol(element.SymbolHash)?.Name ?? $"#{element.SymbolHash}";
-                            if (!bankMatches && !TreeMatches(symbolName))
-                            {
-                                continue;
-                            }
-
-                            var elementNode = CreateTreeItem(
-                                $"{j}: {symbolName}  frame {element.FrameNumber}",
-                                new TreeNodeTag(element, "Element", bank, i, j),
-                                PackIconKind.VectorSquare,
-                                "Element");
-                            frameNode.Items.Add(elementNode);
-                        }
-
-                        bankNode.Items.Add(frameNode);
+                        bankNode.Items.Add(new TreeViewItem { Header = "展开加载帧..." });
+                        bankNode.Expanded += BankNode_Expanded;
                     }
 
-                    if (bankMatches || bankNode.Items.Count > 0)
-                    {
-                        bankNode.IsExpanded = !string.IsNullOrWhiteSpace(treeSearchText);
-                        animNode.Items.Add(bankNode);
-                    }
+                    bankNode.IsExpanded = !string.IsNullOrWhiteSpace(treeSearchText);
+                    animNode.Items.Add(bankNode);
                 }
 
                 if (animNode.Items.Count > 0 || string.IsNullOrWhiteSpace(treeSearchText))
@@ -538,6 +556,10 @@ namespace KAnimGui.Windows
             if (!ReferenceEquals(currentBank, nodeTag.Bank))
             {
                 AnimationComboBox.SelectedItem = nodeTag.Bank;
+                if (nodeTag.FrameIndex < 0)
+                {
+                    StartPlayback();
+                }
             }
 
             if (nodeTag.FrameIndex >= 0)
@@ -572,6 +594,53 @@ namespace KAnimGui.Windows
             }
 
             return frame.Elements.Any(element => TreeMatches(data.Build.GetSymbol(element.SymbolHash)?.Name));
+        }
+
+        private void BankNode_Expanded(object sender, RoutedEventArgs e)
+        {
+            if (sender is not TreeViewItem bankNode ||
+                bankNode.Tag is not TreeNodeTag { Value: KAnimBank bank })
+            {
+                return;
+            }
+
+            bankNode.Expanded -= BankNode_Expanded;
+            bankNode.Items.Clear();
+            bool bankMatches = TreeMatches(bank.Name);
+
+            for (int i = 0; i < bank.Frames.Count; i++)
+            {
+                var frame = bank.Frames[i];
+                if (!bankMatches && !FrameContainsMatchingElement(frame))
+                {
+                    continue;
+                }
+
+                var frameNode = CreateTreeItem(
+                    $"Frame {i}  ({frame.Elements.Count} elements)",
+                    new TreeNodeTag(frame, "AnimFrame", bank, i),
+                    PackIconKind.LayersOutline,
+                    "AnimFrame");
+
+                for (int j = 0; j < frame.Elements.Count; j++)
+                {
+                    var element = frame.Elements[j];
+                    var symbolName = data?.Build?.GetSymbol(element.SymbolHash)?.Name ?? $"#{element.SymbolHash}";
+                    if (!bankMatches && !TreeMatches(symbolName))
+                    {
+                        continue;
+                    }
+
+                    var elementNode = CreateTreeItem(
+                        $"{j}: {symbolName}  frame {element.FrameNumber}",
+                        new TreeNodeTag(element, "Element", bank, i, j),
+                        PackIconKind.VectorSquare,
+                        "Element");
+                    frameNode.Items.Add(elementNode);
+                }
+
+                bankNode.Items.Add(frameNode);
+            }
         }
 
         private static object GetTreeItemValue(TreeViewItem item)
@@ -625,8 +694,16 @@ namespace KAnimGui.Windows
             currentBank = null;
             selectedElementIndex = -1;
 
-            AnimationComboBox.ItemsSource = data?.Anim?.Banks;
-            AnimationComboBox.SelectedIndex = GetPreferredAnimationIndex();
+            isInitializingAnimationSelection = true;
+            try
+            {
+                AnimationComboBox.ItemsSource = data?.Anim?.Banks;
+                AnimationComboBox.SelectedIndex = GetPreferredAnimationIndex();
+            }
+            finally
+            {
+                isInitializingAnimationSelection = false;
+            }
 
             if (AnimationComboBox.SelectedItem is KAnimBank selectedBank)
             {
@@ -649,7 +726,6 @@ namespace KAnimGui.Windows
             SetPlaybackControlsEnabled(bank.Frames.Count > 0);
             UpdateFrameNavigator();
             UpdatePlaybackInterval();
-            EnsureAnimationFramesCached(bank);
             RenderCurrentAnimationFrame();
         }
 
@@ -694,6 +770,7 @@ namespace KAnimGui.Windows
             PreviousFrameButton.IsEnabled = isEnabled;
             NextFrameButton.IsEnabled = isEnabled;
             FrameSlider.IsEnabled = isEnabled;
+            PlaybackSpeedSlider.IsEnabled = isEnabled;
             FrameListBox.IsEnabled = isEnabled;
             ElementListBox.IsEnabled = isEnabled;
         }
@@ -701,7 +778,7 @@ namespace KAnimGui.Windows
         private void UpdatePlaybackInterval()
         {
             var rate = currentBank?.Rate > 0 ? currentBank.Rate : 30;
-            playbackTimer.Interval = TimeSpan.FromMilliseconds(1000.0 / rate);
+            playbackTimer.Interval = TimeSpan.FromMilliseconds(1000.0 / (rate * playbackSpeedMultiplier));
         }
 
         private void PlaybackTimer_Tick(object? sender, EventArgs e)
@@ -709,11 +786,30 @@ namespace KAnimGui.Windows
             StepFrame(1);
         }
 
+        private void PlaybackSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            playbackSpeedMultiplier = Math.Clamp(e.NewValue, 0.1, 2.0);
+            if (PlaybackSpeedText != null)
+            {
+                PlaybackSpeedText.Text = $"速度 {playbackSpeedMultiplier:0.00}x";
+            }
+
+            if (currentBank != null)
+            {
+                UpdatePlaybackInterval();
+                FrameStatusText.Text = BuildFrameStatusText();
+            }
+        }
+
         private void AnimationComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (AnimationComboBox.SelectedItem is KAnimBank bank)
             {
                 SetCurrentBank(bank);
+                if (!isInitializingAnimationSelection)
+                {
+                    StartPlayback();
+                }
             }
         }
 
@@ -730,10 +826,7 @@ namespace KAnimGui.Windows
             }
             else
             {
-                isPlaying = true;
-                PlayPauseButton.Content = new PackIcon { Kind = PackIconKind.Pause };
-                UpdatePlaybackInterval();
-                playbackTimer.Start();
+                StartPlayback();
             }
         }
 
@@ -758,6 +851,19 @@ namespace KAnimGui.Windows
             {
                 PlayPauseButton.Content = new PackIcon { Kind = PackIconKind.Play };
             }
+        }
+
+        private void StartPlayback()
+        {
+            if (currentBank == null || currentBank.Frames.Count == 0)
+            {
+                return;
+            }
+
+            isPlaying = true;
+            PlayPauseButton.Content = new PackIcon { Kind = PackIconKind.Pause };
+            UpdatePlaybackInterval();
+            playbackTimer.Start();
         }
 
         private void StepFrame(int delta)
@@ -804,23 +910,32 @@ namespace KAnimGui.Windows
                 var now = DateTime.UtcNow;
                 if ((now - lastPlaybackStatusUpdate).TotalMilliseconds >= 250)
                 {
-                    FrameStatusText.Text = $"{currentBank.Name}  {currentFrameIndex + 1}/{currentBank.Frames.Count}  {currentBank.Rate:0.##} fps";
+                    FrameStatusText.Text = BuildFrameStatusText();
                     lastPlaybackStatusUpdate = now;
                 }
             }
             else
             {
-                FrameStatusText.Text = $"{currentBank.Name}  {currentFrameIndex + 1}/{currentBank.Frames.Count}  {currentBank.Rate:0.##} fps";
+                FrameStatusText.Text = BuildFrameStatusText();
                 UpdateParameterInfo(frame);
             }
         }
 
+        private string BuildFrameStatusText()
+        {
+            if (currentBank == null)
+            {
+                return "未加载动画";
+            }
+
+            return $"{currentBank.Name}  {currentFrameIndex + 1}/{currentBank.Frames.Count}  {currentBank.Rate:0.##} fps · {playbackSpeedMultiplier:0.##}x";
+        }
+
         private bool ShouldRenderInspectionOverlay()
         {
-            return !isPlaying &&
-                (ShowOriginCheckBox.IsChecked == true ||
-                 ShowBoundsCheckBox.IsChecked == true ||
-                 (HighlightElementCheckBox.IsChecked == true && selectedElementIndex >= 0));
+            return ShowOriginCheckBox.IsChecked == true ||
+                ShowBoundsCheckBox.IsChecked == true ||
+                (HighlightElementCheckBox.IsChecked == true && selectedElementIndex >= 0);
         }
 
         private void UpdateFrameNavigator()
@@ -991,32 +1106,44 @@ namespace KAnimGui.Windows
 
         private BitmapSource GetCachedAnimationFrame(KAnimBank bank, int frameIndex)
         {
-            EnsureAnimationFramesCached(bank);
-            return animationFrameCache[bank][frameIndex];
+            if (!animationFrameCache.TryGetValue(bank, out var frames))
+            {
+                frames = Enumerable.Repeat<BitmapSource?>(null, bank.Frames.Count).ToList();
+                animationFrameCache[bank] = frames;
+            }
+
+            var frameImage = frames[frameIndex];
+            if (frameImage == null)
+            {
+                frameImage = RenderAnimationFrame(bank.Frames[frameIndex], includeInspectionOverlay: false);
+                frames[frameIndex] = frameImage;
+                animationFrameCacheOrder.Enqueue((bank, frameIndex));
+                TrimAnimationFrameCache();
+            }
+
+            return frameImage;
         }
 
-        private void EnsureAnimationFramesCached(KAnimBank bank)
+        private void TrimAnimationFrameCache()
         {
-            if (animationFrameCache.ContainsKey(bank))
+            while (animationFrameCacheOrder.Count > MaxCachedAnimationFrames)
             {
-                return;
+                var oldest = animationFrameCacheOrder.Dequeue();
+                if (animationFrameCache.TryGetValue(oldest.Bank, out var frames) &&
+                    oldest.FrameIndex >= 0 &&
+                    oldest.FrameIndex < frames.Count)
+                {
+                    frames[oldest.FrameIndex] = null;
+                }
             }
-
-            FrameStatusText.Text = $"正在缓存 {bank.Name}...";
-
-            var frames = new List<BitmapSource>(bank.Frames.Count);
-            foreach (var frame in bank.Frames)
-            {
-                frames.Add(RenderAnimationFrame(frame, includeInspectionOverlay: false));
-            }
-
-            animationFrameCache[bank] = frames;
         }
 
         private void ClearRenderCaches()
         {
             animationFrameCache.Clear();
+            animationFrameCacheOrder.Clear();
             elementImageCache.Clear();
+            elementImageCacheOrder.Clear();
         }
 
         private BitmapSource RenderAnimationFrame(KAnimFrame animFrame, bool includeInspectionOverlay)
@@ -1248,7 +1375,18 @@ namespace KAnimGui.Windows
             var cropped = new CroppedBitmap(data.Texture, new Int32Rect(sourceRect.X, sourceRect.Y, sourceRect.Width, sourceRect.Height));
             cropped.Freeze();
             elementImageCache[cacheKey] = cropped;
+            elementImageCacheOrder.Enqueue(cacheKey);
+            TrimElementImageCache();
             return cropped;
+        }
+
+        private void TrimElementImageCache()
+        {
+            while (elementImageCacheOrder.Count > MaxCachedElementImages)
+            {
+                var oldestKey = elementImageCacheOrder.Dequeue();
+                elementImageCache.Remove(oldestKey);
+            }
         }
 
 

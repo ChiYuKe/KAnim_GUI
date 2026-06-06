@@ -82,5 +82,113 @@ namespace KAnimGui {
                 this["NoSuccessPopup"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FavoriteOniResources {
+            get {
+                return ((string)(this["FavoriteOniResources"]));
+            }
+            set {
+                this["FavoriteOniResources"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string OniRecentActions {
+            get {
+                return ((string)(this["OniRecentActions"]));
+            }
+            set {
+                this["OniRecentActions"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string OniResourceTags {
+            get {
+                return ((string)(this["OniResourceTags"]));
+            }
+            set {
+                this["OniResourceTags"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string OniFilterPresets {
+            get {
+                return ((string)(this["OniFilterPresets"]));
+            }
+            set {
+                this["OniFilterPresets"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool OniCompactView {
+            get {
+                return ((bool)(this["OniCompactView"]));
+            }
+            set {
+                this["OniCompactView"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool OniTableView {
+            get {
+                return ((bool)(this["OniTableView"]));
+            }
+            set {
+                this["OniTableView"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("SourceLabel,TagText,AnimCount,FrameCount,ElementCount")]
+        public string OniTableColumns {
+            get {
+                return ((string)(this["OniTableColumns"]));
+            }
+            set {
+                this["OniTableColumns"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Name=420;SourceLabel=74;TagText=140;AnimCount=64;FrameCount=64;ElementCount=64")]
+        public string OniTableColumnWidths {
+            get {
+                return ((string)(this["OniTableColumnWidths"]));
+            }
+            set {
+                this["OniTableColumnWidths"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Grouped")]
+        public string OniKAnimExportLayout {
+            get {
+                return ((string)(this["OniKAnimExportLayout"]));
+            }
+            set {
+                this["OniKAnimExportLayout"] = value;
+            }
+        }
     }
 }

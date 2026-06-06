@@ -17,6 +17,7 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 - 自动日志：转换过程自动写入 log 文件，便于排查失败原因
 - KAnim 预览器：查看 build/symbol/frame/animation 结构，播放动画并检查帧元素
 - 内置解码/诊断/转换：直接读取 `_anim.bytes` / `_build.bytes`，支持 KAnim 与 SCML 双向转换，并检查引用、计数、UV、颜色和矩阵异常
+- ONI 资源桥客户端：连接本机 ONI Mod，查看游戏已加载的动画资源
 - 预览辅助：帧跳转、元素高亮、原点/包围盒显示、缩放和平移
 - `.txt` 兼容：可选将 `_anim.txt` / `_build.txt` 自动复制为 `.bytes`
 
@@ -93,6 +94,12 @@ example_build.bytes
 - 鼠标滚轮缩放、左键拖动平移、双击恢复视图
 - 导出或替换选中的 Symbol/Frame 图片
 - 诊断当前 KAnim 包并生成结构报告
+
+## ONI 资源桥
+
+如果安装并启用了 `ONIResourceBridge` 模组，游戏启动后会在本机 `127.0.0.1` 开放资源桥端口。点击 KAnimGUI 顶部的资源桥按钮，可以查看游戏当前已加载的 KAnim 资源、搜索动画名，并把选中的资源导入到 `KAnim -> SCML` 页签。
+
+资源桥只绑定本机地址，不对局域网或公网开放。默认端口为 `17871`，被占用时会尝试到 `17890`，实际端口状态会写入 `%LOCALAPPDATA%\KAnimGui\ONIResourceBridge.json`。
 
 ## 日志
 

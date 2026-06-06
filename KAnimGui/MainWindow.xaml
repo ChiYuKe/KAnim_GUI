@@ -156,6 +156,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <!--  占位撑开  -->
                         <ColumnDefinition Width="Auto" />
@@ -199,11 +200,20 @@
                         Foreground="White"
                         Style="{StaticResource MaterialDesignIconButton}"
                         ToolTip="实验功能" />
+                    <Button
+                        x:Name="OniBridgeButton"
+                        Grid.Column="4"
+                        Click="OniBridgeButton_Click"
+                        Content="{materialDesign:PackIcon Kind=AccessPointNetwork}"
+                        FocusVisualStyle="{x:Null}"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="连接游戏资源桥" />
 
                     <!--  PinButton 靠右  -->
                     <Button
                         x:Name="PinButton"
-                        Grid.Column="5"
+                        Grid.Column="6"
                         Click="PinButton_Click"
                         Content="{materialDesign:PackIcon Kind=Pin}"
                         FocusVisualStyle="{x:Null}"

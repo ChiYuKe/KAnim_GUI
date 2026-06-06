@@ -15,12 +15,17 @@
 
   <ItemGroup>
     <Content Include="home.ico" />
+    <EmbeddedResource Include="..\artifacts\ONIResourceBridge-clean.zip">
+      <Link>ONIResourceBridge-clean.zip</Link>
+      <LogicalName>KAnimGui.ONIResourceBridge-clean.zip</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
+    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
   </ItemGroup>
 

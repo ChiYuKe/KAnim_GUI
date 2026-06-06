@@ -43,7 +43,7 @@ namespace KAnimGui
             var ksePath = KseLocator.FindExecutable();
             if (string.IsNullOrEmpty(ksePath))
             {
-                kanimLog.Log("未找到 kanimal-cli.exe；KAnim -> SCML 将使用内置内核，SCML -> KAnim 需要在设置中指定 kanimal-cli.exe。", false);
+                kanimLog.Log("未找到 kanimal-cli.exe；普通 KAnim ↔ SCML 转换将使用内置内核，高级 SCML 选项需要配置 kanimal-cli.exe。", false);
                 StatusText.Text = "状态：内置内核就绪";
             }
 
@@ -179,7 +179,7 @@ namespace KAnimGui
             }
             else
             {
-                kanimLog.Log("[配置] 未找到 kanimal-cli.exe；KAnim -> SCML 将使用内置内核，SCML -> KAnim 暂不可用。", false);
+                kanimLog.Log("[配置] 未找到 kanimal-cli.exe；普通 KAnim ↔ SCML 转换将使用内置内核，高级 SCML 选项需要配置 kanimal-cli.exe。", false);
                 StatusText.Text = "状态：内置内核就绪";
             }
         }
@@ -268,7 +268,7 @@ namespace KAnimGui
                     if (!AppSettings.NoSuccessPopup)
                     {
                         var msgBox = new CustomMessageBox("转换成功！", "成功", PackIconKind.Information);
-                        msgBox.Owner = this;
+                        TrySetOwner(msgBox);
                         msgBox.ShowDialog();
                     }
 
@@ -280,14 +280,14 @@ namespace KAnimGui
                     // 失败提示：显示具体的错误信息（例如：找不到 kanimal-cli.exe）
                     string errorDetail = string.IsNullOrEmpty(result.ErrorMessage) ? "未知原因" : result.ErrorMessage;
                     var msgBox = new CustomMessageBox($"转换失败：{errorDetail}", "失败", PackIconKind.CloseCircle);
-                    msgBox.Owner = this;
+                    TrySetOwner(msgBox);
                     msgBox.ShowDialog();
                 }
             }
             catch (Exception ex)
             {
                 var msgBox = new CustomMessageBox($"程序运行异常：{ex.Message}", "错误", PackIconKind.AlertCircle);
-                msgBox.Owner = this;
+                TrySetOwner(msgBox);
                 msgBox.ShowDialog();
             }
             finally
@@ -327,7 +327,7 @@ namespace KAnimGui
                     if (!AppSettings.NoSuccessPopup)
                     {
                         var msgBox = new CustomMessageBox("SCML转换成功！", "成功", PackIconKind.Information);
-                        msgBox.Owner = this;
+                        TrySetOwner(msgBox);
                         msgBox.ShowDialog();
 
                     }
@@ -336,14 +336,14 @@ namespace KAnimGui
                 else
                 {
                     var msgBox = new CustomMessageBox(result.ErrorMessage ?? "未知原因", "失败", PackIconKind.CloseCircle);
-                    msgBox.Owner = this;
+                    TrySetOwner(msgBox);
                     msgBox.ShowDialog();
                 }
             }
             catch (Exception ex)
             {
                 var msgBox = new CustomMessageBox($"程序运行异常：{ex.Message}", "错误", PackIconKind.AlertCircle);
-                msgBox.Owner = this;
+                TrySetOwner(msgBox);
                 msgBox.ShowDialog();
             }
             finally
@@ -743,11 +743,27 @@ namespace KAnimGui
 
         private void ShowMessage(string message, string title, PackIconKind iconKind)
         {
-            var msgBox = new CustomMessageBox(message, title, iconKind)
-            {
-                Owner = this
-            };
+            var msgBox = new CustomMessageBox(message, title, iconKind);
+            TrySetOwner(msgBox);
             msgBox.ShowDialog();
+        }
+
+        private bool TrySetOwner(Window child)
+        {
+            if (!IsLoaded || !IsVisible)
+            {
+                return false;
+            }
+
+            try
+            {
+                child.Owner = this;
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
         }
 
         private void SetDefaultOutputDirectory()
@@ -801,13 +817,13 @@ namespace KAnimGui
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "未知";
             var msgBox = new CustomMessageBox($"当前版本为：{version} \n具体可以前往git仓库了解", "帮助", PackIconKind.Information);
-            msgBox.Owner = this;
+            TrySetOwner(msgBox);
             msgBox.ShowDialog();
         }
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             var settings = new SettingsWindow();
-            settings.Owner = this; // 设置所属主窗口
+            TrySetOwner(settings); // 设置所属主窗口
             settings.Show(); // 非模态打开
 
         }
@@ -850,12 +866,133 @@ namespace KAnimGui
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            var previewWindow = new KAnimRenderWindow
-            {
-                Owner = this
-            };
+            var previewWindow = new KAnimRenderWindow();
+            TrySetOwner(previewWindow);
             previewWindow.Show();
 
+            if (TryGetCurrentKanimFileSet(out string pngPath, out string animPath, out string buildPath))
+            {
+                try
+                {
+                    previewWindow.OpenFiles(pngPath, buildPath, animPath);
+                    kanimLog.Log($"已在预览器打开: {Path.GetFileNameWithoutExtension(pngPath)}");
+                    StatusText.Text = "状态：预览器已加载当前 KAnim";
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage($"预览器加载失败：{ex.Message}", "预览失败", PackIconKind.AlertCircle);
+                }
+            }
+
+        }
+
+        private bool TryGetCurrentKanimFileSet(out string pngPath, out string animPath, out string buildPath)
+        {
+            pngPath = PngPathTextBox.Text?.Trim() ?? string.Empty;
+            animPath = AnimPathTextBox.Text?.Trim() ?? string.Empty;
+            buildPath = BuildPathTextBox.Text?.Trim() ?? string.Empty;
+
+            return File.Exists(pngPath)
+                && File.Exists(animPath)
+                && File.Exists(buildPath);
+        }
+
+        public void ImportKanimFileSet(string pngPath, string animPath, string buildPath)
+        {
+            MainTabControl.SelectedItem = KanimToScmlTab;
+            PngPathTextBox.Text = pngPath;
+            AnimPathTextBox.Text = animPath;
+            BuildPathTextBox.Text = buildPath;
+            kanimLog.Log($"已从 ONI 资源桥导入: {Path.GetFileNameWithoutExtension(pngPath)}");
+            StatusText.Text = "状态：已导入 ONI 资源";
+
+            var previewWindow = OwnedWindows.OfType<KAnimRenderWindow>().FirstOrDefault();
+            if (previewWindow == null)
+            {
+                return;
+            }
+
+            _ = SyncPreviewWindowAsync(previewWindow, pngPath, animPath, buildPath);
+        }
+
+        private async Task SyncPreviewWindowAsync(KAnimRenderWindow previewWindow, string pngPath, string animPath, string buildPath)
+        {
+            try
+            {
+                StatusText.Text = "状态：正在同步到预览器";
+                await previewWindow.OpenFilesAndPlayAsync(pngPath, buildPath, animPath);
+                kanimLog.Log("已同步到 KAnim 预览器并开始播放。");
+                StatusText.Text = "状态：已同步到预览器";
+            }
+            catch (Exception ex)
+            {
+                kanimLog.Log($"同步到 KAnim 预览器失败：{ex.Message}", true);
+                StatusText.Text = "状态：预览器同步失败";
+            }
+        }
+
+        private void OniBridgeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!EnsureOniResourceBridgeModInstalled())
+            {
+                return;
+            }
+
+            var existingWindow = OwnedWindows.OfType<OniResourceBridgeWindow>().FirstOrDefault();
+            if (existingWindow != null)
+            {
+                existingWindow.Activate();
+                return;
+            }
+
+            var bridgeWindow = new OniResourceBridgeWindow();
+            TrySetOwner(bridgeWindow);
+            bridgeWindow.Show();
+        }
+
+        private bool EnsureOniResourceBridgeModInstalled()
+        {
+            if (OniResourceBridgeModInstaller.IsInstalled())
+            {
+                return true;
+            }
+
+            if (!OniResourceBridgeModInstaller.CanInstallBundledMod(out string zipPath))
+            {
+                ShowMessage(
+                    $"没有在缺氧 Mods 目录中找到 ONI Resource Bridge 模组，也没有找到内置模组包：\n{zipPath}",
+                    "缺少 ONI Resource Bridge",
+                    PackIconKind.AlertCircle);
+                return false;
+            }
+
+            var result = MessageBox.Show(
+                "没有在缺氧 Mods 目录中找到 ONI Resource Bridge 模组。\n\n" +
+                $"是否将内置模组解压到：\n{OniResourceBridgeModInstaller.TargetModDirectory}\n\n" +
+                "安装后需要重启缺氧，并在模组列表中启用它。",
+                "安装 ONI Resource Bridge 模组",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes)
+            {
+                return false;
+            }
+
+            try
+            {
+                OniResourceBridgeModInstaller.InstallBundledMod();
+                ShowMessage(
+                    $"ONI Resource Bridge 模组已安装到：\n{OniResourceBridgeModInstaller.TargetModDirectory}\n\n请重启缺氧，并在模组列表中启用它。",
+                    "安装完成",
+                    PackIconKind.CheckCircle);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"安装 ONI Resource Bridge 模组失败：\n{ex.Message}", "安装失败", PackIconKind.AlertCircle);
+                return false;
+            }
         }
 
 
