@@ -20,9 +20,6 @@ public partial class MainWindow : Window
 
     public void NotifySettingsChanged() => controller.NotifySettingsChanged();
 
-    public void ImportKanimFileSet(string pngPath, string animPath, string buildPath) =>
-        controller.ImportKanimFileSet(pngPath, animPath, buildPath);
-
     private void MainWindow_Closed(object? sender, EventArgs e) => controller.Dispose();
 
     private void Browse_Click(object sender, RoutedEventArgs e) => controller.Browse_Click(sender, e);

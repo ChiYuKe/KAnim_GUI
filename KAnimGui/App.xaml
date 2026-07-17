@@ -17,8 +17,11 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ProgressBar.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- Embedded HarmonyOS Sans SC; the fallback keeps the UI usable if the resource cannot load. -->
+            <FontFamily x:Key="AppFontFamily">pack://application:,,,/KAnimGui;component/Fonts/HarmonyOS_Sans_SC/#HarmonyOS Sans SC</FontFamily>
+
             <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="Microsoft YaHei UI" />
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontSize" Value="14" />
                 <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
                 <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
@@ -26,13 +29,13 @@
 
             <Style TargetType="Control">
                 <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                <Setter Property="FontFamily" Value="Microsoft YaHei UI" />
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
                 <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
             </Style>
 
             <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
-                <Setter Property="FontFamily" Value="Microsoft YaHei UI" />
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
                 <Setter Property="FontSize" Value="15" />
                 <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
                 <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />

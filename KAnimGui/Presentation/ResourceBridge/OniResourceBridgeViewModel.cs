@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -7,6 +8,10 @@ using KAnimGui.Application.ResourceBridge;
 
 namespace KAnimGui.Presentation.ResourceBridge;
 
+/// <summary>
+/// Coordinates the resource bridge browsing and export workflow.
+/// The window deliberately stays focused on three actions: filter, preview and export.
+/// </summary>
 public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 {
     private readonly IResourceBridgeClient client;
@@ -14,34 +19,34 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     private readonly IResourceBridgeStateStore stateStore;
     private readonly IThumbnailCache thumbnailCache;
     private readonly IApplicationPathProvider paths;
-    private readonly IKanimWorkspaceGateway workspaceGateway;
     private CancellationTokenSource? operationCancellation;
     private CancellationTokenSource? thumbnailCancellation;
     private BridgeSnapshot? snapshot;
     private BridgeState state = BridgeState.Empty;
     private bool initialized;
+    private bool applyingLayout;
 
     public OniResourceBridgeViewModel(
         IResourceBridgeClient client,
         IResourceBridgeExportService exporter,
         IResourceBridgeStateStore stateStore,
         IThumbnailCache thumbnailCache,
-        IApplicationPathProvider paths,
-        IKanimWorkspaceGateway workspaceGateway)
+        IApplicationPathProvider paths)
     {
         this.client = client ?? throw new ArgumentNullException(nameof(client));
         this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         this.stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
         this.thumbnailCache = thumbnailCache ?? throw new ArgumentNullException(nameof(thumbnailCache));
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
-        this.workspaceGateway = workspaceGateway ?? throw new ArgumentNullException(nameof(workspaceGateway));
 
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsBusy);
-        ImportSelectedCommand = new AsyncRelayCommand(ImportSelectedAsync, CanImportSelected);
-        ExportFilteredCommand = new AsyncRelayCommand(ExportFilteredAsync, () => !IsBusy && FilteredResources.Any(row => row.CanExport));
+        ExportResourceCommand = new AsyncRelayCommand<BridgeResourceRowViewModel?>(
+            ExportResourceAsync,
+            row => !IsBusy && row?.CanExport == true);
+        ExportFilteredCommand = new AsyncRelayCommand(
+            ExportFilteredAsync,
+            () => !IsBusy && ExportableResourceCount > 0);
         CancelCommand = new RelayCommand(Cancel, () => IsBusy);
-        ToggleFavoriteCommand = new AsyncRelayCommand<BridgeResourceRowViewModel?>(ToggleFavoriteAsync);
-        SaveTagsCommand = new AsyncRelayCommand(SaveTagsAsync, () => SelectedResource != null && !IsBusy);
     }
 
     public ObservableCollection<BridgeResourceRowViewModel> FilteredResources { get; } = [];
@@ -52,17 +57,17 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
     public IAsyncRelayCommand RefreshCommand { get; }
 
-    public IAsyncRelayCommand ImportSelectedCommand { get; }
+    public IAsyncRelayCommand<BridgeResourceRowViewModel?> ExportResourceCommand { get; }
 
     public IAsyncRelayCommand ExportFilteredCommand { get; }
 
     public IRelayCommand CancelCommand { get; }
 
-    public IAsyncRelayCommand<BridgeResourceRowViewModel?> ToggleFavoriteCommand { get; }
-
-    public IAsyncRelayCommand SaveTagsCommand { get; }
-
-    public IReadOnlyList<string> ExportLayoutOptions { get; } = new[] { "Grouped", "Split" };
+    public IReadOnlyList<string> ExportLayoutOptions { get; } = new[]
+    {
+        "按资源分目录",
+        "按文件类型分组"
+    };
 
     [ObservableProperty]
     private string connectionText = "未连接";
@@ -77,52 +82,83 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     private string resourceTypeFilter = "KAnim";
 
     [ObservableProperty]
-    private string exportLayoutText = "Grouped";
+    private string exportLayoutText = "按资源分目录";
 
     [ObservableProperty]
-    private string tagEditText = string.Empty;
-
-    [ObservableProperty]
-    private bool favoritesOnly;
+    private string exportLayoutDescription = "每个资源独立一个文件夹，PNG 和 bytes 文件放在一起。";
 
     [ObservableProperty]
     private bool isBusy;
 
     [ObservableProperty]
+    private bool isExporting;
+
+    [ObservableProperty]
+    private double exportProgress;
+
+    [ObservableProperty]
+    private int exportCompleted;
+
+    [ObservableProperty]
+    private int exportTotal;
+
+    [ObservableProperty]
+    private string exportResultText = string.Empty;
+
+    [ObservableProperty]
     private BridgeResourceRowViewModel? selectedResource;
+
+    public int ExportableResourceCount =>
+        (SelectedResources.Count > 0 ? SelectedResources : FilteredResources)
+        .Count(row => row.CanExport);
+
+    public string FilterSummaryText => $"显示 {FilteredResources.Count} / {AllRows.Count} 个资源";
+
+    public string ExportButtonText => SelectedResources.Count > 0
+        ? $"导出选中 ({ExportableResourceCount})"
+        : $"导出当前结果 ({ExportableResourceCount})";
+
+    public string ExportProgressText => ExportTotal > 0
+        ? $"导出进度 {ExportCompleted} / {ExportTotal}"
+        : string.Empty;
 
     partial void OnFilterTextChanged(string value) => ApplyFilter();
 
     partial void OnResourceTypeFilterChanged(string value) => ApplyFilter();
 
-    partial void OnFavoritesOnlyChanged(bool value) => ApplyFilter();
-
     partial void OnSelectedResourceChanged(BridgeResourceRowViewModel? value)
     {
-        TagEditText = value?.TagText ?? string.Empty;
-        ImportSelectedCommand.NotifyCanExecuteChanged();
-        SaveTagsCommand.NotifyCanExecuteChanged();
+        ExportResourceCommand.NotifyCanExecuteChanged();
+        if (value != null)
+        {
+            EnsureThumbnailLoaded(value);
+        }
     }
 
     partial void OnIsBusyChanged(bool value)
     {
         RefreshCommand.NotifyCanExecuteChanged();
-        ImportSelectedCommand.NotifyCanExecuteChanged();
+        ExportResourceCommand.NotifyCanExecuteChanged();
         ExportFilteredCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
-        SaveTagsCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnExportLayoutTextChanged(string value)
     {
-        if (!initialized)
+        BridgeExportLayout layout = ParseExportLayout(value);
+        ExportLayoutDescription = GetExportLayoutDescription(layout);
+        if (!initialized || applyingLayout)
         {
             return;
         }
 
-        state = state with { ExportLayout = ParseExportLayout(value) };
+        state = state with { ExportLayout = layout };
         _ = stateStore.SaveAsync(state);
     }
+
+    partial void OnExportCompletedChanged(int value) => OnPropertyChanged(nameof(ExportProgressText));
+
+    partial void OnExportTotalChanged(int value) => OnPropertyChanged(nameof(ExportProgressText));
 
     public async Task InitializeAsync()
     {
@@ -138,8 +174,11 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     public void SetSelectedResources(IEnumerable<BridgeResourceRowViewModel> resources)
     {
         SelectedResources = resources.Distinct().ToList();
-        ImportSelectedCommand.NotifyCanExecuteChanged();
-        ExportFilteredCommand.NotifyCanExecuteChanged();
+        NotifyExportStateChanged();
+        if (SelectedResource != null)
+        {
+            EnsureThumbnailLoaded(SelectedResource);
+        }
     }
 
     private async Task RefreshAsync()
@@ -155,20 +194,20 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         try
         {
             state = await stateStore.LoadAsync().ConfigureAwait(true);
-            ExportLayoutText = state.ExportLayout == BridgeExportLayout.Split ? "Split" : "Grouped";
+            SetExportLayoutText(state.ExportLayout);
             snapshot = await client.GetSnapshotAsync().ConfigureAwait(true);
             ConnectionText = $"已加载资源 {snapshot.Status.AnimationCount} / 游戏资源包 {snapshot.Status.ResourcePackageCount}";
 
             var rows = snapshot.AllResources
                 .OrderBy(resource => resource.Key.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(CreateRow)
+                .Select(resource => new BridgeResourceRowViewModel(resource))
                 .ToList();
             ReconcileRows(rows);
             ApplyFilter();
             StatusText = snapshot.Status.AssetsReady
-                ? $"已读取 {snapshot.Animations.Count} 个已加载资源，扫描到 {snapshot.OfflineAnimations.Count} 个离线资源"
+                ? $"在线资源已就绪，可导出 {AllRows.Count(row => row.CanExport)} 个资源。"
                 : $"资源桥已连接，但游戏资源可能还在加载：已加载 {snapshot.Animations.Count}，离线 {snapshot.OfflineAnimations.Count}";
-            StartThumbnailLoads(FilteredResources.Take(96).ToList());
+            StartThumbnailLoads(FilteredResources.Take(128).ToList());
         }
         catch (OperationCanceledException)
         {
@@ -180,6 +219,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             FilteredResources.Clear();
             ConnectionText = "未连接";
             StatusText = ex.Message;
+            NotifyExportStateChanged();
         }
         finally
         {
@@ -187,32 +227,36 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async Task ImportSelectedAsync()
+    private async Task ExportResourceAsync(BridgeResourceRowViewModel? row)
     {
-        BridgeResourceRowViewModel? row = SelectedResource;
         if (row == null || !row.CanExport || snapshot == null || IsBusy)
         {
             return;
         }
 
-        SetBusy(true, $"正在准备 {row.Name}...");
+        SetExportState(1, $"正在导出 {row.Name}...");
+        operationCancellation = new CancellationTokenSource();
         try
         {
-            BridgeExportRequest request = await PrepareExportRequestAsync(row, CancellationToken.None).ConfigureAwait(true);
-            ExportArtifact artifact = await exporter.ExportAsync(request).ConfigureAwait(true);
+            BridgeExportRequest request = await PrepareExportRequestAsync(row, operationCancellation.Token).ConfigureAwait(true);
+            ExportArtifact artifact = await exporter.ExportAsync(request, operationCancellation.Token).ConfigureAwait(true);
+            ExportCompleted = 1;
+            ExportProgress = 100;
+            ExportResultText = $"已导出到：{GetArtifactSummary(artifact)}";
             StatusText = $"已导出 {row.Name}";
-            if (row.Resource is BridgeAnimationResource)
-            {
-                await OpenInWorkspaceAsync(artifact).ConfigureAwait(true);
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "导出已取消";
         }
         catch (Exception ex)
         {
+            ExportResultText = string.Empty;
             StatusText = $"导出失败：{ex.Message}";
         }
         finally
         {
-            SetBusy(false);
+            CompleteExportOperation();
         }
     }
 
@@ -232,7 +276,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             return;
         }
 
-        SetBusy(true, $"正在准备批量导出 {rows.Count} 个资源...");
+        SetExportState(rows.Count, $"正在准备导出 {rows.Count} 个资源...");
         operationCancellation = new CancellationTokenSource();
         try
         {
@@ -255,21 +299,27 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
                 }
             }
 
-            int completed = 0;
             var progress = new Progress<BatchProgress>(item =>
             {
-                completed = item.Completed;
+                ExportCompleted = item.Completed;
+                ExportProgress = item.Total == 0 ? 0 : item.Completed * 100d / item.Total;
                 StatusText = item.Succeeded
-                    ? $"正在导出 {completed} / {item.Total}: {item.ResourceName}"
-                    : $"导出失败 {item.ResourceName}: {item.ErrorMessage}";
+                    ? $"正在导出 {item.Completed} / {item.Total}：{item.ResourceName}"
+                    : $"导出失败 {item.ResourceName}：{item.ErrorMessage}";
             });
             BatchExportResult result = await exporter.ExportBatchAsync(
                 requests,
                 progress,
                 operationCancellation.Token).ConfigureAwait(true);
+            ExportCompleted = result.Succeeded.Count;
+            ExportProgress = rows.Count == 0 ? 0 : ExportCompleted * 100d / rows.Count;
+            int failed = result.Failed.Count + preparationFailures.Count;
             StatusText = result.WasCanceled
                 ? $"批量导出已取消，已完成 {result.Succeeded.Count} 个"
-                : $"批量导出完成：成功 {result.Succeeded.Count} 个，失败 {result.Failed.Count + preparationFailures.Count} 个";
+                : $"批量导出完成：成功 {result.Succeeded.Count} 个，失败 {failed} 个";
+            ExportResultText = result.FailureReportPath == null
+                ? $"输出目录：{ExportDirectory}"
+                : $"输出目录：{ExportDirectory}；失败报告：{Path.GetFileName(result.FailureReportPath)}";
         }
         catch (OperationCanceledException)
         {
@@ -277,13 +327,12 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
+            ExportResultText = string.Empty;
             StatusText = $"批量导出失败：{ex.Message}";
         }
         finally
         {
-            operationCancellation?.Dispose();
-            operationCancellation = null;
-            SetBusy(false);
+            CompleteExportOperation();
         }
     }
 
@@ -311,50 +360,6 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         };
     }
 
-    private async Task ToggleFavoriteAsync(BridgeResourceRowViewModel? row)
-    {
-        if (row == null)
-        {
-            return;
-        }
-
-        row.IsFavorite = !row.IsFavorite;
-        state = BuildState();
-        await stateStore.SaveAsync(state).ConfigureAwait(true);
-        StatusText = row.IsFavorite ? $"已收藏：{row.Name}" : $"已取消收藏：{row.Name}";
-        ApplyFilter();
-    }
-
-    private async Task SaveTagsAsync()
-    {
-        if (SelectedResource == null)
-        {
-            return;
-        }
-
-        SelectedResource.SetTags(TagEditText
-            .Split(new[] { ',', '，', ';', '；' }, StringSplitOptions.RemoveEmptyEntries)
-            .Select(tag => tag.Trim())
-            .Where(tag => tag.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Order(StringComparer.OrdinalIgnoreCase)
-            .ToList());
-        state = BuildState();
-        await stateStore.SaveAsync(state).ConfigureAwait(true);
-        ApplyFilter();
-        StatusText = $"已保存标签：{SelectedResource.Name}";
-    }
-
-    private Task OpenInWorkspaceAsync(ExportArtifact artifact)
-    {
-        if (artifact.PngPath == null || artifact.AnimPath == null || artifact.BuildPath == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        return workspaceGateway.OpenAsync(artifact);
-    }
-
     private void ApplyFilter()
     {
         IEnumerable<BridgeResourceRowViewModel> query = AllRows;
@@ -365,11 +370,6 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         else if (ResourceTypeFilter.Equals("Sprite", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(row => row.Resource is BridgeSpriteResource);
-        }
-
-        if (FavoritesOnly)
-        {
-            query = query.Where(row => row.IsFavorite);
         }
 
         string filter = FilterText.Trim();
@@ -386,11 +386,12 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             FilteredResources.Add(row);
         }
 
-        StatusText = snapshot == null
-            ? StatusText
-            : $"显示 {FilteredResources.Count} / {AllRows.Count} 个资源";
-        ExportFilteredCommand.NotifyCanExecuteChanged();
-        StartThumbnailLoads(FilteredResources.Take(96).ToList());
+        OnPropertyChanged(nameof(FilterSummaryText));
+        NotifyExportStateChanged();
+        if (snapshot != null && !IsBusy)
+        {
+            StartThumbnailLoads(FilteredResources.Take(128).ToList());
+        }
     }
 
     private List<BridgeResourceRowViewModel> AllRows { get; } = [];
@@ -401,15 +402,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         AllRows.AddRange(rows);
         SelectedResource = null;
         SetSelectedResources([]);
-    }
-
-    private BridgeResourceRowViewModel CreateRow(BridgeResource resource)
-    {
-        state.ResourceTags.TryGetValue(resource.Key.Id, out IReadOnlyList<string>? tags);
-        return new BridgeResourceRowViewModel(
-            resource,
-            state.FavoriteResourceIds.Contains(resource.Key.Id),
-            tags ?? []);
+        OnPropertyChanged(nameof(FilterSummaryText));
     }
 
     private void StartThumbnailLoads(IReadOnlyList<BridgeResourceRowViewModel> rows)
@@ -421,11 +414,23 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         }
 
         thumbnailCancellation = new CancellationTokenSource();
-        CancellationToken token = thumbnailCancellation.Token;
-        _ = LoadThumbnailsAsync(rows, token);
+        _ = LoadThumbnailsAsync(rows, thumbnailCancellation.Token);
     }
 
-    private async Task LoadThumbnailsAsync(IReadOnlyList<BridgeResourceRowViewModel> rows, CancellationToken cancellationToken)
+    private void EnsureThumbnailLoaded(BridgeResourceRowViewModel row)
+    {
+        if (snapshot == null || row.HasPreviewLoaded || row.IsLoadingThumbnail)
+        {
+            return;
+        }
+
+        thumbnailCancellation ??= new CancellationTokenSource();
+        _ = LoadThumbnailAsync(row, thumbnailCancellation.Token);
+    }
+
+    private async Task LoadThumbnailsAsync(
+        IReadOnlyList<BridgeResourceRowViewModel> rows,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -439,15 +444,17 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async ValueTask LoadThumbnailAsync(BridgeResourceRowViewModel row, CancellationToken cancellationToken)
+    private async ValueTask LoadThumbnailAsync(
+        BridgeResourceRowViewModel row,
+        CancellationToken cancellationToken)
     {
-        if (snapshot == null || row.HasPreviewLoaded)
+        if (snapshot == null || row.HasPreviewLoaded || row.IsLoadingThumbnail)
         {
             return;
         }
 
         row.IsLoadingThumbnail = true;
-        bool loaded = false;
+        row.HasThumbnailError = false;
         try
         {
             string? path = thumbnailCache.GetPath(row.Resource.Key);
@@ -463,14 +470,18 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             }
 
             BitmapImage bitmap = LoadBitmap(path);
-            loaded = true;
             if (System.Windows.Application.Current?.Dispatcher.CheckAccess() == true)
             {
                 row.Thumbnail = bitmap;
+                row.HasPreviewLoaded = true;
             }
             else if (System.Windows.Application.Current != null)
             {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => row.Thumbnail = bitmap);
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    row.Thumbnail = bitmap;
+                    row.HasPreviewLoaded = true;
+                });
             }
         }
         catch (OperationCanceledException)
@@ -478,18 +489,10 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         }
         catch
         {
-            // A missing preview must not make the resource unusable.
+            row.HasThumbnailError = true;
         }
         finally
         {
-            if (loaded && System.Windows.Application.Current?.Dispatcher.CheckAccess() == true)
-            {
-                row.HasPreviewLoaded = true;
-            }
-            else if (loaded && System.Windows.Application.Current != null)
-            {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => row.HasPreviewLoaded = true);
-            }
             row.IsLoadingThumbnail = false;
         }
     }
@@ -499,30 +502,69 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         var bitmap = new BitmapImage();
         bitmap.BeginInit();
         bitmap.CacheOption = BitmapCacheOption.OnLoad;
-        bitmap.DecodePixelWidth = 96;
+        bitmap.DecodePixelWidth = 256;
         bitmap.UriSource = new Uri(path, UriKind.Absolute);
         bitmap.EndInit();
         bitmap.Freeze();
         return bitmap;
     }
 
-    private BridgeState BuildState()
+    private void SetExportLayoutText(BridgeExportLayout layout)
     {
-        return new BridgeState(
-            1,
-            AllRows.Where(row => row.IsFavorite).Select(row => row.Resource.Key.Id).ToHashSet(StringComparer.OrdinalIgnoreCase),
-            AllRows
-                .Where(row => row.Tags.Count > 0)
-                .ToDictionary(
-                    row => row.Resource.Key.Id,
-                    row => (IReadOnlyList<string>)row.Tags.ToList(),
-                    StringComparer.OrdinalIgnoreCase),
-            state.ExportLayout);
+        applyingLayout = true;
+        try
+        {
+            ExportLayoutText = FormatExportLayout(layout);
+            ExportLayoutDescription = GetExportLayoutDescription(layout);
+        }
+        finally
+        {
+            applyingLayout = false;
+        }
     }
 
-    private bool CanImportSelected() => !IsBusy && SelectedResource?.CanExport == true;
+    private void SetExportState(int total, string status)
+    {
+        ExportTotal = total;
+        ExportCompleted = 0;
+        ExportProgress = 0;
+        ExportResultText = string.Empty;
+        IsExporting = true;
+        SetBusy(true, status);
+    }
+
+    private void CompleteExportOperation()
+    {
+        operationCancellation?.Dispose();
+        operationCancellation = null;
+        IsExporting = false;
+        SetBusy(false);
+    }
+
+    private void NotifyExportStateChanged()
+    {
+        OnPropertyChanged(nameof(ExportableResourceCount));
+        OnPropertyChanged(nameof(ExportButtonText));
+        ExportFilteredCommand.NotifyCanExecuteChanged();
+        ExportResourceCommand.NotifyCanExecuteChanged();
+    }
+
+    private static string GetArtifactSummary(ExportArtifact artifact)
+    {
+        string path = artifact.PngPath ?? artifact.AnimPath ?? artifact.BuildPath ?? string.Empty;
+        return string.IsNullOrWhiteSpace(path) ? "输出目录" : path;
+    }
+
+    private static string FormatExportLayout(BridgeExportLayout layout) =>
+        layout == BridgeExportLayout.Split ? "按文件类型分组" : "按资源分目录";
+
+    private static string GetExportLayoutDescription(BridgeExportLayout layout) =>
+        layout == BridgeExportLayout.Split
+            ? "所有 PNG 放入 KAnim_Png，bytes 文件放入 KAnim_Bytes，适合批量处理。"
+            : "每个资源独立一个文件夹，PNG 和 bytes 文件放在一起，最适合逐个使用。";
 
     private static BridgeExportLayout ParseExportLayout(string value) =>
+        value.Equals("按文件类型分组", StringComparison.OrdinalIgnoreCase) ||
         value.Equals("Split", StringComparison.OrdinalIgnoreCase)
             ? BridgeExportLayout.Split
             : BridgeExportLayout.Grouped;
@@ -539,6 +581,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     private void Cancel()
     {
         operationCancellation?.Cancel();
+        thumbnailCancellation?.Cancel();
         StatusText = "正在取消...";
     }
 
@@ -560,14 +603,9 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
 public partial class BridgeResourceRowViewModel : ObservableObject
 {
-    public BridgeResourceRowViewModel(
-        BridgeResource resource,
-        bool isFavorite,
-        IReadOnlyList<string> tags)
+    public BridgeResourceRowViewModel(BridgeResource resource)
     {
-        Resource = resource;
-        IsFavorite = isFavorite;
-        Tags = new ObservableCollection<string>(tags);
+        Resource = resource ?? throw new ArgumentNullException(nameof(resource));
     }
 
     public BridgeResource Resource { get; }
@@ -576,9 +614,11 @@ public partial class BridgeResourceRowViewModel : ObservableObject
 
     public string ResourceTypeLabel => Resource.Key.Type == BridgeResourceType.KAnim ? "KAnim" : "Sprite";
 
-    public string SourceLabel => Resource.IsOffline ? "离线" : "已加载";
+    public string SourceLabel => Resource.IsOffline ? "离线资源" : "在线资源";
 
     public string? Bundle => Resource.Bundle;
+
+    public string BundleText => string.IsNullOrWhiteSpace(Bundle) ? "" : $"Bundle：{Bundle}";
 
     public string SummaryText => Resource switch
     {
@@ -594,32 +634,15 @@ public partial class BridgeResourceRowViewModel : ObservableObject
         _ => false
     };
 
-    public string ImportStatus => CanExport ? (HasPreviewLoaded ? "可导出" : "缩略图加载中") : "无动画，不能导出";
+    public string ExportStatus => CanExport ? "可导出" : "没有可用动画，无法导出";
 
-    public ObservableCollection<string> Tags { get; }
-
-    public string TagText => string.Join(", ", Tags);
-
-    public void SetTags(IEnumerable<string> tags)
-    {
-        Tags.Clear();
-        foreach (string tag in tags)
-        {
-            Tags.Add(tag);
-        }
-
-        OnPropertyChanged(nameof(TagText));
-    }
-
-    [ObservableProperty]
-    private bool isFavorite;
-
-    public string FavoriteGlyph => IsFavorite ? "★" : string.Empty;
-
-    partial void OnIsFavoriteChanged(bool value)
-    {
-        OnPropertyChanged(nameof(FavoriteGlyph));
-    }
+    public string ThumbnailStatusText => HasPreviewLoaded
+        ? "在线缩略图已就绪"
+        : IsLoadingThumbnail
+            ? "正在加载在线缩略图..."
+            : HasThumbnailError
+                ? "在线缩略图加载失败"
+                : "等待加载缩略图";
 
     [ObservableProperty]
     private BitmapImage? thumbnail;
@@ -627,10 +650,15 @@ public partial class BridgeResourceRowViewModel : ObservableObject
     [ObservableProperty]
     private bool hasPreviewLoaded;
 
-    partial void OnHasPreviewLoadedChanged(bool value) => OnPropertyChanged(nameof(ImportStatus));
-
     [ObservableProperty]
     private bool isLoadingThumbnail;
 
-    partial void OnIsLoadingThumbnailChanged(bool value) => OnPropertyChanged(nameof(ImportStatus));
+    [ObservableProperty]
+    private bool hasThumbnailError;
+
+    partial void OnHasPreviewLoadedChanged(bool value) => OnPropertyChanged(nameof(ThumbnailStatusText));
+
+    partial void OnIsLoadingThumbnailChanged(bool value) => OnPropertyChanged(nameof(ThumbnailStatusText));
+
+    partial void OnHasThumbnailErrorChanged(bool value) => OnPropertyChanged(nameof(ThumbnailStatusText));
 }

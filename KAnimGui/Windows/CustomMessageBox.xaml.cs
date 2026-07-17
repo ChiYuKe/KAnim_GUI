@@ -7,6 +7,10 @@ namespace KAnimGui.Windows;
 
 public partial class CustomMessageBox : Window
 {
+    private static FontFamily AppFontFamily =>
+        System.Windows.Application.Current?.TryFindResource("AppFontFamily") as FontFamily ??
+        new FontFamily("HarmonyOS Sans SC, Microsoft YaHei UI, Segoe UI");
+
     public CustomMessageBox() : this("操作完成", "提示", PackIconKind.Information)
     {
     }
@@ -17,13 +21,13 @@ public partial class CustomMessageBox : Window
         Title = title;
         ReadmeTextBox.Text = message;
         IconPack.Kind = iconKind;
-        TitleTextBlock.FontFamily = new FontFamily("Microsoft YaHei UI");
+        TitleTextBlock.FontFamily = AppFontFamily;
         TitleTextBlock.FontSize = 18;
         TitleTextBlock.FontWeight = FontWeights.Bold;
         TitleTextBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333333"));
         TextOptions.SetTextFormattingMode(TitleTextBlock, TextFormattingMode.Display);
         TextOptions.SetTextRenderingMode(TitleTextBlock, TextRenderingMode.ClearType);
-        ReadmeTextBox.FontFamily = new FontFamily("Microsoft YaHei UI");
+        ReadmeTextBox.FontFamily = AppFontFamily;
         ReadmeTextBox.FontSize = 14;
         ReadmeTextBox.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555"));
         ReadmeTextBox.Focusable = false;

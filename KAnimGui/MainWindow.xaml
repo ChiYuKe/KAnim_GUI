@@ -7,7 +7,7 @@
     Width="900"
     Height="750"
     Background="{DynamicResource MaterialDesignPaper}"
-    FontFamily="Microsoft YaHei UI"
+    FontFamily="{DynamicResource AppFontFamily}"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
     TextOptions.TextFormattingMode="Display"
     TextOptions.TextRenderingMode="ClearType"

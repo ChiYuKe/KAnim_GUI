@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterOwner"
       
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        FontFamily="Microsoft YaHei UI"
+        FontFamily="{DynamicResource AppFontFamily}"
         
         
           

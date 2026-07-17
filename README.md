@@ -35,18 +35,22 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 
 如果发布包里没有自带 `kanimal-cli.exe`，普通双向转换仍可使用内置内核；如需 CLI 的严格兼容或高级处理，请把它放到 `KAnimGui.exe` 同目录，或在设置里指定完整路径。
 
+## 字体许可
+
+界面内置 HarmonyOS Sans SC（Regular/Bold）字体，字体版权归 Huawei Device Co., Ltd. 所有。字体随程序资源发布，完整许可协议见 `KAnimGui/Fonts/HarmonyOS_Sans_SC/LICENSE.txt`。
+
 ## 架构与扩展
 
 项目按依赖方向分为四层：
 
 - `KAnimGui.Core`：不依赖 WPF、HTTP 或用户目录的 KAnim 数据模型、二进制读写、解析规则与预览基础能力
-- `KAnimGui.Application`：转换、资源桥和工作区网关的请求/结果类型与接口
+- `KAnimGui.Application`：转换与资源桥的请求/结果类型和接口
 - `KAnimGui.Infrastructure`：HTTP、文件导出、缩略图缓存、JSON 状态、CLI 进程和 `.txt` 输入准备
 - `KAnimGui`：WPF 视图、ViewModel、窗口导航和渲染互操作；主工作台由 `MainWindowController` 协调转换、拖放和导航，预览器的加载、树模型、播放协调、参数检查、渲染缓存、文件选择与 PNG 操作分别由 Presentation 服务承载
 
 Core 的二进制编解码器只接收 `Stream`，纹理以 `KAnimTextureData`（PNG 字节 + 尺寸）跨层传递；`BitmapImage` 只在 WPF 外层适配，避免纯业务层被 UI 类型污染。
 
-应用启动时由 `App` 统一组装依赖。扩展新的转换器或资源类型时，先在 Application 增加强类型请求和接口，再在 Infrastructure 提供实现，最后在 ViewModel 注册命令；窗口和 ViewModel 通过文件系统/外部启动器网关访问本机资源，不直接依赖 `HttpClient`、`File` 或 `Process`。资源桥状态保存在 `%LOCALAPPDATA%\KAnimGui\ResourceBridgeState.json`，缩略图缓存在 `%LOCALAPPDATA%\KAnimGui\Cache\ResourceBridge`。
+应用启动时由 `App` 统一组装依赖。扩展新的转换器或资源类型时，先在 Application 增加强类型请求和接口，再在 Infrastructure 提供实现，最后在 ViewModel 注册命令；窗口和 ViewModel 通过文件系统/外部启动器网关访问本机资源，不直接依赖 `HttpClient`、`File` 或 `Process`。资源桥状态只保存导出布局，保存在 `%LOCALAPPDATA%\KAnimGui\ResourceBridgeState.json`；在线缩略图缓存在 `%LOCALAPPDATA%\KAnimGui\Cache\ResourceBridge`。
 
 内置 `KAnim -> SCML` 导出会尽量兼容 `kanimal-cli.exe` 的坐标、角度、缩放、pivot 和帧时间；当动画引用当前 build 不包含的外部 symbol/frame 时，会写入透明 1x1 占位图并在诊断报告中标出。
 
@@ -110,7 +114,9 @@ example_build.bytes
 
 ## ONI 资源桥
 
-如果安装并启用了 `ONIResourceBridge` 模组，游戏启动后会在本机 `127.0.0.1` 开放资源桥端口。点击 KAnimGUI 顶部的资源桥按钮，可以查看游戏当前已加载的 KAnim 资源、搜索动画名，并把选中的资源导入到 `KAnim -> SCML` 页签。
+如果安装并启用了 `ONIResourceBridge` 模组，游戏启动后会在本机 `127.0.0.1` 开放资源桥端口。点击 KAnimGUI 顶部的资源桥按钮，可以查看游戏当前已加载的 KAnim/Sprite 资源、搜索名称或 Bundle，并在线加载缩略图；选中资源后可直接导出 PNG、`_anim.bytes` 和 `_build.bytes`，也可以批量导出当前筛选结果。
+
+资源桥窗口只保留“筛选 → 缩略图预览 → 导出”主流程，不再维护收藏、标签或导入工作区状态。导出支持“按资源分目录”和“按文件类型分组”两种布局，并在底部显示批量进度、成功/失败数量和失败报告位置。
 
 资源桥只绑定本机地址，不对局域网或公网开放。默认端口为 `17871`，被占用时会尝试到 `17890`，实际端口状态会写入 `%LOCALAPPDATA%\KAnimGui\ONIResourceBridge.json`。
 

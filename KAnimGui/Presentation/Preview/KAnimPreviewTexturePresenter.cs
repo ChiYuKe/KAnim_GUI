@@ -13,7 +13,15 @@ namespace KAnimGui.Presentation.Preview;
 /// </summary>
 public sealed class KAnimPreviewTexturePresenter
 {
-    private static readonly Typeface Typeface = new("Microsoft YaHei UI");
+    private static Typeface Typeface
+    {
+        get
+        {
+            var family = System.Windows.Application.Current?.TryFindResource("AppFontFamily") as FontFamily ??
+                new FontFamily("HarmonyOS Sans SC, Microsoft YaHei UI, Segoe UI");
+            return new Typeface(family, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        }
+    }
 
     public void Show(
         AnimationViewport viewport,

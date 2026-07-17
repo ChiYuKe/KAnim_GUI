@@ -39,29 +39,16 @@ public sealed class JsonResourceBridgeStateStore : IResourceBridgeStateStore
                 JsonOptions,
                 cancellationToken).ConfigureAwait(false);
 
-            if (file == null || file.SchemaVersion != 1)
+            if (file == null || file.SchemaVersion is < 1 or > 2)
             {
                 return BridgeState.Empty;
             }
 
-            var favorites = new HashSet<string>(
-                file.FavoriteResourceIds ?? [],
-                StringComparer.OrdinalIgnoreCase);
-            var tags = (file.ResourceTags ?? new Dictionary<string, List<string>>())
-                .Where(pair => !string.IsNullOrWhiteSpace(pair.Key))
-                .ToDictionary(
-                    pair => pair.Key,
-                    pair => (IReadOnlyList<string>)(pair.Value ?? [])
-                        .Where(tag => !string.IsNullOrWhiteSpace(tag))
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .OrderBy(tag => tag, StringComparer.OrdinalIgnoreCase)
-                        .ToList(),
-                    StringComparer.OrdinalIgnoreCase);
             BridgeExportLayout layout = Enum.IsDefined(file.ExportLayout)
                 ? file.ExportLayout
                 : BridgeExportLayout.Grouped;
 
-            return new BridgeState(1, favorites, tags, layout);
+            return new BridgeState(2, layout);
         }
         catch (JsonException)
         {
@@ -85,21 +72,7 @@ public sealed class JsonResourceBridgeStateStore : IResourceBridgeStateStore
 
         Directory.CreateDirectory(directory);
         var file = new StateFile(
-            1,
-            state.FavoriteResourceIds
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Order(StringComparer.OrdinalIgnoreCase)
-                .ToArray(),
-            state.ResourceTags
-                .Where(pair => !string.IsNullOrWhiteSpace(pair.Key))
-                .ToDictionary(
-                    pair => pair.Key,
-                    pair => pair.Value
-                        .Where(tag => !string.IsNullOrWhiteSpace(tag))
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .Order(StringComparer.OrdinalIgnoreCase)
-                        .ToList(),
-                    StringComparer.OrdinalIgnoreCase),
+            2,
             state.ExportLayout);
         string temporaryPath = ResourceBridgePath.TemporaryPath(paths.ResourceBridgeStateFilePath);
 
@@ -157,7 +130,5 @@ public sealed class JsonResourceBridgeStateStore : IResourceBridgeStateStore
 
     private sealed record StateFile(
         int SchemaVersion,
-        string[]? FavoriteResourceIds,
-        Dictionary<string, List<string>>? ResourceTags,
         BridgeExportLayout ExportLayout);
 }

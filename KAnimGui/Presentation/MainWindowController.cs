@@ -161,7 +161,10 @@ public sealed class MainWindowController : IDisposable
     public void HelpButton_Click(object sender, RoutedEventArgs e)
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "未知";
-        ShowMessage($"当前版本为：{version} \n具体可以前往git仓库了解", "帮助", PackIconKind.Information);
+        ShowMessage(
+            $"当前版本为：{version} \n具体可以前往git仓库了解\n\n界面内置 HarmonyOS Sans SC 字体。",
+            "帮助",
+            PackIconKind.Information);
     }
 
     public void SettingsButton_Click(object sender, RoutedEventArgs e)
@@ -248,22 +251,6 @@ public sealed class MainWindowController : IDisposable
         scmlOutputDirectory.Clear();
         scmlLog.Clear();
         conversionViewModel.ScmlLog.Clear();
-    }
-
-    public void ImportKanimFileSet(string png, string anim, string build)
-    {
-        mainTabs.SelectedItem = kanimTab;
-        pngPath.Text = png;
-        animPath.Text = anim;
-        buildPath.Text = build;
-        conversionViewModel.AppendKanimMessage($"已从 ONI 资源桥导入: {Path.GetFileNameWithoutExtension(png)}");
-        statusText.Text = "状态：已导入 ONI 资源";
-
-        var preview = owner.OwnedWindows.OfType<KAnimRenderWindow>().FirstOrDefault();
-        if (preview != null)
-        {
-            _ = SyncPreviewWindowAsync(preview, png, anim, build);
-        }
     }
 
     public void Dispose()

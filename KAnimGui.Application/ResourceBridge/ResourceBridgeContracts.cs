@@ -111,14 +111,10 @@ public sealed record BridgeSpritePackage(
 
 public sealed record BridgeState(
     int SchemaVersion,
-    IReadOnlySet<string> FavoriteResourceIds,
-    IReadOnlyDictionary<string, IReadOnlyList<string>> ResourceTags,
     BridgeExportLayout ExportLayout)
 {
     public static BridgeState Empty { get; } = new(
-        SchemaVersion: 1,
-        FavoriteResourceIds: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
-        ResourceTags: new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase),
+        SchemaVersion: 2,
         ExportLayout: BridgeExportLayout.Grouped);
 }
 
@@ -194,11 +190,6 @@ public interface IThumbnailCache
         BridgeResourceKey resource,
         string pngBase64,
         CancellationToken cancellationToken = default);
-}
-
-public interface IKanimWorkspaceGateway
-{
-    Task OpenAsync(ExportArtifact artifact, CancellationToken cancellationToken = default);
 }
 
 public interface IApplicationPathProvider

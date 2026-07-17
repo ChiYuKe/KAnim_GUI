@@ -21,6 +21,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Fonts\HarmonyOS_Sans_SC\**" />
+    <Resource Include="Fonts\HarmonyOS_Sans_SC\HarmonyOS_Sans_SC_Regular.ttf" />
+    <Resource Include="Fonts\HarmonyOS_Sans_SC\HarmonyOS_Sans_SC_Bold.ttf" />
+    <Content Include="Fonts\HarmonyOS_Sans_SC\LICENSE.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />

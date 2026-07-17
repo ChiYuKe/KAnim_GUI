@@ -7,7 +7,7 @@
     Title="Anim Render Window"
     Width="1280"
     Height="800"
-    FontFamily="Microsoft YaHei UI"
+    FontFamily="{DynamicResource AppFontFamily}"
     SizeToContent="Manual"
     SnapsToDevicePixels="True"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"

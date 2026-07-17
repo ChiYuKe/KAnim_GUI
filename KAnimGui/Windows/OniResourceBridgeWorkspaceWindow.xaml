@@ -8,144 +8,397 @@
     Height="780"
     MinWidth="1080"
     MinHeight="650"
+    Background="{DynamicResource WorkspaceBackgroundBrush}"
+    FontFamily="{DynamicResource AppFontFamily}"
+    TextElement.Foreground="{DynamicResource PanelTitleBrush}"
+    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextRenderingMode="ClearType"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
     WindowStartupLocation="CenterOwner">
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Window.Resources>
+        <SolidColorBrush x:Key="AppBarBrush" Color="#FF94435D" />
+        <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#FF90455D" />
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFFFF" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#FFE7CED8" />
+        <SolidColorBrush x:Key="PanelTitleBrush" Color="#FF4F2033" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#FF6B2742" />
+        <SolidColorBrush x:Key="SubtleTextBrush" Color="#FF8A5B6C" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF6750A4" />
+        <SolidColorBrush x:Key="SoftAccentBrush" Color="#FFFFF7FA" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <Grid Grid.Row="0" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock FontSize="20" FontWeight="SemiBold" Text="ONI 资源桥" />
-                <TextBlock Margin="0,4,0,0" Foreground="#FF6B2742" Text="{Binding ConnectionText}" />
-            </StackPanel>
-            <Button
-                Grid.Column="1"
-                Margin="8,0,0,0"
-                Command="{Binding RefreshCommand}"
-                Content="刷新"
-                MinWidth="84" />
-            <Button
-                Grid.Column="2"
-                Margin="8,0,0,0"
-                Command="{Binding CancelCommand}"
-                Content="取消"
-                IsEnabled="{Binding IsBusy}"
-                MinWidth="84" />
-        </Grid>
+        <Style x:Key="SectionTitleText" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource PanelTitleBrush}" />
+        </Style>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="320" />
-            </Grid.ColumnDefinitions>
+        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="#FF4B2394" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
 
-            <Border Grid.Column="0" Margin="0,0,12,0" Padding="14" BorderBrush="#FFE7CED8" BorderThickness="1" CornerRadius="8">
-                <StackPanel>
-                    <TextBlock FontWeight="SemiBold" Text="筛选" />
-                    <TextBox Margin="0,12,0,0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="搜索名称或 Bundle" />
-                    <ComboBox Margin="0,12,0,0" SelectedIndex="0" SelectedValue="{Binding ResourceTypeFilter}" SelectedValuePath="Content">
-                        <ComboBoxItem Content="KAnim" />
-                        <ComboBoxItem Content="Sprite" />
-                        <ComboBoxItem Content="全部" />
-                    </ComboBox>
-                    <CheckBox Margin="0,12,0,0" Content="仅显示收藏" IsChecked="{Binding FavoritesOnly}" />
-                    <TextBlock Margin="0,18,0,0" FontWeight="SemiBold" Text="KAnim 导出布局" />
-                    <ComboBox Margin="0,6,0,0" ItemsSource="{Binding ExportLayoutOptions}" SelectedItem="{Binding ExportLayoutText, UpdateSourceTrigger=PropertyChanged}" />
-                    <Separator Margin="0,18,0,12" />
-                    <TextBlock FontWeight="SemiBold" Text="导出目录" />
-                    <TextBlock Margin="0,6,0,0" Text="{Binding ExportDirectory}" TextWrapping="Wrap" />
-                    <Button Margin="0,12,0,0" Click="OpenExportFolder_Click" Content="打开导出目录" />
+        <Style x:Key="PrimaryActionButton" BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+            <Setter Property="Width" Value="Auto" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="#FF4B2394" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style x:Key="CompactActionButton" BasedOn="{StaticResource PrimaryActionButton}" TargetType="Button">
+            <Setter Property="MinWidth" Value="70" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="12,0" />
+        </Style>
+
+        <Style x:Key="AppBarActionButton" BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+            <Setter Property="MinWidth" Value="72" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style x:Key="SecondaryActionButton" BasedOn="{StaticResource MaterialDesignOutlinedButton}" TargetType="Button">
+            <Setter Property="Width" Value="Auto" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="Background" Value="{StaticResource SoftAccentBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+        </Style>
+
+        <Style x:Key="ResourceListItemStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="Foreground" Value="{StaticResource PanelTitleBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFF6EDF2" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFE4F3FB" />
+                    <Setter Property="BorderBrush" Value="#FF33A7D8" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Background="{StaticResource WorkspaceBackgroundBrush}">
+        <Border
+            Height="52"
+            Padding="12,0"
+            Background="{StaticResource AppBarBrush}"
+            DockPanel.Dock="Top">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="White"
+                        Text="ONI 资源桥" />
+                    <TextBlock
+                        Margin="14,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="#FFF7EAF0"
+                        Text="{Binding ConnectionText}"
+                        TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-            </Border>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button
+                        Command="{Binding RefreshCommand}"
+                        Content="刷新资源"
+                        Style="{StaticResource AppBarActionButton}" />
+                    <Button
+                        Command="{Binding CancelCommand}"
+                        Content="取消"
+                        IsEnabled="{Binding IsBusy}"
+                        Style="{StaticResource AppBarActionButton}" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
-            <ListView
-                x:Name="ResourceListView"
-                Grid.Column="1"
-                BorderBrush="#FFE7CED8"
-                BorderThickness="1"
-                ItemsSource="{Binding FilteredResources}"
-                SelectedItem="{Binding SelectedResource, Mode=TwoWay}"
-                SelectionChanged="ResourceListView_SelectionChanged"
-                SelectionMode="Extended"
-                ScrollViewer.CanContentScroll="True"
-                VirtualizingPanel.IsVirtualizing="True"
-                VirtualizingPanel.VirtualizationMode="Recycling">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid MinHeight="70" Margin="4">
+        <Grid Margin="10,12,10,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <Border
+                    Grid.Column="0"
+                    Margin="0,0,10,0"
+                    Padding="14"
+                    Background="{StaticResource PanelBackgroundBrush}"
+                    BorderBrush="{StaticResource PanelBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="5">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="资源筛选" />
+                        <TextBox
+                            Margin="0,12,0,0"
+                            Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                            materialDesign:HintAssist.Hint="搜索名称或 Bundle" />
+                        <ComboBox
+                            Margin="0,12,0,0"
+                            SelectedIndex="0"
+                            SelectedValue="{Binding ResourceTypeFilter}"
+                            SelectedValuePath="Content">
+                            <ComboBoxItem Content="KAnim" />
+                            <ComboBoxItem Content="Sprite" />
+                            <ComboBoxItem Content="全部" />
+                        </ComboBox>
+                        <TextBlock
+                            Margin="0,12,0,0"
+                            Foreground="{StaticResource SubtleTextBrush}"
+                            Text="{Binding FilterSummaryText}" />
+
+                        <Separator Margin="0,18,0,12" Background="{StaticResource PanelBorderBrush}" />
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="导出布局" />
+                        <ComboBox
+                            Margin="0,6,0,0"
+                            ItemsSource="{Binding ExportLayoutOptions}"
+                            SelectedItem="{Binding ExportLayoutText, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock
+                            Margin="0,6,0,0"
+                            Foreground="{StaticResource SubtleTextBrush}"
+                            Text="{Binding ExportLayoutDescription}"
+                            TextWrapping="Wrap" />
+
+                        <Separator Margin="0,18,0,12" Background="{StaticResource PanelBorderBrush}" />
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="导出目录" />
+                        <TextBlock
+                            Margin="0,6,0,0"
+                            Foreground="{StaticResource SubtleTextBrush}"
+                            Text="{Binding ExportDirectory}"
+                            TextWrapping="Wrap" />
+                        <Button
+                            Margin="0,12,0,0"
+                            Click="OpenExportFolder_Click"
+                            Content="打开导出目录"
+                            Style="{StaticResource SecondaryActionButton}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Grid.Column="1"
+                    Padding="6"
+                    Background="{StaticResource PanelBackgroundBrush}"
+                    BorderBrush="{StaticResource PanelBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="5">
+                    <DockPanel>
+                        <Grid Margin="8,4,8,8" DockPanel.Dock="Top">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="70" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="180" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Border Width="58" Height="58" Background="#FFF4EEF1" BorderBrush="#FFE7CED8" BorderThickness="1">
-                                <Grid>
-                                    <Image Source="{Binding Thumbnail}" Stretch="Uniform" />
-                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FF9E7A86" Text="无图">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Thumbnail}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Margin="8,0,0,0" Foreground="#FFD18B00" Text="{Binding FavoriteGlyph}" />
-                                </StackPanel>
-                                <TextBlock Margin="0,4,0,0" Foreground="#FF6B2742" Text="{Binding SourceLabel}" />
-                                <TextBlock FontSize="11" Foreground="#FF9E6B7C" Text="{Binding ImportStatus}" />
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="在线资源" />
+                                <TextBlock
+                                    Margin="0,3,0,0"
+                                    Foreground="{StaticResource SubtleTextBrush}"
+                                    Text="缩略图按需从游戏资源桥加载，选中资源会优先显示。" />
                             </StackPanel>
-                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Foreground="#FF6B2742" Text="{Binding SummaryText}" TextWrapping="Wrap" />
-                            <Button
-                                Grid.Column="3"
-                                Margin="8,0,0,0"
-                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="{Binding}"
-                                Content="收藏"
-                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource MutedTextBrush}"
+                                Text="支持多选后批量导出" />
                         </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
 
-            <Border Grid.Column="2" Margin="12,0,0,0" Padding="16" BorderBrush="#FFE7CED8" BorderThickness="1" CornerRadius="8">
-                <StackPanel DataContext="{Binding SelectedResource}">
-                    <TextBlock FontSize="17" FontWeight="SemiBold" Text="资源详情" />
-                    <Image Height="180" Margin="0,14,0,10" Source="{Binding Thumbnail}" Stretch="Uniform" />
-                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding Name}" TextWrapping="Wrap" />
-                    <TextBlock Margin="0,6,0,0" Text="{Binding ResourceTypeLabel}" />
-                    <TextBlock Margin="0,4,0,0" Text="{Binding SourceLabel}" />
-                    <TextBlock Margin="0,4,0,0" Text="{Binding SummaryText}" TextWrapping="Wrap" />
-                    <TextBlock Margin="0,10,0,0" Foreground="#FF6B2742" Text="{Binding ImportStatus}" />
-                    <TextBlock Margin="0,12,0,0" FontWeight="SemiBold" Text="标签" />
-                    <TextBox Margin="0,4,0,0" Text="{Binding DataContext.TagEditText, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="用逗号分隔" />
-                    <Button Margin="0,6,0,0" Command="{Binding DataContext.SaveTagsCommand, RelativeSource={RelativeSource AncestorType=Window}}" Content="保存标签" />
-                    <Button Margin="0,16,0,0" Command="{Binding DataContext.ImportSelectedCommand, RelativeSource={RelativeSource AncestorType=Window}}" Content="导入 / 导出选中" />
+                        <ListView
+                            x:Name="ResourceListView"
+                            BorderThickness="0"
+                            ItemContainerStyle="{StaticResource ResourceListItemStyle}"
+                            ItemsSource="{Binding FilteredResources}"
+                            SelectedItem="{Binding SelectedResource, Mode=TwoWay}"
+                            SelectionChanged="ResourceListView_SelectionChanged"
+                            SelectionMode="Extended"
+                            ScrollViewer.CanContentScroll="True"
+                            VirtualizingPanel.IsVirtualizing="True"
+                            VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid MinHeight="82" Margin="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="82" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="190" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border
+                                            Width="72"
+                                            Height="72"
+                                            Background="{StaticResource SoftAccentBrush}"
+                                            BorderBrush="{StaticResource PanelBorderBrush}"
+                                            BorderThickness="1">
+                                            <Grid>
+                                                <Image Source="{Binding Thumbnail}" Stretch="Uniform" />
+                                                <TextBlock
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{StaticResource SubtleTextBrush}"
+                                                    Text="{Binding ThumbnailStatusText}"
+                                                    TextAlignment="Center"
+                                                    TextWrapping="Wrap">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasPreviewLoaded}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                                                <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="{Binding SourceLabel}" />
+                                                <TextBlock Margin="10,0,0,0" Foreground="{StaticResource SubtleTextBrush}" Text="{Binding ResourceTypeLabel}" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Margin="0,3,0,0"
+                                                Foreground="{StaticResource SubtleTextBrush}"
+                                                Text="{Binding ExportStatus}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="{Binding SummaryText}" TextWrapping="Wrap" />
+                                            <TextBlock
+                                                Margin="0,4,0,0"
+                                                Foreground="{StaticResource SubtleTextBrush}"
+                                                Text="{Binding ThumbnailStatusText}"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Button
+                                            Grid.Column="3"
+                                            Command="{Binding DataContext.ExportResourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Content="导出"
+                                            Style="{StaticResource CompactActionButton}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </DockPanel>
+                </Border>
+
+                <Border
+                    Grid.Column="2"
+                    Margin="10,0,0,0"
+                    Padding="16"
+                    Background="{StaticResource PanelBackgroundBrush}"
+                    BorderBrush="{StaticResource PanelBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="5">
+                    <Grid DataContext="{Binding SelectedResource}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="资源预览" />
+                        <Border
+                            Grid.Row="1"
+                            Height="230"
+                            Margin="0,14,0,10"
+                            Background="{StaticResource SoftAccentBrush}"
+                            BorderBrush="{StaticResource PanelBorderBrush}"
+                            BorderThickness="1">
+                            <Grid>
+                                <Image Source="{Binding Thumbnail}" Stretch="Uniform" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Foreground="{StaticResource SubtleTextBrush}"
+                                    Text="{Binding ThumbnailStatusText}"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasPreviewLoaded}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                        <StackPanel Grid.Row="2">
+                            <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding Name}" TextWrapping="Wrap" />
+                            <TextBlock Margin="0,6,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding ResourceTypeLabel}" />
+                            <TextBlock Margin="0,4,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding SourceLabel}" />
+                            <TextBlock Margin="0,4,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding SummaryText}" TextWrapping="Wrap" />
+                            <TextBlock Margin="0,4,0,0" Foreground="{StaticResource SubtleTextBrush}" Text="{Binding BundleText}" TextWrapping="Wrap" />
+                            <TextBlock Margin="0,12,0,0" Foreground="{StaticResource SubtleTextBrush}" Text="选中资源后可查看在线缩略图并直接导出。" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button
+                            Grid.Row="3"
+                            Command="{Binding DataContext.ExportResourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            Content="导出当前资源"
+                            Style="{StaticResource PrimaryActionButton}" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <DockPanel Grid.Row="1" Margin="0,10,0,0">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <ProgressBar
+                        Width="120"
+                        Height="6"
+                        Margin="0,0,8,0"
+                        Maximum="100"
+                        Minimum="0"
+                        Value="{Binding ExportProgress}"
+                        Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisibility}}"
+                        VerticalAlignment="Center" />
+                    <Button
+                        Command="{Binding ExportFilteredCommand}"
+                        Content="{Binding ExportButtonText}"
+                        Style="{StaticResource PrimaryActionButton}" />
                 </StackPanel>
-            </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Foreground="White" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Margin="0,2,0,0"
+                        Foreground="#FFF7EAF0"
+                        Text="{Binding ExportResultText}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </DockPanel>
         </Grid>
-
-        <DockPanel Grid.Row="2" Margin="0,12,0,0">
-            <Button DockPanel.Dock="Right" Command="{Binding ExportFilteredCommand}" Content="批量导出当前结果" MinWidth="150" />
-            <TextBlock VerticalAlignment="Center" Foreground="#FF6B2742" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" />
-        </DockPanel>
-    </Grid>
+    </DockPanel>
 </Window>

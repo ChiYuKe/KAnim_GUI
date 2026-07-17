@@ -10,28 +10,20 @@ namespace KAnimGui.Tests;
 public sealed class ResourceBridgeInfrastructureTests
 {
     [Fact]
-    public async Task StateStore_RoundTripsAndNormalizesState()
+    public async Task StateStore_RoundTripsExportLayout()
     {
         string root = CreateTempDirectory();
         try
         {
             var paths = new LocalApplicationPathProvider(root, root);
             var store = new JsonResourceBridgeStateStore(paths);
-            var state = new BridgeState(
-                1,
-                new HashSet<string>(new[] { "B", "a", "a" }, StringComparer.OrdinalIgnoreCase),
-                new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["resource"] = new[] { "z", "A", "a" }
-                },
-                BridgeExportLayout.Split);
+            var state = new BridgeState(2, BridgeExportLayout.Split);
 
             await store.SaveAsync(state);
             BridgeState loaded = await store.LoadAsync();
 
             Assert.Equal(BridgeExportLayout.Split, loaded.ExportLayout);
-            Assert.Equal(new[] { "a", "B" }, loaded.FavoriteResourceIds.Order(StringComparer.OrdinalIgnoreCase));
-            Assert.Equal(new[] { "A", "z" }, loaded.ResourceTags["resource"]);
+            Assert.Equal(2, loaded.SchemaVersion);
         }
         finally
         {
@@ -52,7 +44,8 @@ public sealed class ResourceBridgeInfrastructureTests
 
             BridgeState state = await store.LoadAsync();
 
-            Assert.Empty(state.FavoriteResourceIds);
+            Assert.Equal(BridgeState.Empty.ExportLayout, state.ExportLayout);
+            Assert.Equal(2, state.SchemaVersion);
             Assert.False(File.Exists(paths.ResourceBridgeStateFilePath));
             Assert.NotEmpty(Directory.GetFiles(
                 Path.GetDirectoryName(paths.ResourceBridgeStateFilePath)!,

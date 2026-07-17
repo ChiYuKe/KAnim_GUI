@@ -48,7 +48,6 @@ namespace KAnimGui
             services.AddSingleton<IInputFilePreparer, TxtToBytesFilePreparer>();
             services.AddSingleton<IConversionService, LegacyConversionServiceAdapter>();
             services.AddSingleton<ConversionWorkspaceViewModel>();
-            services.AddSingleton<IKanimWorkspaceGateway, MainWindowWorkspaceGateway>();
             services.AddTransient<OniResourceBridgeViewModel>();
             services.AddTransient<OniResourceBridgeWorkspaceWindow>();
             services.AddTransient<KAnimPreviewLoadService>();

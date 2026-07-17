@@ -6,7 +6,7 @@ namespace KAnimGui.Tests;
 public sealed class ResourceBridgeViewModelTests
 {
     [Fact]
-    public async Task ViewModel_FiltersAndTogglesFavorites()
+    public async Task ViewModel_FiltersAndPersistsExportLayout()
     {
         var client = new FakeResourceBridgeClient(CreateSnapshot());
         var stateStore = new InMemoryStateStore();
@@ -19,40 +19,29 @@ public sealed class ResourceBridgeViewModelTests
 
         viewModel.ResourceTypeFilter = "全部";
         Assert.Equal(2, viewModel.FilteredResources.Count);
-        BridgeResourceRowViewModel row = viewModel.FilteredResources[0];
+        viewModel.ExportLayoutText = "按文件类型分组";
 
-        await viewModel.ToggleFavoriteCommand.ExecuteAsync(row);
-        viewModel.SelectedResource = row;
-        viewModel.TagEditText = "combat, boss, combat";
-        await viewModel.SaveTagsCommand.ExecuteAsync(null);
-        viewModel.ExportLayoutText = "Split";
-        viewModel.FavoritesOnly = true;
-
-        Assert.Single(viewModel.FilteredResources);
-        Assert.True(viewModel.FilteredResources[0].IsFavorite);
-        Assert.Contains("hero-id", stateStore.State.FavoriteResourceIds);
-        Assert.Equal(new[] { "boss", "combat" }, stateStore.State.ResourceTags["hero-id"]);
         Assert.Equal(BridgeExportLayout.Split, stateStore.State.ExportLayout);
+        Assert.Equal(2, viewModel.ExportableResourceCount);
+        Assert.Contains("导出", viewModel.ExportButtonText);
     }
 
     [Fact]
-    public async Task ViewModel_ImportsSelectedAnimationThroughGateway()
+    public async Task ViewModel_ExportsSelectedAnimation()
     {
         var client = new FakeResourceBridgeClient(CreateSnapshot());
         var exporter = new FakeExportService();
-        var gateway = new FakeWorkspaceGateway();
-        using var viewModel = CreateViewModel(client, new InMemoryStateStore(), exporter, gateway);
+        using var viewModel = CreateViewModel(client, new InMemoryStateStore(), exporter);
 
         await viewModel.InitializeAsync();
         BridgeResourceRowViewModel row = viewModel.FilteredResources[0];
         viewModel.SelectedResource = row;
         viewModel.SetSelectedResources(new[] { row });
 
-        await viewModel.ImportSelectedCommand.ExecuteAsync(null);
+        await viewModel.ExportResourceCommand.ExecuteAsync(row);
 
         Assert.NotNull(exporter.LastRequest);
-        Assert.NotNull(gateway.LastArtifact);
-        Assert.Equal("hero", gateway.LastArtifact!.Resource.Name);
+        Assert.Equal("hero", exporter.LastRequest!.Resource.Key.Name);
     }
 
     [Fact]
@@ -97,8 +86,7 @@ public sealed class ResourceBridgeViewModelTests
             new FakeExportService(),
             new InMemoryStateStore(),
             new FakeThumbnailCache(),
-            new FakePathProvider(),
-            new FakeWorkspaceGateway());
+            new FakePathProvider());
 
         await viewModel.InitializeAsync();
         await client.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
@@ -119,8 +107,7 @@ public sealed class ResourceBridgeViewModelTests
             new FakeExportService(),
             new InMemoryStateStore(),
             new FakeThumbnailCache(),
-            new FakePathProvider(),
-            new FakeWorkspaceGateway());
+            new FakePathProvider());
 
         await viewModel.InitializeAsync();
         await client.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -131,16 +118,14 @@ public sealed class ResourceBridgeViewModelTests
     private static OniResourceBridgeViewModel CreateViewModel(
         FakeResourceBridgeClient client,
         InMemoryStateStore stateStore,
-        FakeExportService? exporter = null,
-        FakeWorkspaceGateway? gateway = null)
+        FakeExportService? exporter = null)
     {
         return new OniResourceBridgeViewModel(
             client,
             exporter ?? new FakeExportService(),
             stateStore,
             new FakeThumbnailCache(),
-            new FakePathProvider(),
-            gateway ?? new FakeWorkspaceGateway());
+            new FakePathProvider());
     }
 
     private static BridgeSnapshot CreateSnapshot()
@@ -248,17 +233,6 @@ public sealed class ResourceBridgeViewModelTests
         public Task<BatchExportResult> ExportBatchAsync(IEnumerable<BridgeExportRequest> requests, IProgress<BatchProgress>? progress = null, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new BatchExportResult(Array.Empty<ExportArtifact>(), Array.Empty<BridgeResourceKey>(), null, false));
-        }
-    }
-
-    private sealed class FakeWorkspaceGateway : IKanimWorkspaceGateway
-    {
-        public ExportArtifact? LastArtifact { get; private set; }
-
-        public Task OpenAsync(ExportArtifact artifact, CancellationToken cancellationToken = default)
-        {
-            LastArtifact = artifact;
-            return Task.CompletedTask;
         }
     }
 
