@@ -123,7 +123,8 @@ public sealed record BridgeExportRequest(
     BridgeResource Resource,
     BridgeKAnimPackage? KAnimPackage = null,
     BridgeSpritePackage? SpritePackage = null,
-    BridgeExportLayout Layout = BridgeExportLayout.Grouped);
+    BridgeExportLayout Layout = BridgeExportLayout.Grouped,
+    string? OutputDirectory = null);
 
 public sealed record ExportArtifact(
     BridgeResourceKey Resource,

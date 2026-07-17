@@ -181,6 +181,40 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         }
     }
 
+    public async Task<ExportArtifact> PrepareAnimationPreviewAsync(
+        BridgeResourceRowViewModel? row,
+        CancellationToken cancellationToken = default)
+    {
+        if (row?.CanPreview != true || snapshot == null || IsBusy)
+        {
+            throw new InvalidOperationException("请选择一个可预览的 KAnim 动画。");
+        }
+
+        SetBusy(true, $"正在准备 {row.Name} 的动画预览...");
+        operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        try
+        {
+            BridgeExportRequest request = await PrepareExportRequestAsync(
+                row,
+                operationCancellation.Token).ConfigureAwait(true);
+            request = request with
+            {
+                OutputDirectory = Path.Combine(paths.ResourceBridgeCacheDirectory, "Preview")
+            };
+            ExportArtifact artifact = await exporter.ExportAsync(
+                request,
+                operationCancellation.Token).ConfigureAwait(true);
+            StatusText = $"已准备 {row.Name} 的动画预览";
+            return artifact;
+        }
+        finally
+        {
+            operationCancellation.Dispose();
+            operationCancellation = null;
+            SetBusy(false);
+        }
+    }
+
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -644,6 +678,10 @@ public partial class BridgeResourceRowViewModel : ObservableObject
         BridgeSpriteResource => true,
         _ => false
     };
+
+    public bool CanPreview => Resource is BridgeAnimationResource animation && animation.HasAnimation;
+
+    public string RowActionText => CanPreview ? "预览" : "导出";
 
     public string ExportStatus => CanExport ? "可导出" : "没有可用动画，无法导出";
 

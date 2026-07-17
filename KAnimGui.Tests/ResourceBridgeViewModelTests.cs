@@ -45,6 +45,26 @@ public sealed class ResourceBridgeViewModelTests
     }
 
     [Fact]
+    public async Task ViewModel_PreparesAnimationPreviewInCache()
+    {
+        var exporter = new FakeExportService();
+        using var viewModel = CreateViewModel(
+            new FakeResourceBridgeClient(CreateSnapshot()),
+            new InMemoryStateStore(),
+            exporter);
+
+        await viewModel.InitializeAsync();
+        BridgeResourceRowViewModel row = viewModel.FilteredResources[0];
+        ExportArtifact artifact = await viewModel.PrepareAnimationPreviewAsync(row);
+
+        Assert.NotNull(artifact.AnimPath);
+        Assert.NotNull(exporter.LastRequest);
+        Assert.Contains("Preview", exporter.LastRequest!.OutputDirectory, StringComparison.OrdinalIgnoreCase);
+        Assert.True(row.CanPreview);
+        Assert.Equal("预览", row.RowActionText);
+    }
+
+    [Fact]
     public async Task ViewModel_WritesPreparationFailureReport()
     {
         var exporter = new FakeExportService();

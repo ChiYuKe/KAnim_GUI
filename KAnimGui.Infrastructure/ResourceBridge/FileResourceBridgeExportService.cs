@@ -87,7 +87,7 @@ public sealed class FileResourceBridgeExportService : IResourceBridgeExportServi
         byte[] anim = DecodeBase64(package.AnimBytes, "anim bytes");
         byte[] build = DecodeBase64(package.BuildBytes, "build bytes");
         string safeName = ResourceBridgePath.KAnimName(request.Resource.Key);
-        string root = paths.ResourceBridgeExportDirectory;
+        string root = ResolveOutputDirectory(request);
         string outputDirectory = request.Layout == BridgeExportLayout.Split
             ? root
             : Path.Combine(root, safeName);
@@ -120,7 +120,7 @@ public sealed class FileResourceBridgeExportService : IResourceBridgeExportServi
             throw new InvalidOperationException("Sprite 导出缺少资源包。");
         byte[] png = DecodeBase64(package.PngBytes, "sprite png");
         string path = Path.Combine(
-            paths.ResourceBridgeExportDirectory,
+            ResolveOutputDirectory(request),
             "Sprites",
             ResourceBridgePath.SpriteFileName(request.Resource.Key));
         await WritePackageAsync(new[] { (path, png) }, cancellationToken).ConfigureAwait(false);
@@ -154,6 +154,11 @@ public sealed class FileResourceBridgeExportService : IResourceBridgeExportServi
             }
         }
     }
+
+    private string ResolveOutputDirectory(BridgeExportRequest request) =>
+        string.IsNullOrWhiteSpace(request.OutputDirectory)
+            ? paths.ResourceBridgeExportDirectory
+            : request.OutputDirectory;
 
     private async Task<string?> WriteFailureReportCoreAsync(
         IReadOnlyList<string> failures,

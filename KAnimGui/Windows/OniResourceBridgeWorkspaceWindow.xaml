@@ -301,9 +301,9 @@
                                         </StackPanel>
                                         <Button
                                             Grid.Column="3"
-                                            Command="{Binding DataContext.ExportResourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"
-                                            Content="导出"
+                                            Click="ResourceRowAction_Click"
+                                            Content="{Binding RowActionText}"
+                                            IsEnabled="{Binding CanExport}"
                                             Style="{StaticResource CompactActionButton}"
                                             VerticalAlignment="Center" />
                                     </Grid>
