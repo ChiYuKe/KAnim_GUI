@@ -25,7 +25,7 @@ public partial class CustomMessageBox : Window
         TitleTextBlock.FontSize = 18;
         TitleTextBlock.FontWeight = FontWeights.Bold;
         TitleTextBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333333"));
-        TextOptions.SetTextFormattingMode(TitleTextBlock, TextFormattingMode.Display);
+        TextOptions.SetTextFormattingMode(TitleTextBlock, TextFormattingMode.Ideal);
         TextOptions.SetTextRenderingMode(TitleTextBlock, TextRenderingMode.ClearType);
         ReadmeTextBox.FontFamily = AppFontFamily;
         ReadmeTextBox.FontSize = 14;
@@ -33,7 +33,7 @@ public partial class CustomMessageBox : Window
         ReadmeTextBox.Focusable = false;
         ReadmeTextBox.Cursor = Cursors.Arrow;
         ReadmeTextBox.IsHitTestVisible = false;
-        TextOptions.SetTextFormattingMode(ReadmeTextBox, TextFormattingMode.Display);
+        TextOptions.SetTextFormattingMode(ReadmeTextBox, TextFormattingMode.Ideal);
         TextOptions.SetTextRenderingMode(ReadmeTextBox, TextRenderingMode.ClearType);
         if (iconKind == PackIconKind.CloseCircle)
         {

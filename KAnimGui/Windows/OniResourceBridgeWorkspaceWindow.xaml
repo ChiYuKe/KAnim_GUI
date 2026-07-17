@@ -11,7 +11,7 @@
     Background="{DynamicResource WorkspaceBackgroundBrush}"
     FontFamily="{DynamicResource AppFontFamily}"
     TextElement.Foreground="{DynamicResource PanelTitleBrush}"
-    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="ClearType"
     SnapsToDevicePixels="True"
     UseLayoutRounding="True"

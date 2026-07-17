@@ -11,7 +11,7 @@
     SizeToContent="Manual"
     SnapsToDevicePixels="True"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="ClearType"
     UseLayoutRounding="True"
     WindowStartupLocation="CenterOwner">

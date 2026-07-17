@@ -9,7 +9,7 @@
     Background="{DynamicResource MaterialDesignPaper}"
     FontFamily="{DynamicResource AppFontFamily}"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="ClearType"
     SnapsToDevicePixels="True"
     UseLayoutRounding="True"
