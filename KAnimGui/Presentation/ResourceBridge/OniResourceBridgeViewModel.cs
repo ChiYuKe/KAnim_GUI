@@ -103,6 +103,9 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     private int exportTotal;
 
     [ObservableProperty]
+    private string exportPhaseText = string.Empty;
+
+    [ObservableProperty]
     private string exportResultText = string.Empty;
 
     [ObservableProperty]
@@ -114,12 +117,14 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
     public string FilterSummaryText => $"显示 {FilteredResources.Count} / {AllRows.Count} 个资源";
 
-    public string ExportButtonText => SelectedResources.Count > 0
+    public string ExportButtonText => IsExporting
+        ? (ExportTotal > 0 ? $"{ExportPhaseText} {ExportCompleted}/{ExportTotal}" : "处理中...")
+        : SelectedResources.Count > 0
         ? $"导出选中 ({ExportableResourceCount})"
         : $"导出当前结果 ({ExportableResourceCount})";
 
     public string ExportProgressText => ExportTotal > 0
-        ? $"导出进度 {ExportCompleted} / {ExportTotal}"
+        ? $"{ExportPhaseText}：{ExportCompleted} / {ExportTotal}"
         : string.Empty;
 
     partial void OnFilterTextChanged(string value) => ApplyFilter();
@@ -156,9 +161,29 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         _ = stateStore.SaveAsync(state);
     }
 
-    partial void OnExportCompletedChanged(int value) => OnPropertyChanged(nameof(ExportProgressText));
+    partial void OnExportCompletedChanged(int value)
+    {
+        OnPropertyChanged(nameof(ExportProgressText));
+        OnPropertyChanged(nameof(ExportButtonText));
+    }
 
-    partial void OnExportTotalChanged(int value) => OnPropertyChanged(nameof(ExportProgressText));
+    partial void OnExportTotalChanged(int value)
+    {
+        OnPropertyChanged(nameof(ExportProgressText));
+        OnPropertyChanged(nameof(ExportButtonText));
+    }
+
+    partial void OnExportPhaseTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(ExportProgressText));
+        OnPropertyChanged(nameof(ExportButtonText));
+    }
+
+    partial void OnIsExportingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ExportProgressText));
+        OnPropertyChanged(nameof(ExportButtonText));
+    }
 
     public async Task InitializeAsync()
     {
@@ -268,11 +293,13 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             return;
         }
 
-        SetExportState(1, $"正在导出 {row.Name}...");
+        SetExportState(1, $"正在准备 {row.Name} 的导出...");
         operationCancellation = new CancellationTokenSource();
         try
         {
             BridgeExportRequest request = await PrepareExportRequestAsync(row, operationCancellation.Token).ConfigureAwait(true);
+            ExportPhaseText = "写入导出文件";
+            StatusText = $"资源包已准备，正在写入 {row.Name} 的导出文件...";
             ExportArtifact artifact = await exporter.ExportAsync(request, operationCancellation.Token).ConfigureAwait(true);
             ExportCompleted = 1;
             ExportProgress = 100;
@@ -310,14 +337,19 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             return;
         }
 
-        SetExportState(rows.Count, $"正在准备导出 {rows.Count} 个资源...");
+        SetExportState(rows.Count, $"正在从游戏资源桥准备 {rows.Count} 个资源包...");
         operationCancellation = new CancellationTokenSource();
         try
         {
             var requests = new List<BridgeExportRequest>();
             var preparationFailures = new List<string>();
-            foreach (BridgeResourceRowViewModel row in rows)
+            for (int index = 0; index < rows.Count; index++)
             {
+                BridgeResourceRowViewModel row = rows[index];
+                ExportPhaseText = "读取资源包";
+                ExportCompleted = index;
+                ExportProgress = rows.Count == 0 ? 0 : index * 100d / rows.Count;
+                StatusText = $"正在从游戏资源桥读取资源包 {index + 1} / {rows.Count}：{row.Name}";
                 try
                 {
                     requests.Add(await PrepareExportRequestAsync(row, operationCancellation.Token).ConfigureAwait(true));
@@ -331,8 +363,18 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
                 {
                     preparationFailures.Add($"{row.Name}: {ex.Message}");
                 }
+
+                ExportCompleted = index + 1;
+                ExportProgress = rows.Count == 0 ? 0 : (index + 1) * 100d / rows.Count;
             }
 
+            ExportTotal = requests.Count;
+            ExportCompleted = 0;
+            ExportProgress = 0;
+            ExportPhaseText = requests.Count > 0 ? "写入导出文件" : "整理失败报告";
+            StatusText = requests.Count > 0
+                ? $"资源包准备完成，正在写入 {requests.Count} 个导出文件..."
+                : "资源包准备完成，正在整理失败报告...";
             var progress = new Progress<BatchProgress>(item =>
             {
                 ExportCompleted = item.Completed;
@@ -574,6 +616,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         ExportCompleted = 0;
         ExportProgress = 0;
         ExportResultText = string.Empty;
+        ExportPhaseText = "准备资源包";
         IsExporting = true;
         SetBusy(true, status);
     }
@@ -583,6 +626,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         operationCancellation?.Dispose();
         operationCancellation = null;
         IsExporting = false;
+        ExportPhaseText = string.Empty;
         SetBusy(false);
     }
 

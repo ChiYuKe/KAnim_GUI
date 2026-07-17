@@ -397,6 +397,12 @@
                     <TextBlock
                         Margin="0,2,0,0"
                         Foreground="#FFF7EAF0"
+                        Text="{Binding ExportProgressText}"
+                        TextTrimming="CharacterEllipsis"
+                        Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock
+                        Margin="0,2,0,0"
+                        Foreground="#FFF7EAF0"
                         Text="{Binding ExportResultText}"
                         TextTrimming="CharacterEllipsis" />
                 </StackPanel>
