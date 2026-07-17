@@ -160,6 +160,7 @@ public sealed class ResourceBridgeInfrastructureTests
                     "/assets/offline-anims" => "{\"ok\":true,\"items\":[]}",
                     "/assets/sprites" => "{\"ok\":true,\"items\":[]}",
                     "/assets/offline-sprites" => "{\"ok\":true,\"items\":[]}",
+                    "/assets/kanim" => "{\"ok\":true,\"name\":\"hero unit\",\"source\":\"runtime\",\"animBytes\":\"YQ==\",\"buildBytes\":\"Yg==\",\"textures\":[],\"error\":null,\"detail\":null}",
                     _ => "{}"
                 });
             }));
@@ -167,11 +168,12 @@ public sealed class ResourceBridgeInfrastructureTests
 
             BridgeSnapshot snapshot = await client.GetSnapshotAsync();
             BridgeResourceKey resource = snapshot.Animations[0].Key with { Name = "hero unit" };
-            await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetKAnimPackageAsync(snapshot.BaseUrl, resource));
+            BridgeKAnimPackage package = await client.GetKAnimPackageAsync(snapshot.BaseUrl, resource);
 
             Assert.Equal("http://resource-bridge/status", requestedUris[0]);
             Assert.Contains("hero%20unit", requestedUris[^1]);
             Assert.Single(snapshot.Animations);
+            Assert.Equal(BridgeResourceSource.Runtime, package.Source);
         }
         finally
         {

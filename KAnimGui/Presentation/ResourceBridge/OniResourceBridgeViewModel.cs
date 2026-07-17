@@ -314,12 +314,23 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             ExportCompleted = result.Succeeded.Count;
             ExportProgress = rows.Count == 0 ? 0 : ExportCompleted * 100d / rows.Count;
             int failed = result.Failed.Count + preparationFailures.Count;
+            string? failureReportPath = result.FailureReportPath;
+            if (preparationFailures.Count > 0)
+            {
+                var reportLines = preparationFailures
+                    .Concat(result.Failed.Select(resource => $"{resource.Name}: 导出阶段失败"))
+                    .ToList();
+                failureReportPath = await exporter.WriteFailureReportAsync(
+                    reportLines,
+                    operationCancellation.Token).ConfigureAwait(true);
+            }
+
             StatusText = result.WasCanceled
                 ? $"批量导出已取消，已完成 {result.Succeeded.Count} 个"
                 : $"批量导出完成：成功 {result.Succeeded.Count} 个，失败 {failed} 个";
-            ExportResultText = result.FailureReportPath == null
+            ExportResultText = failureReportPath == null
                 ? $"输出目录：{ExportDirectory}"
-                : $"输出目录：{ExportDirectory}；失败报告：{Path.GetFileName(result.FailureReportPath)}";
+                : $"输出目录：{ExportDirectory}；失败报告：{Path.GetFileName(failureReportPath)}";
         }
         catch (OperationCanceledException)
         {

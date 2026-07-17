@@ -45,6 +45,25 @@ public sealed class ResourceBridgeViewModelTests
     }
 
     [Fact]
+    public async Task ViewModel_WritesPreparationFailureReport()
+    {
+        var exporter = new FakeExportService();
+        using var viewModel = new OniResourceBridgeViewModel(
+            new FailingKAnimPackageClient(CreateSnapshot()),
+            exporter,
+            new InMemoryStateStore(),
+            new FakeThumbnailCache(),
+            new FakePathProvider());
+
+        await viewModel.InitializeAsync();
+        await viewModel.ExportFilteredCommand.ExecuteAsync(null);
+
+        Assert.Single(exporter.LastFailureReport);
+        Assert.Contains("资源包请求失败", exporter.LastFailureReport[0]);
+        Assert.Contains("失败报告", viewModel.ExportResultText);
+    }
+
+    [Fact]
     public async Task ViewModel_FiltersFiveThousandResourcesWithoutMaterializingExtraRows()
     {
         var resources = Enumerable.Range(0, 5000)
@@ -220,6 +239,8 @@ public sealed class ResourceBridgeViewModelTests
     {
         public BridgeExportRequest? LastRequest { get; private set; }
 
+        public IReadOnlyList<string> LastFailureReport { get; private set; } = Array.Empty<string>();
+
         public Task<ExportArtifact> ExportAsync(BridgeExportRequest request, CancellationToken cancellationToken = default)
         {
             LastRequest = request;
@@ -234,6 +255,43 @@ public sealed class ResourceBridgeViewModelTests
         {
             return Task.FromResult(new BatchExportResult(Array.Empty<ExportArtifact>(), Array.Empty<BridgeResourceKey>(), null, false));
         }
+
+        public Task<string?> WriteFailureReportAsync(IEnumerable<string> failures, CancellationToken cancellationToken = default)
+        {
+            LastFailureReport = failures.ToList();
+            return Task.FromResult<string?>(LastFailureReport.Count == 0 ? null : "failure-report.log");
+        }
+    }
+
+    private sealed class FailingKAnimPackageClient : IResourceBridgeClient
+    {
+        private readonly FakeResourceBridgeClient inner;
+
+        public FailingKAnimPackageClient(BridgeSnapshot snapshot)
+        {
+            inner = new FakeResourceBridgeClient(snapshot);
+        }
+
+        public Task<BridgeSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default) =>
+            inner.GetSnapshotAsync(cancellationToken);
+
+        public Task<BridgeKAnimPackage> GetKAnimPackageAsync(
+            string baseUrl,
+            BridgeResourceKey resource,
+            CancellationToken cancellationToken = default) =>
+            Task.FromException<BridgeKAnimPackage>(new InvalidOperationException("资源包请求失败：source runtime 无法解析。"));
+
+        public Task<BridgePreview> GetPreviewAsync(
+            string baseUrl,
+            BridgeResourceKey resource,
+            CancellationToken cancellationToken = default) =>
+            inner.GetPreviewAsync(baseUrl, resource, cancellationToken);
+
+        public Task<BridgeSpritePackage> GetSpritePackageAsync(
+            string baseUrl,
+            BridgeResourceKey resource,
+            CancellationToken cancellationToken = default) =>
+            inner.GetSpritePackageAsync(baseUrl, resource, cancellationToken);
     }
 
     private sealed class FakeThumbnailCache : IThumbnailCache

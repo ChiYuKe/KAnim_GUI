@@ -11,7 +11,8 @@ public enum BridgeResourceType
 public enum BridgeResourceSource
 {
     Loaded,
-    Offline
+    Offline,
+    Runtime
 }
 
 public enum BridgeExportLayout
@@ -172,6 +173,10 @@ public interface IResourceBridgeExportService
     Task<BatchExportResult> ExportBatchAsync(
         IEnumerable<BridgeExportRequest> requests,
         IProgress<BatchProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    Task<string?> WriteFailureReportAsync(
+        IEnumerable<string> failures,
         CancellationToken cancellationToken = default);
 }
 

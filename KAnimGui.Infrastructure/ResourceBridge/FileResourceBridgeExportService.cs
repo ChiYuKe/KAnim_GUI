@@ -48,7 +48,7 @@ public sealed class FileResourceBridgeExportService : IResourceBridgeExportServi
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                return new BatchExportResult(succeeded, failed, await WriteFailureReportAsync(failures, cancellationToken).ConfigureAwait(false), true);
+                return new BatchExportResult(succeeded, failed, await WriteFailureReportCoreAsync(failures, cancellationToken).ConfigureAwait(false), true);
             }
             catch (Exception ex)
             {
@@ -60,8 +60,16 @@ public sealed class FileResourceBridgeExportService : IResourceBridgeExportServi
 
         string? reportPath = failures.Count == 0
             ? null
-            : await WriteFailureReportAsync(failures, cancellationToken).ConfigureAwait(false);
+            : await WriteFailureReportCoreAsync(failures, cancellationToken).ConfigureAwait(false);
         return new BatchExportResult(succeeded, failed, reportPath, false);
+    }
+
+    public Task<string?> WriteFailureReportAsync(
+        IEnumerable<string> failures,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(failures);
+        return WriteFailureReportCoreAsync(failures.ToList(), cancellationToken);
     }
 
     private async Task<ExportArtifact> ExportKAnimAsync(
@@ -147,7 +155,7 @@ public sealed class FileResourceBridgeExportService : IResourceBridgeExportServi
         }
     }
 
-    private async Task<string?> WriteFailureReportAsync(
+    private async Task<string?> WriteFailureReportCoreAsync(
         IReadOnlyList<string> failures,
         CancellationToken cancellationToken)
     {
