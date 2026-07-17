@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:preview="clr-namespace:KAnimGui.Presentation.Preview"
     Title="Anim Render Window"
     Width="1280"
     Height="800"
@@ -164,22 +165,22 @@
                         </Style>
                     </Menu.Resources>
                     <MenuItem Header="文件" Foreground="White">
-                        <MenuItem Header="打开..." Name="MenuOpen" Click="MenuOpen_Click" />
-                        <MenuItem Header="导出 PNG" Name="MenuExportPng" Click="MenuExportPng_Click" />
+                        <MenuItem Header="打开..." Name="MenuOpen" />
+                        <MenuItem Header="导出 PNG" Name="MenuExportPng" />
                         <Separator />
-                        <MenuItem Header="退出" Name="MenuExit" Click="MenuExit_Click" />
+                        <MenuItem Header="退出" Name="MenuExit" />
                     </MenuItem>
                     <MenuItem Header="视图" Foreground="White">
-                        <MenuItem Header="背景颜色：黑色" Click="PreviewBackgroundBlack_Click" />
-                        <MenuItem Header="背景颜色：白色" Click="PreviewBackgroundWhite_Click" />
+                        <MenuItem x:Name="MenuBackgroundBlack" Header="背景颜色：黑色" />
+                        <MenuItem x:Name="MenuBackgroundWhite" Header="背景颜色：白色" />
                     </MenuItem>
                     <MenuItem Header="动画" Foreground="White">
-                        <MenuItem Header="播放/暂停" Click="PlayPause_Click" />
-                        <MenuItem Header="上一帧" Click="PreviousFrame_Click" />
-                        <MenuItem Header="下一帧" Click="NextFrame_Click" />
+                        <MenuItem x:Name="MenuPlayPause" Header="播放/暂停" />
+                        <MenuItem x:Name="MenuPreviousFrame" Header="上一帧" />
+                        <MenuItem x:Name="MenuNextFrame" Header="下一帧" />
                     </MenuItem>
                     <MenuItem Header="诊断" Foreground="White">
-                        <MenuItem Header="诊断当前包" Click="DiagnosePackage_Click" />
+                        <MenuItem x:Name="MenuDiagnosePackage" Header="诊断当前包" />
                     </MenuItem>
                 </Menu>
             </DockPanel>
@@ -223,7 +224,7 @@
                         Margin="0,0,0,8"
                         DockPanel.Dock="Top"
                         materialDesign:HintAssist.Hint="搜索 symbol / animation"
-                        TextChanged="TreeSearchBox_TextChanged" />
+                        />
 
                     <TreeView
                         x:Name="BuildTreeView"
@@ -231,7 +232,6 @@
                         Foreground="{StaticResource PanelTitleBrush}"
                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                        SelectedItemChanged="BuildTreeView_SelectedItemChanged"
                         Style="{StaticResource MaterialDesignTreeView}"
                         VirtualizingPanel.IsVirtualizing="True"
                         VirtualizingPanel.VirtualizationMode="Recycling">
@@ -243,11 +243,11 @@
                                 BorderBrush="{StaticResource PanelBorderBrush}"
                                 BorderThickness="1">
                                 <MenuItem
-                                    Click="ExportSelectedImage_Click"
+                                    x:Name="ExportSelectedImageMenu"
                                     FontSize="14"
                                     Header="导出图片" />
                                 <MenuItem
-                                    Click="ReplaceSelectedImage_Click"
+                                    x:Name="ReplaceSelectedImageMenu"
                                     FontSize="14"
                                     Header="替换图片" />
                             </ContextMenu>
@@ -256,7 +256,6 @@
                                 <Setter Property="ContextMenu" Value="{StaticResource TreeViewItemContextMenu}" />
                                 <Setter Property="FontSize" Value="13" />
                                 <Setter Property="Padding" Value="2,3" />
-                                <EventSetter Event="PreviewMouseRightButtonDown" Handler="TreeViewItem_PreviewMouseRightButtonDown" />
                             </Style>
                         </TreeView.Resources>
                     </TreeView>
@@ -272,31 +271,9 @@
                 BorderBrush="{StaticResource PreviewBorderBrush}"
                 BorderThickness="3"
                 CornerRadius="8"
-                Drop="Card_Drop"
                 SnapsToDevicePixels="True"
                 UseLayoutRounding="True">
-                <Grid
-                    x:Name="PreviewViewport"
-                    ClipToBounds="True"
-                    MouseLeftButtonDown="PreviewViewport_MouseLeftButtonDown"
-                    MouseLeftButtonUp="PreviewViewport_MouseLeftButtonUp"
-                    MouseMove="PreviewViewport_MouseMove"
-                    MouseWheel="PreviewViewport_MouseWheel">
-                    <Image
-                        x:Name="PreviewImage"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        RenderOptions.BitmapScalingMode="LowQuality"
-                        RenderOptions.CachingHint="Cache"
-                        Stretch="Uniform">
-                        <Image.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform x:Name="PreviewScaleTransform" ScaleX="1" ScaleY="1" />
-                                <TranslateTransform x:Name="PreviewTranslateTransform" X="0" Y="0" />
-                            </TransformGroup>
-                        </Image.RenderTransform>
-                    </Image>
-                </Grid>
+                <preview:AnimationViewport x:Name="PreviewViewport" />
             </Border>
 
             <Grid Grid.Column="2">
@@ -313,11 +290,6 @@
                     Margin="0,0,0,10"
                     Padding="12"
                     AllowDrop="True"
-                    DragEnter="Card_DragEnter"
-                    DragLeave="Card_DragLeave"
-                    Drop="Card_Drop"
-                    MouseDoubleClick="DropCard_MouseDoubleClick"
-                    MouseEnter="DropCard_MouseEnter"
                     Style="{StaticResource PanelCardStyle}">
                     <DockPanel>
                         <DockPanel
@@ -413,15 +385,13 @@
                                 <ListBox
                                     x:Name="FrameListBox"
                                     BorderThickness="0"
-                                    DisplayMemberPath="Title"
-                                    SelectionChanged="FrameListBox_SelectionChanged" />
+                                    DisplayMemberPath="Title" />
                             </TabItem>
                             <TabItem Header="元素">
                                 <ListBox
                                     x:Name="ElementListBox"
                                     BorderThickness="0"
-                                    DisplayMemberPath="Title"
-                                    SelectionChanged="ElementListBox_SelectionChanged" />
+                                    DisplayMemberPath="Title" />
                             </TabItem>
                         </TabControl>
                     </DockPanel>
@@ -461,7 +431,6 @@
                             Grid.Row="1"
                             Margin="0,0,0,8"
                             DisplayMemberPath="Name"
-                            SelectionChanged="AnimationComboBox_SelectionChanged"
                             Style="{StaticResource MaterialDesignFloatingHintComboBox}"
                             materialDesign:HintAssist.Hint="动画" />
 
@@ -471,7 +440,6 @@
                             Orientation="Horizontal">
                             <Button
                                 x:Name="PreviousFrameButton"
-                                Click="PreviousFrame_Click"
                                 Content="{materialDesign:PackIcon Kind=SkipPrevious}"
                                 FocusVisualStyle="{x:Null}"
                                 Foreground="{StaticResource PrimaryColor}"
@@ -479,7 +447,6 @@
                                 ToolTip="上一帧" />
                             <Button
                                 x:Name="PlayPauseButton"
-                                Click="PlayPause_Click"
                                 Content="{materialDesign:PackIcon Kind=Play}"
                                 FocusVisualStyle="{x:Null}"
                                 Foreground="{StaticResource PrimaryColor}"
@@ -487,7 +454,6 @@
                                 ToolTip="播放/暂停" />
                             <Button
                                 x:Name="NextFrameButton"
-                                Click="NextFrame_Click"
                                 Content="{materialDesign:PackIcon Kind=SkipNext}"
                                 FocusVisualStyle="{x:Null}"
                                 Foreground="{StaticResource PrimaryColor}"
@@ -510,7 +476,7 @@
                             IsSnapToTickEnabled="True"
                             Minimum="0"
                             TickFrequency="1"
-                            ValueChanged="FrameSlider_ValueChanged" />
+                            />
 
                         <Grid
                             Grid.Row="5"
@@ -534,7 +500,7 @@
                                 Minimum="0.1"
                                 SmallChange="0.05"
                                 Value="1"
-                                ValueChanged="PlaybackSpeedSlider_ValueChanged" />
+                                />
                         </Grid>
 
                         <WrapPanel
@@ -543,22 +509,19 @@
                             <CheckBox
                                 x:Name="ShowOriginCheckBox"
                                 Margin="0,0,8,0"
-                                Checked="OverlayOption_Changed"
                                 Content="原点"
                                 IsChecked="True"
-                                Unchecked="OverlayOption_Changed" />
+                                />
                             <CheckBox
                                 x:Name="ShowBoundsCheckBox"
                                 Margin="0,0,8,0"
-                                Checked="OverlayOption_Changed"
                                 Content="盒"
-                                Unchecked="OverlayOption_Changed" />
+                                />
                             <CheckBox
                                 x:Name="HighlightElementCheckBox"
-                                Checked="OverlayOption_Changed"
                                 Content="高亮"
                                 IsChecked="True"
-                                Unchecked="OverlayOption_Changed" />
+                                />
                         </WrapPanel>
                     </Grid>
                 </materialDesign:Card>

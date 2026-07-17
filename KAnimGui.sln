@@ -7,6 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KAnimGui", "KAnimGui\KAnimG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KAnimGui.Tests", "KAnimGui.Tests\KAnimGui.Tests.csproj", "{ECA6B265-2380-41D1-9429-536108846E3A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KAnimGui.Core", "KAnimGui.Core\KAnimGui.Core.csproj", "{6D30A75E-10D3-4A57-82BD-0A163C35AEAC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KAnimGui.Application", "KAnimGui.Application\KAnimGui.Application.csproj", "{D4B2882F-3534-4E7E-92B0-02E51695A07B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KAnimGui.Infrastructure", "KAnimGui.Infrastructure\KAnimGui.Infrastructure.csproj", "{90069BDF-E21A-43BD-978A-7C77AC5ADB8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +27,18 @@ Global
 		{ECA6B265-2380-41D1-9429-536108846E3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ECA6B265-2380-41D1-9429-536108846E3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ECA6B265-2380-41D1-9429-536108846E3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D30A75E-10D3-4A57-82BD-0A163C35AEAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D30A75E-10D3-4A57-82BD-0A163C35AEAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D30A75E-10D3-4A57-82BD-0A163C35AEAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D30A75E-10D3-4A57-82BD-0A163C35AEAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4B2882F-3534-4E7E-92B0-02E51695A07B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4B2882F-3534-4E7E-92B0-02E51695A07B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4B2882F-3534-4E7E-92B0-02E51695A07B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4B2882F-3534-4E7E-92B0-02E51695A07B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90069BDF-E21A-43BD-978A-7C77AC5ADB8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90069BDF-E21A-43BD-978A-7C77AC5ADB8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90069BDF-E21A-43BD-978A-7C77AC5ADB8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90069BDF-E21A-43BD-978A-7C77AC5ADB8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

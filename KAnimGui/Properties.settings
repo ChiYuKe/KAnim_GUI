@@ -17,32 +17,5 @@
     <Setting Name="NoSuccessPopup" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="FavoriteOniResources" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="OniRecentActions" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="OniResourceTags" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="OniFilterPresets" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="OniCompactView" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="OniTableView" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="OniTableColumns" Type="System.String" Scope="User">
-      <Value Profile="(Default)">SourceLabel,TagText,AnimCount,FrameCount,ElementCount</Value>
-    </Setting>
-    <Setting Name="OniTableColumnWidths" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Name=420;SourceLabel=74;TagText=140;AnimCount=64;FrameCount=64;ElementCount=64</Value>
-    </Setting>
-    <Setting Name="OniKAnimExportLayout" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Grouped</Value>
-    </Setting>
   </Settings>
 </SettingsFile>

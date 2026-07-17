@@ -289,6 +289,7 @@
                                         Grid.Row="0"
                                         Grid.Column="0"
                                         Margin="0,0,5,5"
+                                        Text="{Binding PngPath, UpdateSourceTrigger=PropertyChanged}"
                                         materialDesign:HintAssist.Hint="PNG文件路径"
                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
                                     <Button
@@ -307,6 +308,7 @@
                                         Grid.Row="1"
                                         Grid.Column="0"
                                         Margin="0,0,5,5"
+                                        Text="{Binding AnimPath, UpdateSourceTrigger=PropertyChanged}"
                                         materialDesign:HintAssist.Hint="Anim文件路径"
                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
                                     <Button
@@ -325,6 +327,7 @@
                                         Grid.Row="2"
                                         Grid.Column="0"
                                         Margin="0,0,5,0"
+                                        Text="{Binding BuildPath, UpdateSourceTrigger=PropertyChanged}"
                                         materialDesign:HintAssist.Hint="Build文件路径"
                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
                                     <Button
@@ -356,12 +359,14 @@
                                         x:Name="StrictModeCheckBox"
                                         Margin="0,0,15,0"
                                         Content="严格模式"
+                                        IsChecked="{Binding StrictMode}"
                                         FocusVisualStyle="{x:Null}"
                                         Style="{StaticResource MaterialDesignCheckBox}"
                                         ToolTip="强制转换过程遵循更严格的规范检查，确保输出文件完全符合Klei官方标准。" />
                                     <CheckBox
                                         x:Name="StrictOrderCheckBox"
                                         Content="严格文件顺序"
+                                        IsChecked="{Binding StrictOrder}"
                                         FocusVisualStyle="{x:Null}"
                                         Style="{StaticResource MaterialDesignCheckBox}"
                                         ToolTip="为真PNG 文件 → Build 文件 → Anim 文件&#10;否则PNG 文件 → Anim 文件 → Build 文件" />
@@ -385,6 +390,7 @@
                                     <TextBox
                                         x:Name="OutputDirTextBox"
                                         Grid.Column="1"
+                                        Text="{Binding KanimOutputDirectory, UpdateSourceTrigger=PropertyChanged}"
                                         materialDesign:HintAssist.Hint="选择输出目录"
                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
                                     <Button
@@ -449,14 +455,13 @@
                                     Style="{StaticResource SecondaryActionButton}" />
                                 <Button
                                     x:Name="CancelKanimButton"
-                                    Click="CancelKanimButton_Click"
+                                    Command="{Binding CancelKanimCommand}"
                                     Content="取消"
                                     FocusVisualStyle="{x:Null}"
-                                    IsEnabled="False"
                                     Style="{StaticResource SecondaryActionButton}" />
                                 <Button
                                     x:Name="ConvertButton"
-                                    Click="ConvertButton_Click"
+                                    Command="{Binding ConvertKanimCommand}"
                                     Content="开始转换"
                                     FocusVisualStyle="{x:Null}"
                                     Style="{StaticResource PrimaryActionButton}" />
@@ -508,6 +513,7 @@
                                         x:Name="ScmlPathTextBox"
                                         Grid.Column="0"
                                         Margin="0"
+                                        Text="{Binding ScmlPath, UpdateSourceTrigger=PropertyChanged}"
                                         VerticalAlignment="Center"
                                         materialDesign:HintAssist.Hint="SCML文件路径 (.scml)"
                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
@@ -541,12 +547,14 @@
                                         x:Name="InterpolateCheckBox"
                                         Margin="0,0,15,0"
                                         Content="启用插值"
+                                        IsChecked="{Binding Interpolate}"
                                         FocusVisualStyle="{x:Null}"
                                         Style="{StaticResource MaterialDesignCheckBox}"
                                         ToolTip="启用Spriter关键帧插值" />
                                     <CheckBox
                                         x:Name="DeboneCheckBox"
                                         Content="去骨骼"
+                                        IsChecked="{Binding Debone}"
                                         FocusVisualStyle="{x:Null}"
                                         Style="{StaticResource MaterialDesignCheckBox}"
                                         ToolTip="启用Spriter去骨骼操作" />
@@ -575,6 +583,7 @@
                                     <TextBox
                                         x:Name="ScmlOutputDirTextBox"
                                         Grid.Column="1"
+                                        Text="{Binding ScmlOutputDirectory, UpdateSourceTrigger=PropertyChanged}"
                                         VerticalAlignment="Center"
                                         materialDesign:HintAssist.Hint="选择输出目录"
                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
@@ -642,14 +651,13 @@
                                     Style="{StaticResource SecondaryActionButton}" />
                                 <Button
                                     x:Name="CancelScmlButton"
-                                    Click="CancelScmlButton_Click"
+                                    Command="{Binding CancelScmlCommand}"
                                     Content="取消"
                                     FocusVisualStyle="{x:Null}"
-                                    IsEnabled="False"
                                     Style="{StaticResource SecondaryActionButton}" />
                                 <Button
                                     x:Name="ConvertScmlButton"
-                                    Click="ConvertScmlButton_Click"
+                                    Command="{Binding ConvertScmlCommand}"
                                     Content="开始转换"
                                     FocusVisualStyle="{x:Null}"
                                     Style="{StaticResource PrimaryActionButton}" />

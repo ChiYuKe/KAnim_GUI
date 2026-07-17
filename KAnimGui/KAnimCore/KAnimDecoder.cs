@@ -27,14 +27,14 @@ namespace KAnimGui.KAnimCore
         public static KBuild? LoadBuild(string? buildPath)
         {
             return HasExistingFile(buildPath)
-                ? KAnimUtils.ReadBuild(buildPath!)
+                ? KAnimBinaryFileCodec.ReadBuild(buildPath!)
                 : null;
         }
 
         public static KAnim? LoadAnim(string? animPath)
         {
             return HasExistingFile(animPath)
-                ? KAnimUtils.ReadAnim(animPath!)
+                ? KAnimBinaryFileCodec.ReadAnim(animPath!)
                 : null;
         }
 

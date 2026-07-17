@@ -1,7 +1,7 @@
 ﻿// ScmlConverter.cs
 using KAnimGui.Models;
 using KAnimGui.KAnimCore;
-using KAnimGui.Utils;
+using KAnimGui.Application.Conversion;
 using System;
 using System.IO;
 using System.Threading;
@@ -15,6 +15,9 @@ namespace KAnimGui.Core
         public string OutputDir { get; set; } = string.Empty;
         public bool Interpolate { get; set; }
         public bool Debone { get; set; }
+        public IProcessRunner? ProcessRunner { get; set; }
+        public IKseExecutableLocator? ExecutableLocator { get; set; }
+        public string? CliExecutablePath { get; set; }
 
         // 真实转换使用的完整输出目录（包含子文件夹）
         public string ActualOutputDir { get; private set; } = string.Empty;
@@ -29,13 +32,27 @@ namespace KAnimGui.Core
             ActualOutputDir = Path.Combine(OutputDir, folderName);
             Directory.CreateDirectory(ActualOutputDir);
 
-            var ksePath = KseLocator.FindExecutable();
+            var ksePath = string.IsNullOrWhiteSpace(CliExecutablePath)
+                ? ExecutableLocator?.FindExecutable()
+                : CliExecutablePath;
             if (string.IsNullOrEmpty(ksePath))
             {
                 return ConvertWithBuiltInExporter(log);
             }
 
-            return await CliProcessRunner.RunAsync(ksePath, BuildArguments(ActualOutputDir), log, cancellationToken);
+            if (ProcessRunner == null)
+            {
+                return await CliProcessRunner.RunAsync(ksePath, BuildArguments(ActualOutputDir), log, cancellationToken);
+            }
+
+            var progress = new Progress<OperationEvent>(eventInfo => log(eventInfo.Message, eventInfo.IsError));
+            var result = await ProcessRunner.RunAsync(ksePath, BuildArguments(ActualOutputDir), progress, cancellationToken);
+            return new ConversionResult
+            {
+                Success = result.Succeeded,
+                ExitCode = result.ExitCode,
+                ErrorMessage = result.ErrorMessage
+            };
         }
 
         private ConversionResult ConvertWithBuiltInExporter(Action<string, bool> log)

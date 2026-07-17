@@ -197,8 +197,8 @@ public sealed class KAnimDiagnosticsTests
         Assert.True(File.Exists(result.BuildPath));
         Assert.True(File.Exists(result.AnimPath));
 
-        var build = KAnimUtils.ReadBuild(result.BuildPath);
-        var anim = KAnimUtils.ReadAnim(result.AnimPath);
+        var build = KAnimBinaryFileCodec.ReadBuild(result.BuildPath);
+        var anim = KAnimBinaryFileCodec.ReadAnim(result.AnimPath);
         Assert.Equal("sample", build.Name);
         Assert.Single(build.Symbols);
         Assert.Single(anim.Banks);

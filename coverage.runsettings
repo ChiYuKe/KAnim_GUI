@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Include>
+            [KAnimGui.Core]KAnimGui.Core.*
+            [KAnimGui.Application]KAnimGui.Application.*
+          </Include>
+          <!-- KanimLib is the compatibility model copied from the legacy app; the
+               coverage gate targets the new Core/Application orchestration code. -->
+          <Exclude>[KAnimGui.Core]KanimLib.*</Exclude>
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

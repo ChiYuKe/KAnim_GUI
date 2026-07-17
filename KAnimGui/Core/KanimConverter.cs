@@ -1,7 +1,7 @@
 ﻿// KanimConverter.cs
 using KAnimGui.Models;
 using KAnimGui.KAnimCore;
-using KAnimGui.Utils;
+using KAnimGui.Application.Conversion;
 using System;
 using System.IO;
 using System.Threading;
@@ -17,6 +17,9 @@ namespace KAnimGui.Core
         public string OutputDir { get; set; } = string.Empty;
         public bool StrictOrder { get; set; }
         public bool StrictMode { get; set; }
+        public IProcessRunner? ProcessRunner { get; set; }
+        public IKseExecutableLocator? ExecutableLocator { get; set; }
+        public string? CliExecutablePath { get; set; }
 
         // 真实转换使用的完整输出目录（包含子文件夹）
         public string ActualOutputDir { get; private set; } = string.Empty;
@@ -32,13 +35,44 @@ namespace KAnimGui.Core
             ActualOutputDir = Path.Combine(OutputDir, folderName);
             Directory.CreateDirectory(ActualOutputDir);
 
-            var ksePath = KseLocator.FindExecutable();
+            var ksePath = string.IsNullOrWhiteSpace(CliExecutablePath)
+                ? ExecutableLocator?.FindExecutable()
+                : CliExecutablePath;
             if (string.IsNullOrEmpty(ksePath))
             {
                 return ConvertWithBuiltInExporter(log);
             }
 
-            return await CliProcessRunner.RunAsync(ksePath, BuildArguments(ActualOutputDir), log, cancellationToken);
+            var cliResult = await RunCliAsync(ksePath, log, cancellationToken);
+            if (string.Equals(cliResult.ErrorMessage, "转换已取消", StringComparison.Ordinal))
+            {
+                return cliResult;
+            }
+
+            if (cliResult.Success)
+            {
+                return cliResult;
+            }
+
+            log($"kanimal-cli.exe 转换失败（{cliResult.ErrorMessage ?? $"退出代码: {cliResult.ExitCode}"}），改用内置 KAnim 解码/SCML 导出内核。", true);
+            return ConvertWithBuiltInExporter(log);
+        }
+
+        private async Task<ConversionResult> RunCliAsync(string executablePath, Action<string, bool> log, CancellationToken cancellationToken)
+        {
+            if (ProcessRunner == null)
+            {
+                return await CliProcessRunner.RunAsync(executablePath, BuildArguments(ActualOutputDir), log, cancellationToken);
+            }
+
+            var progress = new Progress<OperationEvent>(eventInfo => log(eventInfo.Message, eventInfo.IsError));
+            var result = await ProcessRunner.RunAsync(executablePath, BuildArguments(ActualOutputDir), progress, cancellationToken);
+            return new ConversionResult
+            {
+                Success = result.Succeeded,
+                ExitCode = result.ExitCode,
+                ErrorMessage = result.ErrorMessage
+            };
         }
 
         private ConversionResult ConvertWithBuiltInExporter(Action<string, bool> log)

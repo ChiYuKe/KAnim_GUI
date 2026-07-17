@@ -20,6 +20,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KAnimGui\KAnimGui.csproj" />
+    <ProjectReference Include="..\KAnimGui.Core\KAnimGui.Core.csproj" />
+    <ProjectReference Include="..\KAnimGui.Application\KAnimGui.Application.csproj" />
+    <ProjectReference Include="..\KAnimGui.Infrastructure\KAnimGui.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

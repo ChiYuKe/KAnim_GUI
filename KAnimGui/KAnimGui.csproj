@@ -24,8 +24,15 @@
     <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
-    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KAnimGui.Core\KAnimGui.Core.csproj" />
+    <ProjectReference Include="..\KAnimGui.Application\KAnimGui.Application.csproj" />
+    <ProjectReference Include="..\KAnimGui.Infrastructure\KAnimGui.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -40,12 +40,12 @@ namespace KAnimGui.KAnimCore
             var animPath = Path.Combine(outputDirectory, $"{buildName}_anim.bytes");
 
             atlas.Bitmap.Save(pngPath, ImageFormat.Png);
-            if (!KAnimUtils.WriteBuild(buildPath, build))
+            if (!KAnimBinaryFileCodec.WriteBuild(buildPath, build))
             {
                 throw new IOException("写入 build.bytes 失败。");
             }
 
-            if (!KAnimUtils.WriteAnim(animPath, anim))
+            if (!KAnimBinaryFileCodec.WriteAnim(animPath, anim))
             {
                 throw new IOException("写入 anim.bytes 失败。");
             }

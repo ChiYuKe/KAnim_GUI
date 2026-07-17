@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
 using KanimLib;
+using KAnimGui.Core.Kanim;
 
 namespace KAnimGui.KAnimCore
 {

@@ -35,6 +35,19 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 
 如果发布包里没有自带 `kanimal-cli.exe`，普通双向转换仍可使用内置内核；如需 CLI 的严格兼容或高级处理，请把它放到 `KAnimGui.exe` 同目录，或在设置里指定完整路径。
 
+## 架构与扩展
+
+项目按依赖方向分为四层：
+
+- `KAnimGui.Core`：不依赖 WPF、HTTP 或用户目录的 KAnim 数据模型、二进制读写、解析规则与预览基础能力
+- `KAnimGui.Application`：转换、资源桥和工作区网关的请求/结果类型与接口
+- `KAnimGui.Infrastructure`：HTTP、文件导出、缩略图缓存、JSON 状态、CLI 进程和 `.txt` 输入准备
+- `KAnimGui`：WPF 视图、ViewModel、窗口导航和渲染互操作；主工作台由 `MainWindowController` 协调转换、拖放和导航，预览器的加载、树模型、播放协调、参数检查、渲染缓存、文件选择与 PNG 操作分别由 Presentation 服务承载
+
+Core 的二进制编解码器只接收 `Stream`，纹理以 `KAnimTextureData`（PNG 字节 + 尺寸）跨层传递；`BitmapImage` 只在 WPF 外层适配，避免纯业务层被 UI 类型污染。
+
+应用启动时由 `App` 统一组装依赖。扩展新的转换器或资源类型时，先在 Application 增加强类型请求和接口，再在 Infrastructure 提供实现，最后在 ViewModel 注册命令；窗口和 ViewModel 通过文件系统/外部启动器网关访问本机资源，不直接依赖 `HttpClient`、`File` 或 `Process`。资源桥状态保存在 `%LOCALAPPDATA%\KAnimGui\ResourceBridgeState.json`，缩略图缓存在 `%LOCALAPPDATA%\KAnimGui\Cache\ResourceBridge`。
+
 内置 `KAnim -> SCML` 导出会尽量兼容 `kanimal-cli.exe` 的坐标、角度、缩放、pivot 和帧时间；当动画引用当前 build 不包含的外部 symbol/frame 时，会写入透明 1x1 占位图并在诊断报告中标出。
 
 ## 兼容性说明
@@ -149,6 +162,23 @@ name_build.bytes
 ```powershell
 dotnet build KAnimGui.sln --no-restore
 ```
+
+运行测试：
+
+```powershell
+dotnet test KAnimGui.sln --configuration Release --no-restore
+```
+
+采集并校验 Core/Application 行覆盖率（门槛 80%）：
+
+```powershell
+$out = Join-Path $env:TEMP "kanimgui-coverage"
+dotnet test KAnimGui.sln -c Release --no-build --no-restore --settings coverage.runsettings --collect:"XPlat Code Coverage" --results-directory $out
+$report = Get-ChildItem $out -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
+./check-coverage.ps1 -CoverageFile $report.FullName
+```
+
+CI 会在 Windows runner 上完成 Release 构建、测试和 `win-x64` 自包含发布验证；发布目录是临时构建产物，不在 Git 中维护生成的 ZIP。
 
 发布 win-x64 自包含包：
 

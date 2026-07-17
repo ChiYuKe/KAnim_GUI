@@ -1,0 +1,44 @@
+name: KAnimGUI CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+
+      - name: Restore
+        run: dotnet restore KAnimGui.sln -r win-x64
+
+      - name: Build Release
+        run: dotnet build KAnimGui.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test KAnimGui.sln --configuration Release --no-build --no-restore --settings coverage.runsettings --collect:"XPlat Code Coverage" --results-directory TestResults
+
+      - name: Enforce Core/Application coverage
+        shell: pwsh
+        run: |
+          $coverage = Get-ChildItem TestResults -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
+          if ($null -eq $coverage) { throw "coverage.cobertura.xml was not produced" }
+          ./check-coverage.ps1 -CoverageFile $coverage.FullName
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: TestResults/**/coverage.cobertura.xml
+
+      - name: Publish win-x64 smoke artifact
+        run: dotnet publish KAnimGui/KAnimGui.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore -p:PublishSingleFile=false -o artifacts/KAnimGui-win-x64
