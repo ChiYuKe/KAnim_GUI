@@ -26,6 +26,8 @@
         <SolidColorBrush x:Key="SubtleTextBrush" Color="#FF8A5B6C" />
         <SolidColorBrush x:Key="AccentBrush" Color="#FF6750A4" />
         <SolidColorBrush x:Key="SoftAccentBrush" Color="#FFFFF7FA" />
+        <SolidColorBrush x:Key="PreviewBackgroundBrush" Color="#FF20242B" />
+        <SolidColorBrush x:Key="PreviewPlaceholderBrush" Color="#FFC7D0DC" />
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
         <Style x:Key="SectionTitleText" TargetType="TextBlock">
@@ -253,7 +255,7 @@
                                         <Border
                                             Width="72"
                                             Height="72"
-                                            Background="{StaticResource SoftAccentBrush}"
+                                            Background="{StaticResource PreviewBackgroundBrush}"
                                             BorderBrush="{StaticResource PanelBorderBrush}"
                                             BorderThickness="1">
                                             <Grid>
@@ -261,7 +263,7 @@
                                                 <TextBlock
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    Foreground="{StaticResource SubtleTextBrush}"
+                                                    Foreground="{StaticResource PreviewPlaceholderBrush}"
                                                     Text="{Binding ThumbnailStatusText}"
                                                     TextAlignment="Center"
                                                     TextWrapping="Wrap">
@@ -331,7 +333,7 @@
                             Grid.Row="1"
                             Height="230"
                             Margin="0,14,0,10"
-                            Background="{StaticResource SoftAccentBrush}"
+                            Background="{StaticResource PreviewBackgroundBrush}"
                             BorderBrush="{StaticResource PanelBorderBrush}"
                             BorderThickness="1">
                             <Grid>
@@ -339,7 +341,7 @@
                                 <TextBlock
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    Foreground="{StaticResource SubtleTextBrush}"
+                                    Foreground="{StaticResource PreviewPlaceholderBrush}"
                                     Text="{Binding ThumbnailStatusText}"
                                     TextAlignment="Center"
                                     TextWrapping="Wrap">
