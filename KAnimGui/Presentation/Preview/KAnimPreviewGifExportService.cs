@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows.Media.Imaging;
 
@@ -9,27 +11,45 @@ public sealed record KAnimGifExportOptions(
     int Height,
     bool ShowCompletionNotification = true)
 {
-    public int GetDelayCentiseconds(double animationFramesPerSecond)
+    public double GetEffectiveFramesPerSecond(double animationFramesPerSecond)
     {
         double safeRate = animationFramesPerSecond > 0 &&
                           !double.IsNaN(animationFramesPerSecond) &&
                           !double.IsInfinity(animationFramesPerSecond)
             ? animationFramesPerSecond
             : 30;
+        return Math.Clamp(safeRate * PlaybackSpeed, 0.01, 100);
+    }
+
+    public int GetDelayCentiseconds(double animationFramesPerSecond)
+    {
         return Math.Clamp(
-            (int)Math.Round(100d / (safeRate * PlaybackSpeed)),
+            (int)Math.Round(100d / GetEffectiveFramesPerSecond(animationFramesPerSecond)),
             1,
             ushort.MaxValue);
     }
 }
 
 /// <summary>
-/// Encodes rendered animation frames as a looping GIF without requiring an
-/// external executable such as FFmpeg.
+/// Encodes rendered animation frames as a looping GIF through FFmpeg's
+/// palettegen/paletteuse pipeline for higher-quality colors, dithering, and
+/// Lanczos scaling than the WPF GIF encoder.
 /// </summary>
 public sealed class KAnimPreviewGifExportService
 {
-    public Task ExportAsync(
+    private readonly Func<string> resolveFfmpeg;
+
+    public KAnimPreviewGifExportService()
+        : this(new FfmpegExecutableProvider().Resolve)
+    {
+    }
+
+    internal KAnimPreviewGifExportService(Func<string> resolveFfmpeg)
+    {
+        this.resolveFfmpeg = resolveFfmpeg ?? throw new ArgumentNullException(nameof(resolveFfmpeg));
+    }
+
+    public async Task ExportAsync(
         int frameCount,
         double animationFramesPerSecond,
         Func<int, BitmapSource> renderFrame,
@@ -44,71 +64,173 @@ public sealed class KAnimPreviewGifExportService
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         ValidateOptions(options);
 
-        var encoder = new GifBitmapEncoder();
-        int delayCentiseconds = options.GetDelayCentiseconds(animationFramesPerSecond);
-        for (int index = 0; index < frameCount; index++)
+        string ffmpegPath = resolveFfmpeg();
+        string? outputDirectory = Path.GetDirectoryName(Path.GetFullPath(outputPath));
+        if (!string.IsNullOrWhiteSpace(outputDirectory))
         {
+            Directory.CreateDirectory(outputDirectory);
+        }
+
+        string temporaryDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "KAnimGui",
+            $"gif-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(temporaryDirectory);
+
+        try
+        {
+            string framePattern = Path.Combine(temporaryDirectory, "frame_%06d.png");
+            for (int index = 0; index < frameCount; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                BitmapSource source = renderFrame(index) ??
+                    throw new InvalidOperationException($"无法渲染第 {index + 1} 帧。");
+                SavePng(source, Path.Combine(temporaryDirectory, $"frame_{index:D6}.png"));
+                progress?.Report(index + 1);
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
-            BitmapSource source = renderFrame(index) ??
-                throw new InvalidOperationException($"无法渲染第 {index + 1} 帧。");
-            BitmapSource resized = Resize(source, options.Width, options.Height);
-            encoder.Frames.Add(CreateGifFrame(
-                resized,
-                delayCentiseconds,
-                index == 0));
-            progress?.Report(index + 1);
+            string palettePath = Path.Combine(temporaryDirectory, "palette.png");
+            string temporaryOutputPath = Path.Combine(temporaryDirectory, "output.gif");
+            double effectiveFramesPerSecond = options.GetEffectiveFramesPerSecond(animationFramesPerSecond);
 
+            await RunFfmpegAsync(
+                ffmpegPath,
+                BuildPaletteArguments(
+                    framePattern,
+                    palettePath,
+                    effectiveFramesPerSecond,
+                    options.Width,
+                    options.Height),
+                cancellationToken).ConfigureAwait(false);
+
+            await RunFfmpegAsync(
+                ffmpegPath,
+                BuildGifArguments(
+                    framePattern,
+                    palettePath,
+                    temporaryOutputPath,
+                    effectiveFramesPerSecond,
+                    options.Width,
+                    options.Height),
+                cancellationToken).ConfigureAwait(false);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            File.Copy(temporaryOutputPath, outputPath, overwrite: true);
         }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        string? directory = Path.GetDirectoryName(Path.GetFullPath(outputPath));
-        if (!string.IsNullOrWhiteSpace(directory))
+        finally
         {
-            Directory.CreateDirectory(directory);
+            TryDeleteDirectory(temporaryDirectory);
+        }
+    }
+
+    private static IReadOnlyList<string> BuildPaletteArguments(
+        string framePattern,
+        string palettePath,
+        double framesPerSecond,
+        int width,
+        int height)
+    {
+        return new[]
+        {
+            "-hide_banner",
+            "-loglevel", "error",
+            "-y",
+            "-framerate", FormatFramesPerSecond(framesPerSecond),
+            "-start_number", "0",
+            "-i", framePattern,
+            "-vf", $"scale={width}:{height}:flags=lanczos,palettegen=max_colors=256:reserve_transparent=1:stats_mode=full",
+            palettePath
+        };
+    }
+
+    private static IReadOnlyList<string> BuildGifArguments(
+        string framePattern,
+        string palettePath,
+        string outputPath,
+        double framesPerSecond,
+        int width,
+        int height)
+    {
+        return new[]
+        {
+            "-hide_banner",
+            "-loglevel", "error",
+            "-y",
+            "-framerate", FormatFramesPerSecond(framesPerSecond),
+            "-start_number", "0",
+            "-i", framePattern,
+            "-i", palettePath,
+            "-filter_complex",
+            $"[0:v]scale={width}:{height}:flags=lanczos:force_original_aspect_ratio=disable[scaled];[scaled][1:v]paletteuse=dither=sierra2_4a:diff_mode=rectangle:alpha_threshold=128",
+            "-loop", "0",
+            "-f", "gif",
+            outputPath
+        };
+    }
+
+    private static async Task RunFfmpegAsync(
+        string executablePath,
+        IReadOnlyList<string> arguments,
+        CancellationToken cancellationToken)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = executablePath,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true
+        };
+        foreach (string argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
         }
 
+        using var process = new Process { StartInfo = startInfo };
+        try
+        {
+            if (!process.Start())
+            {
+                throw new InvalidOperationException("无法启动 FFmpeg。");
+            }
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            throw new InvalidOperationException("无法启动内置 FFmpeg，请检查程序文件是否完整。", ex);
+        }
+
+        Task<string> errorTask = process.StandardError.ReadToEndAsync();
+        try
+        {
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            TryKill(process);
+            throw;
+        }
+
+        string error = await errorTask.ConfigureAwait(false);
+        if (process.ExitCode != 0)
+        {
+            string detail = string.IsNullOrWhiteSpace(error)
+                ? $"退出码 {process.ExitCode}"
+                : error.Trim();
+            throw new InvalidOperationException($"FFmpeg GIF 导出失败：{detail}");
+        }
+    }
+
+    private static void SavePng(BitmapSource source, string outputPath)
+    {
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(source));
         using var stream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
         encoder.Save(stream);
-        return Task.CompletedTask;
     }
 
-    private static BitmapFrame CreateGifFrame(
-        BitmapSource source,
-        int delayCentiseconds,
-        bool includeLoopExtension)
-    {
-        var metadata = new BitmapMetadata("gif");
-        metadata.SetQuery("/grctlext/Delay", (ushort)delayCentiseconds);
-        metadata.SetQuery("/grctlext/Disposal", (byte)2);
-        if (includeLoopExtension)
-        {
-            metadata.SetQuery("/appext/Application", new byte[]
-            {
-                (byte)'N', (byte)'E', (byte)'T', (byte)'S', (byte)'C',
-                (byte)'A', (byte)'P', (byte)'E', (byte)'2', (byte)'.',
-                (byte)'0'
-            });
-            metadata.SetQuery("/appext/Data", new byte[] { 1, 0, 0 });
-        }
-
-        return BitmapFrame.Create(source, null, metadata, null);
-    }
-
-    private static BitmapSource Resize(BitmapSource source, int width, int height)
-    {
-        if (source.PixelWidth == width && source.PixelHeight == height)
-        {
-            return source;
-        }
-
-        var scaled = new TransformedBitmap(
-            source,
-            new System.Windows.Media.ScaleTransform(
-                (double)width / source.PixelWidth,
-                (double)height / source.PixelHeight));
-        scaled.Freeze();
-        return scaled;
-    }
+    private static string FormatFramesPerSecond(double value) =>
+        value.ToString("0.###", CultureInfo.InvariantCulture);
 
     private static void ValidateOptions(KAnimGifExportOptions options)
     {
@@ -122,6 +244,44 @@ public sealed class KAnimPreviewGifExportService
         if (options.Width is < 16 or > 4096 || options.Height is < 16 or > 4096)
         {
             throw new ArgumentOutOfRangeException(nameof(options), "GIF 尺寸必须在 16 到 4096 像素之间。");
+        }
+    }
+
+    private static void TryKill(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // The process already exited while cancellation was being handled.
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // A failed kill must not hide the original cancellation or process error.
+        }
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, recursive: true);
+            }
+        }
+        catch (IOException)
+        {
+            // Temporary files are best-effort cleanup and must not mask export errors.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Temporary files are best-effort cleanup and must not mask export errors.
         }
     }
 }

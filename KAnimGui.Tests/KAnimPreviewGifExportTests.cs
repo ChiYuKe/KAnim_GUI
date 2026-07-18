@@ -24,4 +24,18 @@ public sealed class KAnimPreviewGifExportTests
 
         Assert.True(options.ShowCompletionNotification);
     }
+
+    [Theory]
+    [InlineData(30, 0.5, 15)]
+    [InlineData(30, 1.0, 30)]
+    [InlineData(60, 2.0, 100)]
+    public void GifOptions_ClampsEffectiveFpsToGifTimingLimit(
+        double animationFps,
+        double playbackSpeed,
+        double expectedFps)
+    {
+        var options = new KAnimGifExportOptions(playbackSpeed, 768, 768);
+
+        Assert.Equal(expectedFps, options.GetEffectiveFramesPerSecond(animationFps));
+    }
 }

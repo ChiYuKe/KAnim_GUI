@@ -18,6 +18,14 @@
     <EmbeddedResource Include="Resources\ONIResourceBridge-clean.zip">
       <LogicalName>KAnimGui.ONIResourceBridge-clean.zip</LogicalName>
     </EmbeddedResource>
+    <Content Include="Resources\ffmpeg\ffmpeg.exe.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Resources\ffmpeg\LICENSE-FFMPEG.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
