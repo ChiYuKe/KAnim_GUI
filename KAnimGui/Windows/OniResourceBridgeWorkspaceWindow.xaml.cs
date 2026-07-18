@@ -100,6 +100,7 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
         }
 
         previewWindow = null;
+        viewModel.CleanupAnimationPreviewCache();
     }
 
     private void OpenExportFolder_Click(object sender, RoutedEventArgs e)

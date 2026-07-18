@@ -26,6 +26,10 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     private bool initialized;
     private bool applyingLayout;
 
+    private string PreviewCacheDirectory => Path.Combine(
+        paths.ResourceBridgeCacheDirectory,
+        "Preview");
+
     public OniResourceBridgeViewModel(
         IResourceBridgeClient client,
         IResourceBridgeExportService exporter,
@@ -192,6 +196,8 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             return;
         }
 
+        // Remove preview files left behind by an interrupted previous session.
+        CleanupAnimationPreviewCache();
         initialized = true;
         await RefreshAsync().ConfigureAwait(true);
     }
@@ -217,6 +223,10 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
         SetBusy(true, $"正在准备 {row.Name} 的动画预览...");
         operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        CleanupAnimationPreviewCache();
+        string previewDirectory = Path.Combine(
+            PreviewCacheDirectory,
+            Guid.NewGuid().ToString("N"));
         try
         {
             BridgeExportRequest request = await PrepareExportRequestAsync(
@@ -224,13 +234,19 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
                 operationCancellation.Token).ConfigureAwait(true);
             request = request with
             {
-                OutputDirectory = Path.Combine(paths.ResourceBridgeCacheDirectory, "Preview")
+                OutputDirectory = previewDirectory
             };
             ExportArtifact artifact = await exporter.ExportAsync(
                 request,
                 operationCancellation.Token).ConfigureAwait(true);
             StatusText = $"已准备 {row.Name} 的动画预览";
             return artifact;
+        }
+        catch
+        {
+            // If preparation failed, do not leave a partial preview package behind.
+            TryDeleteDirectory(previewDirectory);
+            throw;
         }
         finally
         {
@@ -681,12 +697,37 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         thumbnailCancellation = null;
     }
 
+    /// <summary>
+    /// Deletes the temporary KAnim files generated for the preview window.
+    /// </summary>
+    public void CleanupAnimationPreviewCache() => TryDeleteDirectory(PreviewCacheDirectory);
+
+    private static void TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, recursive: true);
+            }
+        }
+        catch (IOException)
+        {
+            // Preview cleanup is best effort and must not interrupt closing the UI.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Preview cleanup is best effort and must not interrupt closing the UI.
+        }
+    }
+
     public void Dispose()
     {
         operationCancellation?.Cancel();
         operationCancellation?.Dispose();
         operationCancellation = null;
         CancelThumbnailLoads();
+        CleanupAnimationPreviewCache();
     }
 }
 
