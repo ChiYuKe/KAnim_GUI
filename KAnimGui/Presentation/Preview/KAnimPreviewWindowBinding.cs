@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
@@ -32,6 +33,7 @@ public sealed class KAnimPreviewWindowBinding
         var treeView = Find<TreeView>("BuildTreeView");
         var dropCard = Find<Card>("DropCard");
         var previewSurface = Find<Border>("PreviewSurface");
+        var viewport = Find<AnimationViewport>("PreviewViewport");
         var frameList = Find<ListBox>("FrameListBox");
         var elementList = Find<ListBox>("ElementListBox");
         var animation = Find<ComboBox>("AnimationComboBox");
@@ -70,6 +72,17 @@ public sealed class KAnimPreviewWindowBinding
         animation.PreviewMouseWheel += (_, e) =>
         {
             playback.OnAnimationMouseWheel(e.Delta);
+            e.Handled = true;
+        };
+        root.PreviewKeyDown += (_, e) =>
+        {
+            if (!IsResetViewKey(e) || e.IsRepeat || IsTextInputFocused())
+            {
+                return;
+            }
+
+            viewport.ResetTransform();
+            viewport.Focus();
             e.Handled = true;
         };
         previous.Click += (_, _) => playback.OnPreviousFrame();
@@ -125,4 +138,11 @@ public sealed class KAnimPreviewWindowBinding
             }
         }
     }
+
+    private static bool IsResetViewKey(KeyEventArgs e) =>
+        e.Key == Key.H ||
+        (e.Key == Key.ImeProcessed && e.ImeProcessedKey == Key.H);
+
+    private static bool IsTextInputFocused() =>
+        Keyboard.FocusedElement is TextBoxBase or PasswordBox or RichTextBox;
 }
