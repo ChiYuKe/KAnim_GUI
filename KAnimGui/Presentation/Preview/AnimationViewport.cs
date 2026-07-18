@@ -21,6 +21,10 @@ public sealed class AnimationViewport : Grid
     // cell spans 2 x 2 of those sub-cells.
     private const double GridSubCellSize = 100;
     private const double GameCellSize = GridSubCellSize * 2;
+    // Keep the coordinate grid focused around the origin. Eight ONI cells
+    // across means four cells on either side of the animation origin.
+    private const int VisibleGameGridSize = 8;
+    private const double VisibleGridHalfExtent = GameCellSize * VisibleGameGridSize / 2;
     private static readonly Color DefaultBackground = Color.FromRgb(150, 150, 150);
     private static readonly Color DarkBackground = Color.FromRgb(32, 36, 43);
     private static readonly Color DarkGridLine = Color.FromArgb(70, 255, 255, 255);
@@ -44,6 +48,10 @@ public sealed class AnimationViewport : Grid
     public AnimationViewport()
     {
         ClipToBounds = true;
+        // A transparent background keeps the whole preview surface hit-testable,
+        // including the empty space around the animation.
+        Background = Brushes.Transparent;
+        Focusable = true;
 
         surface = new Grid
         {
@@ -89,6 +97,7 @@ public sealed class AnimationViewport : Grid
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseMove += OnMouseMove;
         MouseLeftButtonUp += OnMouseLeftButtonUp;
+        KeyDown += OnKeyDown;
     }
 
     public ImageSource? ImageSource
@@ -170,12 +179,14 @@ public sealed class AnimationViewport : Grid
 
     private void OnMouseWheel(object sender, MouseWheelEventArgs e)
     {
+        Focus();
         SetZoom(Zoom * (e.Delta > 0 ? 1.12 : 1 / 1.12));
         e.Handled = true;
     }
 
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        Focus();
         if (e.ClickCount == 2)
         {
             ResetTransform();
@@ -187,6 +198,15 @@ public sealed class AnimationViewport : Grid
         lastPanPoint = e.GetPosition(this);
         CaptureMouse();
         e.Handled = true;
+    }
+
+    private void OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.H && !e.IsRepeat)
+        {
+            ResetTransform();
+            e.Handled = true;
+        }
     }
 
     private void OnMouseMove(object sender, MouseEventArgs e)
@@ -260,20 +280,27 @@ public sealed class AnimationViewport : Grid
             double height,
             double scale)
         {
+            double extent = VisibleGridHalfExtent * scale;
+            double minX = Math.Max(0, Origin.X - extent);
+            double maxX = Math.Min(width, Origin.X + extent);
+            double minY = Math.Max(0, Origin.Y - extent);
+            double maxY = Math.Min(height, Origin.Y + extent);
             DrawLines(
                 drawingContext,
                 pen,
-                width,
-                x => new Point(x, 0),
-                x => new Point(x, height),
+                minX,
+                maxX,
+                x => new Point(x, minY),
+                x => new Point(x, maxY),
                 GridSubCellSize * scale,
                 Origin.X);
             DrawLines(
                 drawingContext,
                 gameGridPen,
-                width,
-                x => new Point(x, 0),
-                x => new Point(x, height),
+                minX,
+                maxX,
+                x => new Point(x, minY),
+                x => new Point(x, maxY),
                 GameCellSize * scale,
                 Origin.X);
         }
@@ -286,20 +313,27 @@ public sealed class AnimationViewport : Grid
             double height,
             double scale)
         {
+            double extent = VisibleGridHalfExtent * scale;
+            double minY = Math.Max(0, Origin.Y - extent);
+            double maxY = Math.Min(height, Origin.Y + extent);
+            double minX = Math.Max(0, Origin.X - extent);
+            double maxX = Math.Min(width, Origin.X + extent);
             DrawLines(
                 drawingContext,
                 pen,
-                height,
-                y => new Point(0, y),
-                y => new Point(width, y),
+                minY,
+                maxY,
+                y => new Point(minX, y),
+                y => new Point(maxX, y),
                 GridSubCellSize * scale,
                 Origin.Y);
             DrawLines(
                 drawingContext,
                 gameGridPen,
-                height,
-                y => new Point(0, y),
-                y => new Point(width, y),
+                minY,
+                maxY,
+                y => new Point(minX, y),
+                y => new Point(maxX, y),
                 GameCellSize * scale,
                 Origin.Y);
         }
@@ -307,15 +341,20 @@ public sealed class AnimationViewport : Grid
         private void DrawLines(
             DrawingContext drawingContext,
             Pen pen,
-            double limit,
+            double minPosition,
+            double maxPosition,
             Func<double, Point> startPoint,
             Func<double, Point> endPoint,
             double spacing,
             double originCoordinate)
         {
             double first = originCoordinate - Math.Ceiling(originCoordinate / spacing) * spacing;
+            if (first < minPosition)
+            {
+                first += Math.Ceiling((minPosition - first) / spacing) * spacing;
+            }
 
-            for (double position = first; position <= limit; position += spacing)
+            for (double position = first; position <= maxPosition + 0.01; position += spacing)
             {
                 if (Math.Abs(position - originCoordinate) > 0.01)
                 {
