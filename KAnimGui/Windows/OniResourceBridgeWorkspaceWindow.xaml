@@ -223,7 +223,7 @@
                                 <TextBlock
                                     Margin="0,3,0,0"
                                     Foreground="{StaticResource SubtleTextBrush}"
-                                    Text="缩略图按需从游戏资源桥加载，选中资源会优先显示。" />
+                                    Text="缩略图随列表滚动按需加载，选中资源会优先显示。" />
                             </StackPanel>
                             <TextBlock
                                 Grid.Column="1"
@@ -239,6 +239,8 @@
                             ItemsSource="{Binding FilteredResources}"
                             SelectedItem="{Binding SelectedResource, Mode=TwoWay}"
                             SelectionChanged="ResourceListView_SelectionChanged"
+                            Loaded="ResourceListView_Loaded"
+                            ScrollViewer.ScrollChanged="ResourceListView_ScrollChanged"
                             SelectionMode="Extended"
                             ScrollViewer.CanContentScroll="True"
                             VirtualizingPanel.IsVirtualizing="True"

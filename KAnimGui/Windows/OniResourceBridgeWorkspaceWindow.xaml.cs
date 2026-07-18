@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Threading;
 using KAnimGui.Application.Platform;
 using KAnimGui.Application.ResourceBridge;
 using KAnimGui.Core;
@@ -29,6 +31,7 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
         this.services = services ?? throw new ArgumentNullException(nameof(services));
         InitializeComponent();
         DataContext = viewModel;
+        viewModel.FilteredResources.CollectionChanged += FilteredResources_CollectionChanged;
         viewModel.BridgeUpdateAvailable += ViewModel_BridgeUpdateAvailable;
         Loaded += Window_Loaded;
         Closed += Window_Closed;
@@ -80,8 +83,116 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
 
     private void Window_Closed(object? sender, EventArgs e)
     {
+        viewModel.FilteredResources.CollectionChanged -= FilteredResources_CollectionChanged;
         viewModel.BridgeUpdateAvailable -= ViewModel_BridgeUpdateAvailable;
         viewModel.Dispose();
+    }
+
+    private bool thumbnailViewportUpdateQueued;
+
+    private void ResourceListView_Loaded(object sender, RoutedEventArgs e) => ScheduleVisibleThumbnailLoad();
+
+    private void ResourceListView_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (e.VerticalChange != 0 || e.ViewportHeightChange != 0 || e.ExtentHeightChange != 0)
+        {
+            ScheduleVisibleThumbnailLoad();
+        }
+    }
+
+    private void FilteredResources_CollectionChanged(
+        object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e) =>
+        ScheduleVisibleThumbnailLoad();
+
+    private void ScheduleVisibleThumbnailLoad()
+    {
+        if (thumbnailViewportUpdateQueued || !IsLoaded)
+        {
+            return;
+        }
+
+        thumbnailViewportUpdateQueued = true;
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(() =>
+            {
+                thumbnailViewportUpdateQueued = false;
+                viewModel.LoadThumbnailsForVisibleRows(GetVisibleResourceRows());
+            }));
+    }
+
+    private IReadOnlyList<BridgeResourceRowViewModel> GetVisibleResourceRows()
+    {
+        ScrollViewer? scrollViewer = FindVisualChildren<ScrollViewer>(ResourceListView).FirstOrDefault();
+        if (scrollViewer is null)
+        {
+            return [];
+        }
+
+        var visibleIndexes = new List<int>();
+        foreach (ListViewItem item in FindVisualChildren<ListViewItem>(ResourceListView))
+        {
+            if (item.DataContext is not BridgeResourceRowViewModel)
+            {
+                continue;
+            }
+
+            try
+            {
+                Rect bounds = item.TransformToAncestor(scrollViewer)
+                    .TransformBounds(new Rect(new Point(0, 0), item.RenderSize));
+                if (bounds.Bottom >= 0 && bounds.Top <= scrollViewer.ViewportHeight)
+                {
+                    int index = ResourceListView.ItemContainerGenerator.IndexFromContainer(item);
+                    if (index >= 0)
+                    {
+                        visibleIndexes.Add(index);
+                    }
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // The container can be recycled while a scroll event is raised.
+            }
+        }
+
+        if (visibleIndexes.Count == 0)
+        {
+            return [];
+        }
+
+        const int preloadBuffer = 4;
+        int first = Math.Max(0, visibleIndexes.Min() - preloadBuffer);
+        int last = Math.Min(
+            viewModel.FilteredResources.Count - 1,
+            visibleIndexes.Max() + preloadBuffer);
+        return Enumerable.Range(first, last - first + 1)
+            .Select(index => viewModel.FilteredResources[index])
+            .ToList();
+    }
+
+    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        if (root is null)
+        {
+            yield break;
+        }
+
+        for (int index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+        {
+            DependencyObject child = VisualTreeHelper.GetChild(root, index);
+            if (child is T match)
+            {
+                yield return match;
+            }
+
+            foreach (T descendant in FindVisualChildren<T>(child))
+            {
+                yield return descendant;
+            }
+        }
     }
 
     private void ViewModel_BridgeUpdateAvailable(object? sender, EventArgs e)

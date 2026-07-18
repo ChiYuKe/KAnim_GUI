@@ -300,7 +300,6 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
                 : snapshot.Status.AssetsReady
                     ? $"在线资源已就绪，可导出 {AllRows.Count(row => row.CanExport)} 个资源。"
                     : $"资源桥已连接，但游戏资源可能还在加载：已加载 {snapshot.Animations.Count}，离线 {snapshot.OfflineAnimations.Count}";
-            StartThumbnailLoads(FilteredResources.Take(128).ToList());
             if (IsBridgeUpdateAvailable)
             {
                 BridgeUpdateAvailable?.Invoke(this, EventArgs.Empty);
@@ -530,10 +529,6 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
         OnPropertyChanged(nameof(FilterSummaryText));
         NotifyExportStateChanged();
-        if (snapshot != null && !IsBusy)
-        {
-            StartThumbnailLoads(FilteredResources.Take(128).ToList());
-        }
     }
 
     private List<BridgeResourceRowViewModel> AllRows { get; } = [];
@@ -557,6 +552,32 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
         thumbnailCancellation = new CancellationTokenSource();
         _ = LoadThumbnailsAsync(rows, thumbnailCancellation.Token);
+    }
+
+    /// <summary>
+    /// Loads only the rows currently visible in the virtualized resource list,
+    /// plus the small buffer supplied by the view. Scrolling cancels the old
+    /// queue so requests follow the user's viewport instead of preloading the
+    /// entire result set.
+    /// </summary>
+    public void LoadThumbnailsForVisibleRows(IEnumerable<BridgeResourceRowViewModel> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        IReadOnlyList<BridgeResourceRowViewModel> targets = rows
+            .Distinct()
+            .ToList();
+        if (SelectedResource is not null && !targets.Contains(SelectedResource))
+        {
+            targets = targets.Append(SelectedResource).ToList();
+        }
+
+        if (targets.Count == 0)
+        {
+            CancelThumbnailLoads();
+            return;
+        }
+
+        StartThumbnailLoads(targets);
     }
 
     private void EnsureThumbnailLoaded(BridgeResourceRowViewModel row)

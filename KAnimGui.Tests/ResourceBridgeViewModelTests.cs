@@ -128,6 +128,7 @@ public sealed class ResourceBridgeViewModelTests
             new FakePathProvider());
 
         await viewModel.InitializeAsync();
+        viewModel.LoadThumbnailsForVisibleRows(viewModel.FilteredResources);
         await client.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         viewModel.Dispose();
@@ -149,9 +150,29 @@ public sealed class ResourceBridgeViewModelTests
             new FakePathProvider());
 
         await viewModel.InitializeAsync();
+        viewModel.LoadThumbnailsForVisibleRows(viewModel.FilteredResources);
         await client.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.InRange(client.MaximumConcurrency, 1, 8);
+    }
+
+    [Fact]
+    public async Task ViewModel_LoadsOnlyRowsRequestedByVisibleViewport()
+    {
+        var snapshot = CreateManyAnimationSnapshot(40);
+        var client = new CountingThumbnailClient(snapshot, expectedRequests: 3);
+        using var viewModel = new OniResourceBridgeViewModel(
+            client,
+            new FakeExportService(),
+            new InMemoryStateStore(),
+            new FakeThumbnailCache(),
+            new FakePathProvider());
+
+        await viewModel.InitializeAsync();
+        viewModel.LoadThumbnailsForVisibleRows(viewModel.FilteredResources.Take(3));
+        await client.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.InRange(client.MaximumConcurrency, 1, 3);
     }
 
     private static OniResourceBridgeViewModel CreateViewModel(
