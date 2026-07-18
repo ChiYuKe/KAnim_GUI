@@ -34,44 +34,6 @@
         <SolidColorBrush x:Key="GridLineBrush" Color="#FFE8DCE2" />
         <SolidColorBrush x:Key="PanelTitleBrush" Color="#FF4F2033" />
         <SolidColorBrush x:Key="SubtleTextBrush" Color="#FF8A5B6C" />
-        <DrawingBrush
-            x:Key="PreviewGridBrush"
-            TileMode="Tile"
-            Viewport="0,0,96,96"
-            ViewportUnits="Absolute">
-            <DrawingBrush.Drawing>
-                <DrawingGroup>
-                    <GeometryDrawing Brush="{StaticResource PreviewBackgroundBrush}">
-                        <GeometryDrawing.Geometry>
-                            <RectangleGeometry Rect="0,0,96,96" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing>
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#55FFFFFF" Thickness="1" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <GeometryGroup>
-                                <LineGeometry StartPoint="48,0" EndPoint="48,96" />
-                                <LineGeometry StartPoint="0,48" EndPoint="96,48" />
-                            </GeometryGroup>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing>
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#A5FFFFFF" Thickness="1.4" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <GeometryGroup>
-                                <LineGeometry StartPoint="0,0" EndPoint="96,0" />
-                                <LineGeometry StartPoint="0,0" EndPoint="0,96" />
-                            </GeometryGroup>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup>
-            </DrawingBrush.Drawing>
-        </DrawingBrush>
-
         <Style BasedOn="{StaticResource MaterialDesignNavigationRailTabItem}" TargetType="TabItem">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Padding" Value="16,12" />
@@ -267,7 +229,7 @@
                 Grid.Column="1"
                 Margin="0,0,10,0"
                 AllowDrop="True"
-                Background="{StaticResource PreviewGridBrush}"
+                Background="{StaticResource PreviewBackgroundBrush}"
                 BorderBrush="{StaticResource PreviewBorderBrush}"
                 BorderThickness="3"
                 CornerRadius="8"

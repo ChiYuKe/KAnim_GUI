@@ -144,6 +144,8 @@ public sealed class KAnimPreviewSessionController : IDisposable
         }
 
         KAnimFrame frame = bank.Frames[frameIndex];
+        PreviewCanvasTransform canvasTransform = renderService.GetCanvasTransform(bank);
+        viewport.SetAnimationOrigin(new System.Windows.Point(canvasTransform.OriginX, canvasTransform.OriginY));
         viewport.ImageSource = renderService.RenderAnimationFrame(
             bank,
             frameIndex,

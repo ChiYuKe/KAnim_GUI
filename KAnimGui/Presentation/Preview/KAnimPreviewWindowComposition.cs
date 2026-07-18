@@ -139,7 +139,7 @@ public sealed class KAnimPreviewWindowComposition : IDisposable
         ?? throw new InvalidOperationException($"Preview control '{name}' was not found.");
 
     private void SetPreviewBackground(bool dark) =>
-        Find<Border>("PreviewSurface").Background = AnimationViewport.CreateGridBrush(dark);
+        Find<AnimationViewport>("PreviewViewport").SetBackground(dark);
 
     private void StopPlayback() => playbackCoordinator.Stop();
 

@@ -19,6 +19,8 @@ public readonly record struct PreviewRenderOptions(
     public bool HasInspectionOverlay => ShowOrigin || ShowBounds || (HighlightElement && SelectedElementIndex >= 0);
 }
 
+public readonly record struct PreviewCanvasTransform(double OriginX, double OriginY);
+
 /// <summary>
 /// WPF renderer and bounded image caches for animation frames.
 /// </summary>
@@ -70,19 +72,32 @@ public sealed class KAnimPreviewRenderService
         elementImageCache.Clear();
     }
 
+    public PreviewCanvasTransform GetCanvasTransform(KAnimBank bank)
+    {
+        ArgumentNullException.ThrowIfNull(bank);
+        const double center = AnimationCanvasSize / 2.0;
+        Rect contentBounds = GetAnimationContentBounds(bank);
+        double scale = PreviewGeometry.CalculateAnimationScale(
+            new PreviewRect(contentBounds.Left, contentBounds.Top, contentBounds.Width, contentBounds.Height),
+            AnimationCanvasSize);
+        return new PreviewCanvasTransform(
+            center - (contentBounds.Left + contentBounds.Width / 2.0) * scale,
+            center - (contentBounds.Top + contentBounds.Height / 2.0) * scale);
+    }
+
     private BitmapSource RenderAnimationFrame(KAnimFrame animFrame, PreviewRenderOptions options)
     {
         const int canvasSize = AnimationCanvasSize;
-        const double center = AnimationCanvasSize / 2.0;
         // Spriter keeps one stable coordinate system for the whole animation.
         // Fitting each frame independently makes the artwork jump whenever its
         // bounds change, which is especially visible on working/building loops.
-        var contentBounds = GetAnimationContentBounds(animFrame.Parent);
-        var scale = PreviewGeometry.CalculateAnimationScale(
+        PreviewCanvasTransform canvasTransform = GetCanvasTransform(animFrame.Parent);
+        Rect contentBounds = GetAnimationContentBounds(animFrame.Parent);
+        double scale = PreviewGeometry.CalculateAnimationScale(
             new PreviewRect(contentBounds.Left, contentBounds.Top, contentBounds.Width, contentBounds.Height),
             canvasSize);
-        var offsetX = center - (contentBounds.Left + contentBounds.Width / 2.0) * scale;
-        var offsetY = center - (contentBounds.Top + contentBounds.Height / 2.0) * scale;
+        var offsetX = canvasTransform.OriginX;
+        var offsetY = canvasTransform.OriginY;
 
         var visual = new DrawingVisual();
         using (var dc = visual.RenderOpen())

@@ -37,6 +37,8 @@ public sealed class KAnimPreviewTexturePresenter
             return;
         }
 
+        viewport.SetAnimationOrigin(new System.Windows.Point(384, 384));
+
         var visual = new DrawingVisual();
         using (DrawingContext dc = visual.RenderOpen())
         {
