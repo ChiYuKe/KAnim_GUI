@@ -171,10 +171,12 @@ public sealed class AnimationViewport : Grid
         fitTransform.ScaleX = fit;
         fitTransform.ScaleY = fit;
 
-        // The local surface is enlarged in the shorter dimension so the grid
-        // covers the whole viewport while the 768x768 animation remains centered.
-        surface.Width = width / fit;
-        surface.Height = height / fit;
+        // Keep the render surface as a fixed 768-unit canvas. The grid is a
+        // separate full-viewport layer, so enlarging this surface to fill the
+        // shorter dimension only creates an extra layout clipping boundary for
+        // wide textures when the window is resized.
+        surface.Width = CanvasSize;
+        surface.Height = CanvasSize;
         UpdateGridTransform();
     }
 
