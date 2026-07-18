@@ -132,6 +132,10 @@ public sealed class KAnimPreviewTreeController
 
         if (data.Texture is not null && showTextureView)
         {
+            // A texture/symbol selection must stay in texture inspection mode.
+            // Stop the active animation timer first; otherwise its next tick
+            // renders an animation frame over the texture view again.
+            stopPlayback();
             updateTexture(data.Texture, frames.ToArray(), pivots.ToArray());
         }
 
