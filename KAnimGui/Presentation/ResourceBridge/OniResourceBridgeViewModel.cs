@@ -19,6 +19,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     private readonly IResourceBridgeStateStore stateStore;
     private readonly IThumbnailCache thumbnailCache;
     private readonly IApplicationPathProvider paths;
+    private CancellationTokenSource? refreshCancellation;
     private CancellationTokenSource? operationCancellation;
     private CancellationTokenSource? thumbnailCancellation;
     private BridgeSnapshot? snapshot;
@@ -265,12 +266,14 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
         SetBusy(true, "正在连接游戏资源桥...");
         CancelThumbnailLoads();
+        using var refreshOperation = new CancellationTokenSource();
+        refreshCancellation = refreshOperation;
 
         try
         {
-            state = await stateStore.LoadAsync().ConfigureAwait(true);
+            state = await stateStore.LoadAsync(refreshOperation.Token).ConfigureAwait(true);
             SetExportLayoutText(state.ExportLayout);
-            snapshot = await client.GetSnapshotAsync().ConfigureAwait(true);
+            snapshot = await client.GetSnapshotAsync(refreshOperation.Token).ConfigureAwait(true);
             ConnectionText = $"已加载资源 {snapshot.Status.AnimationCount} / 游戏资源包 {snapshot.Status.ResourcePackageCount}";
 
             var rows = snapshot.AllResources
@@ -284,9 +287,17 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
                 : $"资源桥已连接，但游戏资源可能还在加载：已加载 {snapshot.Animations.Count}，离线 {snapshot.OfflineAnimations.Count}";
             StartThumbnailLoads(FilteredResources.Take(128).ToList());
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (refreshOperation.IsCancellationRequested)
         {
             StatusText = "操作已取消";
+        }
+        catch (OperationCanceledException)
+        {
+            snapshot = null;
+            FilteredResources.Clear();
+            ConnectionText = "未连接";
+            StatusText = "连接资源桥超时，请确认缺氧正在运行且已启用 ONI Resource Bridge 模组，然后点击刷新资源重试。";
+            NotifyExportStateChanged();
         }
         catch (Exception ex)
         {
@@ -298,6 +309,11 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
         }
         finally
         {
+            if (ReferenceEquals(refreshCancellation, refreshOperation))
+            {
+                refreshCancellation = null;
+            }
+
             SetBusy(false);
         }
     }
@@ -685,6 +701,7 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
     private void Cancel()
     {
+        refreshCancellation?.Cancel();
         operationCancellation?.Cancel();
         thumbnailCancellation?.Cancel();
         StatusText = "正在取消...";
@@ -723,6 +740,9 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        refreshCancellation?.Cancel();
+        refreshCancellation?.Dispose();
+        refreshCancellation = null;
         operationCancellation?.Cancel();
         operationCancellation?.Dispose();
         operationCancellation = null;

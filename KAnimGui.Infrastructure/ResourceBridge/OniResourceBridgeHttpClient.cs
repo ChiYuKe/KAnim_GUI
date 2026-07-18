@@ -35,48 +35,64 @@ public sealed class OniResourceBridgeHttpClient : IResourceBridgeClient
         overallTimeout.CancelAfter(SnapshotProbeTimeout);
 
         Exception? lastError = null;
-        foreach (string baseUrl in GetCandidateUrls())
+        try
         {
-            overallTimeout.Token.ThrowIfCancellationRequested();
-
-            using var candidateTimeout = CancellationTokenSource.CreateLinkedTokenSource(overallTimeout.Token);
-            candidateTimeout.CancelAfter(CandidateTimeout);
-
-            try
+            foreach (string baseUrl in GetCandidateUrls())
             {
-                BridgeStatusDto status = await GetJsonAsync<BridgeStatusDto>(
-                    baseUrl,
-                    "status",
-                    candidateTimeout.Token).ConfigureAwait(false);
-                AnimationListDto animations = await GetJsonAsync<AnimationListDto>(
-                    baseUrl,
-                    "assets/anims",
-                    candidateTimeout.Token).ConfigureAwait(false);
-                AnimationListDto offlineAnimations = await GetJsonAsync<AnimationListDto>(
-                    baseUrl,
-                    "assets/offline-anims",
-                    candidateTimeout.Token).ConfigureAwait(false);
-                SpriteListDto sprites = await GetJsonAsync<SpriteListDto>(
-                    baseUrl,
-                    "assets/sprites",
-                    candidateTimeout.Token).ConfigureAwait(false);
-                SpriteListDto offlineSprites = await GetJsonAsync<SpriteListDto>(
-                    baseUrl,
-                    "assets/offline-sprites",
-                    candidateTimeout.Token).ConfigureAwait(false);
+                overallTimeout.Token.ThrowIfCancellationRequested();
 
-                return new BridgeSnapshot(
-                    baseUrl,
-                    ToStatus(status),
-                    animations.Items.Select(item => ToAnimation(item, BridgeResourceSource.Loaded)).ToList(),
-                    offlineAnimations.Items.Select(item => ToAnimation(item, BridgeResourceSource.Offline)).ToList(),
-                    sprites.Items.Select(item => ToSprite(item, BridgeResourceSource.Loaded)).ToList(),
-                    offlineSprites.Items.Select(item => ToSprite(item, BridgeResourceSource.Offline)).ToList());
+                using var candidateTimeout = CancellationTokenSource.CreateLinkedTokenSource(overallTimeout.Token);
+                candidateTimeout.CancelAfter(CandidateTimeout);
+
+                try
+                {
+                    BridgeStatusDto status = await GetJsonAsync<BridgeStatusDto>(
+                        baseUrl,
+                        "status",
+                        candidateTimeout.Token).ConfigureAwait(false);
+                    AnimationListDto animations = await GetJsonAsync<AnimationListDto>(
+                        baseUrl,
+                        "assets/anims",
+                        candidateTimeout.Token).ConfigureAwait(false);
+                    AnimationListDto offlineAnimations = await GetJsonOrDefaultAsync(
+                        baseUrl,
+                        "assets/offline-anims",
+                        new AnimationListDto(true, []),
+                        candidateTimeout.Token).ConfigureAwait(false);
+                    SpriteListDto sprites = await GetJsonOrDefaultAsync(
+                        baseUrl,
+                        "assets/sprites",
+                        new SpriteListDto(true, []),
+                        candidateTimeout.Token).ConfigureAwait(false);
+                    SpriteListDto offlineSprites = await GetJsonOrDefaultAsync(
+                        baseUrl,
+                        "assets/offline-sprites",
+                        new SpriteListDto(true, []),
+                        candidateTimeout.Token).ConfigureAwait(false);
+
+                    return new BridgeSnapshot(
+                        baseUrl,
+                        ToStatus(status),
+                        animations.Items.Select(item => ToAnimation(item, BridgeResourceSource.Loaded)).ToList(),
+                        offlineAnimations.Items.Select(item => ToAnimation(item, BridgeResourceSource.Offline)).ToList(),
+                        sprites.Items.Select(item => ToSprite(item, BridgeResourceSource.Loaded)).ToList(),
+                        offlineSprites.Items.Select(item => ToSprite(item, BridgeResourceSource.Offline)).ToList());
+                }
+                catch (OperationCanceledException ex)
+                    when (!cancellationToken.IsCancellationRequested && !overallTimeout.IsCancellationRequested)
+                {
+                    lastError = new TimeoutException($"连接 {baseUrl} 超时。", ex);
+                }
+                catch (Exception ex) when (ex is HttpRequestException or IOException or JsonException)
+                {
+                    lastError = ex;
+                }
             }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or JsonException)
-            {
-                lastError = ex;
-            }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // The internal probe timeout is a connection failure, not a user cancellation.
+            throw new InvalidOperationException(BuildConnectionFailureMessage(lastError), lastError);
         }
 
         throw new InvalidOperationException(BuildConnectionFailureMessage(lastError), lastError);
@@ -154,54 +170,113 @@ public sealed class OniResourceBridgeHttpClient : IResourceBridgeClient
         return result ?? throw new JsonException($"资源桥返回空响应：{path}");
     }
 
+    private async Task<T> GetJsonOrDefaultAsync<T>(
+        string baseUrl,
+        string path,
+        T fallback,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await GetJsonAsync<T>(baseUrl, path, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Older bridge builds expose only /status, /assets/anims and /assets/kanim.
+            // Missing optional endpoints are represented as empty resource collections.
+            return fallback;
+        }
+    }
+
     private IEnumerable<string> GetCandidateUrls()
     {
-        string? statusUrl = TryReadStatusFileUrl();
-        if (!string.IsNullOrWhiteSpace(statusUrl))
+        var candidates = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        void AddCandidate(string value)
         {
-            yield return EnsureTrailingSlash(statusUrl);
+            string normalized = EnsureTrailingSlash(value);
+            if (seen.Add(normalized))
+            {
+                candidates.Add(normalized);
+            }
+        }
+
+        foreach (string statusUrl in TryReadStatusFileUrls())
+        {
+            AddCandidate(statusUrl);
+        }
+
+        // Prefer ports that are actually listening. This avoids waiting through every
+        // candidate port when the game is not running, while retaining the full range
+        // as a fallback for environments where listener enumeration is restricted.
+        foreach (int port in GetOccupiedPorts().Order())
+        {
+            AddCandidate($"http://127.0.0.1:{port}/");
         }
 
         for (int port = DefaultPort; port <= MaxPort; port++)
         {
-            yield return $"http://127.0.0.1:{port}/";
+            AddCandidate($"http://127.0.0.1:{port}/");
         }
+
+        return candidates;
     }
 
-    private string? TryReadStatusFileUrl()
+    private IReadOnlyList<string> TryReadStatusFileUrls()
     {
-        try
+        var urls = new List<string>();
+        foreach (string statusFilePath in GetStatusFilePaths())
         {
-            if (!File.Exists(paths.StatusFilePath))
+            try
             {
-                return null;
-            }
+                if (!File.Exists(statusFilePath))
+                {
+                    continue;
+                }
 
-            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(paths.StatusFilePath));
-            if (document.RootElement.TryGetProperty("url", out JsonElement urlElement))
-            {
-                return urlElement.GetString();
-            }
+                using JsonDocument document = JsonDocument.Parse(File.ReadAllText(statusFilePath));
+                if (document.RootElement.TryGetProperty("url", out JsonElement urlElement) &&
+                    !string.IsNullOrWhiteSpace(urlElement.GetString()))
+                {
+                    urls.Add(urlElement.GetString()!);
+                    continue;
+                }
 
-            if (document.RootElement.TryGetProperty("port", out JsonElement portElement) &&
-                portElement.TryGetInt32(out int port))
+                if (document.RootElement.TryGetProperty("port", out JsonElement portElement) &&
+                    portElement.TryGetInt32(out int port) &&
+                    port is >= DefaultPort and <= MaxPort)
+                {
+                    urls.Add($"http://127.0.0.1:{port}/");
+                }
+            }
+            catch (Exception ex) when (ex is IOException or JsonException)
             {
-                return $"http://127.0.0.1:{port}/";
+                // A stale or partially-written status file should not prevent port probing.
             }
         }
-        catch (Exception ex) when (ex is IOException or JsonException)
-        {
-            // A stale or partially-written status file should not prevent port probing.
-        }
 
-        return null;
+        return urls;
+    }
+
+    private IEnumerable<string> GetStatusFilePaths()
+    {
+        yield return paths.StatusFilePath;
+
+        // Older bundled bridge builds write this file to the system temp directory.
+        string legacyPath = Path.Combine(Path.GetTempPath(), "KAnimGui.ONIResourceBridge.json");
+        if (!string.Equals(legacyPath, paths.StatusFilePath, StringComparison.OrdinalIgnoreCase))
+        {
+            yield return legacyPath;
+        }
     }
 
     private string BuildConnectionFailureMessage(Exception? lastError)
     {
-        string statusFileText = File.Exists(paths.StatusFilePath)
-            ? $"检测到资源桥状态文件：{paths.StatusFilePath}"
-            : $"没有检测到资源桥状态文件：{paths.StatusFilePath}";
+        string[] statusFiles = GetStatusFilePaths().ToArray();
+        string[] existingStatusFiles = statusFiles.Where(File.Exists).ToArray();
+        string statusFileText = existingStatusFiles.Length > 0
+            ? $"检测到资源桥状态文件：{string.Join("、", existingStatusFiles)}"
+            : $"没有检测到资源桥状态文件：{string.Join("、", statusFiles)}";
         IReadOnlySet<int> occupiedPorts = GetOccupiedPorts();
         string portText = occupiedPorts.Count > 0
             ? $"检测到端口 {string.Join(", ", occupiedPorts.Order())} 正在被占用，但没有返回 ONI Resource Bridge 数据。"

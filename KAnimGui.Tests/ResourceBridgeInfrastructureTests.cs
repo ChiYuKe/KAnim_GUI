@@ -139,7 +139,7 @@ public sealed class ResourceBridgeInfrastructureTests
     }
 
     [Fact]
-    public async Task HttpClient_UsesStatusFileAndEscapesResourceQuery()
+    public async Task HttpClient_UsesStatusFileEscapesResourceQueryAndSupportsMissingOptionalEndpoints()
     {
         string root = CreateTempDirectory();
         try
@@ -157,9 +157,9 @@ public sealed class ResourceBridgeInfrastructureTests
                 {
                     "/status" => "{\"ok\":true,\"mod\":\"bridge\",\"version\":\"1\",\"port\":17871,\"assetsReady\":true,\"animCount\":1,\"resourcePackageCount\":1}",
                     "/assets/anims" => "{\"ok\":true,\"items\":[{\"id\":\"loaded-id\",\"name\":\"loaded\",\"bundle\":null,\"animCount\":1,\"frameCount\":2,\"elementCount\":3}]}",
-                    "/assets/offline-anims" => "{\"ok\":true,\"items\":[]}",
-                    "/assets/sprites" => "{\"ok\":true,\"items\":[]}",
-                    "/assets/offline-sprites" => "{\"ok\":true,\"items\":[]}",
+                    "/assets/offline-anims" => throw new HttpRequestException("not found", null, HttpStatusCode.NotFound),
+                    "/assets/sprites" => throw new HttpRequestException("not found", null, HttpStatusCode.NotFound),
+                    "/assets/offline-sprites" => throw new HttpRequestException("not found", null, HttpStatusCode.NotFound),
                     "/assets/kanim" => "{\"ok\":true,\"name\":\"hero unit\",\"source\":\"runtime\",\"animBytes\":\"YQ==\",\"buildBytes\":\"Yg==\",\"textures\":[],\"error\":null,\"detail\":null}",
                     _ => "{}"
                 });
