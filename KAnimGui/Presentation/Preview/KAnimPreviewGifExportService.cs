@@ -4,14 +4,22 @@ using System.Windows.Media.Imaging;
 namespace KAnimGui.Presentation.Preview;
 
 public sealed record KAnimGifExportOptions(
-    double FramesPerSecond,
+    double PlaybackSpeed,
     int Width,
     int Height)
 {
-    public int DelayCentiseconds => Math.Clamp(
-        (int)Math.Round(100d / FramesPerSecond),
-        1,
-        ushort.MaxValue);
+    public int GetDelayCentiseconds(double animationFramesPerSecond)
+    {
+        double safeRate = animationFramesPerSecond > 0 &&
+                          !double.IsNaN(animationFramesPerSecond) &&
+                          !double.IsInfinity(animationFramesPerSecond)
+            ? animationFramesPerSecond
+            : 30;
+        return Math.Clamp(
+            (int)Math.Round(100d / (safeRate * PlaybackSpeed)),
+            1,
+            ushort.MaxValue);
+    }
 }
 
 /// <summary>
@@ -22,6 +30,7 @@ public sealed class KAnimPreviewGifExportService
 {
     public Task ExportAsync(
         int frameCount,
+        double animationFramesPerSecond,
         Func<int, BitmapSource> renderFrame,
         KAnimGifExportOptions options,
         string outputPath,
@@ -35,13 +44,17 @@ public sealed class KAnimPreviewGifExportService
         ValidateOptions(options);
 
         var encoder = new GifBitmapEncoder();
+        int delayCentiseconds = options.GetDelayCentiseconds(animationFramesPerSecond);
         for (int index = 0; index < frameCount; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             BitmapSource source = renderFrame(index) ??
                 throw new InvalidOperationException($"无法渲染第 {index + 1} 帧。");
             BitmapSource resized = Resize(source, options.Width, options.Height);
-            encoder.Frames.Add(CreateGifFrame(resized, options.DelayCentiseconds, index == 0));
+            encoder.Frames.Add(CreateGifFrame(
+                resized,
+                delayCentiseconds,
+                index == 0));
             progress?.Report(index + 1);
 
         }
@@ -98,11 +111,11 @@ public sealed class KAnimPreviewGifExportService
 
     private static void ValidateOptions(KAnimGifExportOptions options)
     {
-        if (double.IsNaN(options.FramesPerSecond) ||
-            double.IsInfinity(options.FramesPerSecond) ||
-            options.FramesPerSecond is < 1 or > 100)
+        if (double.IsNaN(options.PlaybackSpeed) ||
+            double.IsInfinity(options.PlaybackSpeed) ||
+            options.PlaybackSpeed is < 0.1 or > 2.0)
         {
-            throw new ArgumentOutOfRangeException(nameof(options), "GIF 帧率必须在 1 到 100 FPS 之间。");
+            throw new ArgumentOutOfRangeException(nameof(options), "GIF 播放速度必须在 0.1 到 2.0 倍之间。");
         }
 
         if (options.Width is < 16 or > 4096 || options.Height is < 16 or > 4096)

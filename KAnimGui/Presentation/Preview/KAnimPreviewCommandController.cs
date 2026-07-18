@@ -191,8 +191,7 @@ public sealed class KAnimPreviewCommandController
             return;
         }
 
-        double defaultFps = bank.Rate > 0 ? Math.Min(bank.Rate, 100) : 30;
-        var optionsWindow = new GifExportOptionsWindow(defaultFps, 768, 768)
+        var optionsWindow = new GifExportOptionsWindow(1.0, 768, 768)
         {
             Owner = Window.GetWindow(treeView)
         };
@@ -229,6 +228,7 @@ public sealed class KAnimPreviewCommandController
             stopPlayback();
             await gifExportService.ExportAsync(
                 bank.Frames.Count,
+                bank.Rate,
                 index => renderService.RenderAnimationFrame(
                     bank,
                     index,

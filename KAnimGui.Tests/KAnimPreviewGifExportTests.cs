@@ -3,13 +3,17 @@ using KAnimGui.Presentation.Preview;
 public sealed class KAnimPreviewGifExportTests
 {
     [Theory]
-    [InlineData(25, 4)]
-    [InlineData(30, 3)]
-    [InlineData(100, 1)]
-    public void GifOptions_ConvertsFrameRateToGifDelay(double fps, int expectedDelayCentiseconds)
+    [InlineData(30, 0.5, 7)]
+    [InlineData(30, 1.0, 3)]
+    [InlineData(30, 2.0, 2)]
+    [InlineData(60, 1.0, 2)]
+    public void GifOptions_ConvertsPlaybackSpeedToGifDelay(
+        double animationFps,
+        double playbackSpeed,
+        int expectedDelayCentiseconds)
     {
-        var options = new KAnimGifExportOptions(fps, 768, 768);
+        var options = new KAnimGifExportOptions(playbackSpeed, 768, 768);
 
-        Assert.Equal(expectedDelayCentiseconds, options.DelayCentiseconds);
+        Assert.Equal(expectedDelayCentiseconds, options.GetDelayCentiseconds(animationFps));
     }
 }

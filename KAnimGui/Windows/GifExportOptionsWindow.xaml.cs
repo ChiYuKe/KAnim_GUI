@@ -7,10 +7,10 @@ namespace KAnimGui.Windows;
 
 public partial class GifExportOptionsWindow : Window
 {
-    public GifExportOptionsWindow(double defaultFramesPerSecond, int defaultWidth, int defaultHeight)
+    public GifExportOptionsWindow(double defaultPlaybackSpeed, int defaultWidth, int defaultHeight)
     {
         InitializeComponent();
-        FrameRateTextBox.Text = defaultFramesPerSecond.ToString("0.##", CultureInfo.CurrentCulture);
+        PlaybackSpeedTextBox.Text = defaultPlaybackSpeed.ToString("0.##", CultureInfo.CurrentCulture);
         WidthTextBox.Text = defaultWidth.ToString(CultureInfo.InvariantCulture);
         HeightTextBox.Text = defaultHeight.ToString(CultureInfo.InvariantCulture);
     }
@@ -19,9 +19,10 @@ public partial class GifExportOptionsWindow : Window
 
     private void ExportButton_Click(object sender, RoutedEventArgs e)
     {
-        if (!TryParseDouble(FrameRateTextBox.Text, out double fps) || fps is < 1 or > 100)
+        if (!TryParseDouble(PlaybackSpeedTextBox.Text, out double playbackSpeed) ||
+            playbackSpeed is < 0.1 or > 2.0)
         {
-            ShowError("帧率必须是 1 到 100 之间的数字。");
+            ShowError("播放速度必须是 0.1 到 2.0 倍之间的数字。");
             return;
         }
 
@@ -39,7 +40,7 @@ public partial class GifExportOptionsWindow : Window
             return;
         }
 
-        Options = new KAnimGifExportOptions(fps, width, height);
+        Options = new KAnimGifExportOptions(playbackSpeed, width, height);
         DialogResult = true;
     }
 
