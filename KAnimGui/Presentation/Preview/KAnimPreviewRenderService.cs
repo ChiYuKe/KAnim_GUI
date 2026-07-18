@@ -28,6 +28,7 @@ public sealed class KAnimPreviewRenderService
     private const int MaxCachedAnimationFrames = 8;
     private const int MaxCachedElementImages = 256;
     private readonly BoundedLruCache<(KAnimBank Bank, int FrameIndex), BitmapSource> animationFrameCache = new(MaxCachedAnimationFrames);
+    private readonly BoundedLruCache<KAnimBank, Rect> animationBoundsCache = new(MaxCachedAnimationFrames);
     private readonly BoundedLruCache<string, BitmapSource> elementImageCache = new(MaxCachedElementImages);
     private KAnimPackage? data;
 
@@ -65,6 +66,7 @@ public sealed class KAnimPreviewRenderService
     public void ClearCaches()
     {
         animationFrameCache.Clear();
+        animationBoundsCache.Clear();
         elementImageCache.Clear();
     }
 
@@ -72,7 +74,10 @@ public sealed class KAnimPreviewRenderService
     {
         const int canvasSize = AnimationCanvasSize;
         const double center = AnimationCanvasSize / 2.0;
-        var contentBounds = CalculateFrameContentBounds(animFrame);
+        // Spriter keeps one stable coordinate system for the whole animation.
+        // Fitting each frame independently makes the artwork jump whenever its
+        // bounds change, which is especially visible on working/building loops.
+        var contentBounds = GetAnimationContentBounds(animFrame.Parent);
         var scale = PreviewGeometry.CalculateAnimationScale(
             new PreviewRect(contentBounds.Left, contentBounds.Top, contentBounds.Width, contentBounds.Height),
             canvasSize);
@@ -99,6 +104,30 @@ public sealed class KAnimPreviewRenderService
         rtb.Render(visual);
         rtb.Freeze();
         return rtb;
+    }
+
+    private Rect GetAnimationContentBounds(KAnimBank bank)
+    {
+        if (animationBoundsCache.TryGet(bank, out var cached))
+        {
+            return cached;
+        }
+
+        Rect? bounds = null;
+        foreach (var frame in bank.Frames)
+        {
+            if (frame.Elements.Count == 0)
+            {
+                continue;
+            }
+
+            Rect frameBounds = CalculateFrameContentBounds(frame);
+            bounds = bounds.HasValue ? Rect.Union(bounds.Value, frameBounds) : frameBounds;
+        }
+
+        Rect result = bounds ?? new Rect(-50, -50, 100, 100);
+        animationBoundsCache.Set(bank, result);
+        return result;
     }
 
     private Rect CalculateFrameContentBounds(KAnimFrame animFrame)
