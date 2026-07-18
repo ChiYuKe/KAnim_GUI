@@ -53,19 +53,4 @@
     <ProjectReference Include="..\KAnimGui.Infrastructure\KAnimGui.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Properties.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Properties.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Properties.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Properties.Designer.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-
 </Project>
