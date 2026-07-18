@@ -397,7 +397,8 @@
                             Margin="0,0,0,8"
                             DisplayMemberPath="Name"
                             Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                            materialDesign:HintAssist.Hint="动画" />
+                            materialDesign:HintAssist.Hint="动画"
+                            ToolTip="鼠标悬停后滚动切换动画" />
 
                         <StackPanel
                             Grid.Row="2"

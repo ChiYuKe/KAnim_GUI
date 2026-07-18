@@ -141,6 +141,33 @@ public sealed class KAnimPreviewPlaybackCoordinator : IDisposable
         }
     }
 
+    /// <summary>
+    /// Switches animations directly from the wheel while the pointer is over the animation selector.
+    /// Keeping this here ensures the same selection, playback, and rendering path is used as a click.
+    /// </summary>
+    public void OnAnimationMouseWheel(int delta)
+    {
+        if (delta == 0 || animationComboBox.Items.Count < 2)
+        {
+            return;
+        }
+
+        int currentIndex = animationComboBox.SelectedIndex;
+        if (currentIndex < 0)
+        {
+            currentIndex = 0;
+        }
+
+        int nextIndex = delta > 0
+            ? Math.Max(0, currentIndex - 1)
+            : Math.Min(animationComboBox.Items.Count - 1, currentIndex + 1);
+
+        if (nextIndex != animationComboBox.SelectedIndex)
+        {
+            animationComboBox.SelectedIndex = nextIndex;
+        }
+    }
+
     public void OnPlayPause()
     {
         if (CurrentBank is null || CurrentBank.Frames.Count == 0)

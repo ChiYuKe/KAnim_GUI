@@ -67,6 +67,11 @@ public sealed class KAnimPreviewWindowBinding
         frameList.SelectionChanged += (_, _) => playback.OnFrameListSelectionChanged(frameList.SelectedItem);
         elementList.SelectionChanged += (_, _) => playback.OnElementListSelectionChanged(elementList.SelectedItem);
         animation.SelectionChanged += (_, _) => playback.OnAnimationSelectionChanged();
+        animation.PreviewMouseWheel += (_, e) =>
+        {
+            playback.OnAnimationMouseWheel(e.Delta);
+            e.Handled = true;
+        };
         previous.Click += (_, _) => playback.OnPreviousFrame();
         playPause.Click += (_, _) => playback.OnPlayPause();
         next.Click += (_, _) => playback.OnNextFrame();
