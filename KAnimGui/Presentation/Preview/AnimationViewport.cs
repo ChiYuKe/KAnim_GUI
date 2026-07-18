@@ -8,8 +8,8 @@ namespace KAnimGui.Presentation.Preview;
 
 /// <summary>
 /// Dedicated preview surface for zooming, panning, and bitmap presentation.
-/// The image and the coordinate grid live on the same 768-unit canvas so they
-/// always share the exact same fit, zoom, and pan transforms.
+/// The image and the coordinate grid share the same 768-unit canvas transform
+/// while the grid itself fills the complete viewport.
 /// </summary>
 public sealed class AnimationViewport : Grid
 {
@@ -78,12 +78,12 @@ public sealed class AnimationViewport : Grid
         RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.LowQuality);
         RenderOptions.SetCachingHint(image, CachingHint.Cache);
 
-        surface.Children.Add(gridLayer);
         surface.Children.Add(image);
+        Children.Add(gridLayer);
         Children.Add(surface);
         SizeChanged += (_, _) => UpdateSurfaceLayout();
         UpdateSurfaceLayout();
-        UpdateGridOrigin();
+        UpdateGridTransform();
 
         MouseWheel += OnMouseWheel;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
@@ -104,6 +104,7 @@ public sealed class AnimationViewport : Grid
         double zoom = Math.Clamp(value, 0.25, 6.0);
         zoomTransform.ScaleX = zoom;
         zoomTransform.ScaleY = zoom;
+        UpdateGridTransform();
     }
 
     public void ResetTransform()
@@ -111,6 +112,7 @@ public sealed class AnimationViewport : Grid
         SetZoom(1.0);
         translateTransform.X = 0;
         translateTransform.Y = 0;
+        UpdateGridTransform();
     }
 
     /// <summary>
@@ -119,7 +121,7 @@ public sealed class AnimationViewport : Grid
     public void SetAnimationOrigin(Point origin)
     {
         animationOrigin = origin;
-        UpdateGridOrigin();
+        UpdateGridTransform();
     }
 
     public void SetBackground(bool dark)
@@ -144,19 +146,21 @@ public sealed class AnimationViewport : Grid
         // covers the whole viewport while the 768x768 animation remains centered.
         surface.Width = width / fit;
         surface.Height = height / fit;
-        // FrameworkElement does not always receive the Grid's stretched size
-        // when the sibling image has a fixed 768-unit canvas. Keep the grid
-        // layer explicitly sized so lines cover the complete preview surface.
-        gridLayer.Width = surface.Width;
-        gridLayer.Height = surface.Height;
-        UpdateGridOrigin();
+        UpdateGridTransform();
     }
 
-    private void UpdateGridOrigin()
+    private void UpdateGridTransform()
     {
         double left = Math.Max(0, (surface.Width - CanvasSize) / 2);
         double top = Math.Max(0, (surface.Height - CanvasSize) / 2);
-        gridLayer.Origin = new Point(left + animationOrigin.X, top + animationOrigin.Y);
+        double scale = fitTransform.ScaleX * zoomTransform.ScaleX;
+        Point viewportCenter = new(ActualWidth / 2, ActualHeight / 2);
+        Point localOrigin = new(left + animationOrigin.X, top + animationOrigin.Y);
+        Point surfaceCenter = new(surface.Width / 2, surface.Height / 2);
+        gridLayer.Origin = new Point(
+            viewportCenter.X + (localOrigin.X - surfaceCenter.X) * scale + translateTransform.X,
+            viewportCenter.Y + (localOrigin.Y - surfaceCenter.Y) * scale + translateTransform.Y);
+        gridLayer.GridScale = scale;
         gridLayer.SetPalette(
             darkBackground ? DarkBackground : DefaultBackground,
             darkBackground ? DarkGridLine : LightGridLine,
@@ -196,6 +200,7 @@ public sealed class AnimationViewport : Grid
         Vector delta = current - lastPanPoint;
         translateTransform.X += delta.X;
         translateTransform.Y += delta.Y;
+        UpdateGridTransform();
         lastPanPoint = current;
     }
 
@@ -213,6 +218,8 @@ public sealed class AnimationViewport : Grid
         private Color originLine = LightOriginLine;
 
         public Point Origin { get; set; } = new(CanvasSize / 2, CanvasSize / 2);
+
+        public double GridScale { get; set; } = 1;
 
         public void SetPalette(
             Color backgroundColor,
@@ -234,10 +241,11 @@ public sealed class AnimationViewport : Grid
             double height = Math.Max(RenderSize.Height, 1);
             drawingContext.DrawRectangle(new SolidColorBrush(background), null, new Rect(0, 0, width, height));
 
-            var gridPen = new Pen(new SolidColorBrush(gridLine), 1);
-            var gameGridPen = new Pen(new SolidColorBrush(gameGridLine), 1.35);
-            DrawVerticalLines(drawingContext, gridPen, gameGridPen, width, height);
-            DrawHorizontalLines(drawingContext, gridPen, gameGridPen, width, height);
+            double scale = Math.Max(GridScale, 0.001);
+            var gridPen = new Pen(new SolidColorBrush(gridLine), Math.Max(0.75, scale));
+            var gameGridPen = new Pen(new SolidColorBrush(gameGridLine), Math.Max(1, scale * 1.35));
+            DrawVerticalLines(drawingContext, gridPen, gameGridPen, width, height, scale);
+            DrawHorizontalLines(drawingContext, gridPen, gameGridPen, width, height, scale);
 
             var originPen = new Pen(new SolidColorBrush(originLine), 1.5);
             drawingContext.DrawLine(originPen, new Point(Origin.X, 0), new Point(Origin.X, height));
@@ -249,7 +257,8 @@ public sealed class AnimationViewport : Grid
             Pen pen,
             Pen gameGridPen,
             double width,
-            double height)
+            double height,
+            double scale)
         {
             DrawLines(
                 drawingContext,
@@ -257,7 +266,7 @@ public sealed class AnimationViewport : Grid
                 width,
                 x => new Point(x, 0),
                 x => new Point(x, height),
-                GridSubCellSize,
+                GridSubCellSize * scale,
                 Origin.X);
             DrawLines(
                 drawingContext,
@@ -265,7 +274,7 @@ public sealed class AnimationViewport : Grid
                 width,
                 x => new Point(x, 0),
                 x => new Point(x, height),
-                GameCellSize,
+                GameCellSize * scale,
                 Origin.X);
         }
 
@@ -274,7 +283,8 @@ public sealed class AnimationViewport : Grid
             Pen pen,
             Pen gameGridPen,
             double width,
-            double height)
+            double height,
+            double scale)
         {
             DrawLines(
                 drawingContext,
@@ -282,7 +292,7 @@ public sealed class AnimationViewport : Grid
                 height,
                 y => new Point(0, y),
                 y => new Point(width, y),
-                GridSubCellSize,
+                GridSubCellSize * scale,
                 Origin.Y);
             DrawLines(
                 drawingContext,
@@ -290,7 +300,7 @@ public sealed class AnimationViewport : Grid
                 height,
                 y => new Point(0, y),
                 y => new Point(width, y),
-                GameCellSize,
+                GameCellSize * scale,
                 Origin.Y);
         }
 
