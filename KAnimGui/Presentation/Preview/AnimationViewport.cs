@@ -144,6 +144,11 @@ public sealed class AnimationViewport : Grid
         // covers the whole viewport while the 768x768 animation remains centered.
         surface.Width = width / fit;
         surface.Height = height / fit;
+        // FrameworkElement does not always receive the Grid's stretched size
+        // when the sibling image has a fixed 768-unit canvas. Keep the grid
+        // layer explicitly sized so lines cover the complete preview surface.
+        gridLayer.Width = surface.Width;
+        gridLayer.Height = surface.Height;
         UpdateGridOrigin();
     }
 
