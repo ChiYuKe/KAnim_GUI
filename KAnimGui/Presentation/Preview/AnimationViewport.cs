@@ -14,12 +14,17 @@ namespace KAnimGui.Presentation.Preview;
 public sealed class AnimationViewport : Grid
 {
     private const double CanvasSize = 768;
-    private const double GridCellSize = 100;
+    // KAnim preview coordinates use 100-unit sub-cells, while one ONI world
+    // cell spans 2 x 2 of those sub-cells.
+    private const double GridSubCellSize = 100;
+    private const double GameCellSize = GridSubCellSize * 2;
     private static readonly Color DefaultBackground = Color.FromRgb(150, 150, 150);
     private static readonly Color DarkBackground = Color.FromRgb(32, 36, 43);
-    private static readonly Color DarkGridLine = Color.FromArgb(90, 255, 255, 255);
+    private static readonly Color DarkGridLine = Color.FromArgb(70, 255, 255, 255);
+    private static readonly Color DarkGameGridLine = Color.FromArgb(135, 255, 255, 255);
     private static readonly Color DarkOriginLine = Color.FromArgb(200, 255, 238, 100);
-    private static readonly Color LightGridLine = Color.FromArgb(105, 90, 90, 90);
+    private static readonly Color LightGridLine = Color.FromArgb(90, 90, 90, 90);
+    private static readonly Color LightGameGridLine = Color.FromArgb(145, 70, 70, 70);
     private static readonly Color LightOriginLine = Color.FromArgb(210, 126, 54, 82);
 
     private readonly Grid surface;
@@ -120,6 +125,7 @@ public sealed class AnimationViewport : Grid
         gridLayer.SetPalette(
             dark ? DarkBackground : DefaultBackground,
             dark ? DarkGridLine : LightGridLine,
+            dark ? DarkGameGridLine : LightGameGridLine,
             dark ? DarkOriginLine : LightOriginLine);
     }
 
@@ -146,6 +152,7 @@ public sealed class AnimationViewport : Grid
         gridLayer.SetPalette(
             darkBackground ? DarkBackground : DefaultBackground,
             darkBackground ? DarkGridLine : LightGridLine,
+            darkBackground ? DarkGameGridLine : LightGameGridLine,
             darkBackground ? DarkOriginLine : LightOriginLine);
     }
 
@@ -194,14 +201,20 @@ public sealed class AnimationViewport : Grid
     {
         private Color background = DefaultBackground;
         private Color gridLine = LightGridLine;
+        private Color gameGridLine = LightGameGridLine;
         private Color originLine = LightOriginLine;
 
         public Point Origin { get; set; } = new(CanvasSize / 2, CanvasSize / 2);
 
-        public void SetPalette(Color backgroundColor, Color gridLineColor, Color originLineColor)
+        public void SetPalette(
+            Color backgroundColor,
+            Color gridLineColor,
+            Color gameGridLineColor,
+            Color originLineColor)
         {
             background = backgroundColor;
             gridLine = gridLineColor;
+            gameGridLine = gameGridLineColor;
             originLine = originLineColor;
             InvalidateVisual();
         }
@@ -214,34 +227,81 @@ public sealed class AnimationViewport : Grid
             drawingContext.DrawRectangle(new SolidColorBrush(background), null, new Rect(0, 0, width, height));
 
             var gridPen = new Pen(new SolidColorBrush(gridLine), 1);
-            DrawVerticalLines(drawingContext, gridPen, width, height);
-            DrawHorizontalLines(drawingContext, gridPen, width, height);
+            var gameGridPen = new Pen(new SolidColorBrush(gameGridLine), 1.35);
+            DrawVerticalLines(drawingContext, gridPen, gameGridPen, width, height);
+            DrawHorizontalLines(drawingContext, gridPen, gameGridPen, width, height);
 
             var originPen = new Pen(new SolidColorBrush(originLine), 1.5);
             drawingContext.DrawLine(originPen, new Point(Origin.X, 0), new Point(Origin.X, height));
             drawingContext.DrawLine(originPen, new Point(0, Origin.Y), new Point(width, Origin.Y));
         }
 
-        private void DrawVerticalLines(DrawingContext drawingContext, Pen pen, double width, double height)
+        private void DrawVerticalLines(
+            DrawingContext drawingContext,
+            Pen pen,
+            Pen gameGridPen,
+            double width,
+            double height)
         {
-            double first = Origin.X - Math.Ceiling(Origin.X / GridCellSize) * GridCellSize;
-            for (double x = first; x <= width; x += GridCellSize)
-            {
-                if (Math.Abs(x - Origin.X) > 0.01)
-                {
-                    drawingContext.DrawLine(pen, new Point(x, 0), new Point(x, height));
-                }
-            }
+            DrawLines(
+                drawingContext,
+                pen,
+                width,
+                x => new Point(x, 0),
+                x => new Point(x, height),
+                GridSubCellSize,
+                Origin.X);
+            DrawLines(
+                drawingContext,
+                gameGridPen,
+                width,
+                x => new Point(x, 0),
+                x => new Point(x, height),
+                GameCellSize,
+                Origin.X);
         }
 
-        private void DrawHorizontalLines(DrawingContext drawingContext, Pen pen, double width, double height)
+        private void DrawHorizontalLines(
+            DrawingContext drawingContext,
+            Pen pen,
+            Pen gameGridPen,
+            double width,
+            double height)
         {
-            double first = Origin.Y - Math.Ceiling(Origin.Y / GridCellSize) * GridCellSize;
-            for (double y = first; y <= height; y += GridCellSize)
+            DrawLines(
+                drawingContext,
+                pen,
+                height,
+                y => new Point(0, y),
+                y => new Point(width, y),
+                GridSubCellSize,
+                Origin.Y);
+            DrawLines(
+                drawingContext,
+                gameGridPen,
+                height,
+                y => new Point(0, y),
+                y => new Point(width, y),
+                GameCellSize,
+                Origin.Y);
+        }
+
+        private void DrawLines(
+            DrawingContext drawingContext,
+            Pen pen,
+            double limit,
+            Func<double, Point> startPoint,
+            Func<double, Point> endPoint,
+            double spacing,
+            double originCoordinate)
+        {
+            double first = originCoordinate - Math.Ceiling(originCoordinate / spacing) * spacing;
+
+            for (double position = first; position <= limit; position += spacing)
             {
-                if (Math.Abs(y - Origin.Y) > 0.01)
+                if (Math.Abs(position - originCoordinate) > 0.01)
                 {
-                    drawingContext.DrawLine(pen, new Point(0, y), new Point(width, y));
+                    drawingContext.DrawLine(pen, startPoint(position), endPoint(position));
                 }
             }
         }
