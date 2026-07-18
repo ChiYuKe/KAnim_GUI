@@ -51,7 +51,11 @@ public sealed class AnimationViewport : Grid
         // A transparent background keeps the whole preview surface hit-testable,
         // including the empty space around the animation.
         Background = Brushes.Transparent;
-        Focusable = true;
+        // Keyboard shortcuts are handled by the preview window's root. Keeping
+        // this surface non-focusable prevents WPF's blue focus adorner from
+        // being mistaken for a texture clipping frame in compact windows.
+        Focusable = false;
+        FocusVisualStyle = null;
 
         surface = new Grid
         {
@@ -59,7 +63,10 @@ public sealed class AnimationViewport : Grid
             Height = CanvasSize,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            RenderTransformOrigin = new Point(0.5, 0.5)
+            RenderTransformOrigin = new Point(0.5, 0.5),
+            ClipToBounds = false,
+            Focusable = false,
+            FocusVisualStyle = null
         };
         fitTransform = new ScaleTransform(1, 1);
         zoomTransform = new ScaleTransform(1, 1);
@@ -81,7 +88,11 @@ public sealed class AnimationViewport : Grid
             Height = CanvasSize,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Stretch = Stretch.Uniform
+            Stretch = Stretch.Uniform,
+            IsHitTestVisible = false,
+            Focusable = false,
+            FocusVisualStyle = null,
+            Clip = null
         };
         RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.LowQuality);
         RenderOptions.SetCachingHint(image, CachingHint.Cache);
@@ -103,7 +114,16 @@ public sealed class AnimationViewport : Grid
     public ImageSource? ImageSource
     {
         get => image.Source;
-        set => image.Source = value;
+        set
+        {
+            image.Source = value;
+            // Keep every source, including non-square online textures, inside
+            // the same complete preview canvas. Stretch=Uniform then scales
+            // the entire bitmap without cropping it in compact layouts.
+            image.Width = CanvasSize;
+            image.Height = CanvasSize;
+            UpdateSurfaceLayout();
+        }
     }
 
     public double Zoom => zoomTransform.ScaleX;
@@ -179,14 +199,12 @@ public sealed class AnimationViewport : Grid
 
     private void OnMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        Focus();
         SetZoom(Zoom * (e.Delta > 0 ? 1.12 : 1 / 1.12));
         e.Handled = true;
     }
 
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        Focus();
         if (e.ClickCount == 2)
         {
             ResetTransform();
