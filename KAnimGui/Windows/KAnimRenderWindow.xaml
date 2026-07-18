@@ -240,7 +240,9 @@
                 CornerRadius="8"
                 SnapsToDevicePixels="True"
                 UseLayoutRounding="True">
-                <preview:AnimationViewport x:Name="PreviewViewport" />
+                <preview:AnimationViewport
+                    x:Name="PreviewViewport"
+                    FocusVisualStyle="{x:Null}" />
             </Border>
 
             <Grid Grid.Column="2">
