@@ -10,10 +10,25 @@ public partial class GifExportOptionsWindow : Window
     public GifExportOptionsWindow(double defaultPlaybackSpeed, int defaultWidth, int defaultHeight)
     {
         InitializeComponent();
-        PlaybackSpeedTextBox.Text = defaultPlaybackSpeed.ToString("0.##", CultureInfo.CurrentCulture);
-        ScalingModeComboBox.SelectedIndex = 0;
-        WidthTextBox.Text = defaultWidth.ToString(CultureInfo.InvariantCulture);
-        HeightTextBox.Text = defaultHeight.ToString(CultureInfo.InvariantCulture);
+        double savedPlaybackSpeed = Properties.Default.GifExportPlaybackSpeed;
+        if (double.IsNaN(savedPlaybackSpeed) ||
+            double.IsInfinity(savedPlaybackSpeed) ||
+            savedPlaybackSpeed is < 0.1 or > 2.0)
+        {
+            savedPlaybackSpeed = defaultPlaybackSpeed;
+        }
+
+        int savedWidth = Properties.Default.GifExportWidth is >= 16 and <= 4096
+            ? Properties.Default.GifExportWidth
+            : defaultWidth;
+        int savedHeight = Properties.Default.GifExportHeight is >= 16 and <= 4096
+            ? Properties.Default.GifExportHeight
+            : defaultHeight;
+
+        PlaybackSpeedTextBox.Text = savedPlaybackSpeed.ToString("0.##", CultureInfo.CurrentCulture);
+        WidthTextBox.Text = savedWidth.ToString(CultureInfo.InvariantCulture);
+        HeightTextBox.Text = savedHeight.ToString(CultureInfo.InvariantCulture);
+        ScalingModeComboBox.SelectedIndex = Math.Clamp(Properties.Default.GifExportScalingMode, 0, 3);
         ShowCompletionNotificationCheckBox.IsChecked =
             Properties.Default.ShowGifExportCompletionNotification;
     }
@@ -52,6 +67,10 @@ public partial class GifExportOptionsWindow : Window
             _ => KAnimGifScalingMode.Lanczos
         };
         Properties.Default.ShowGifExportCompletionNotification = showCompletionNotification;
+        Properties.Default.GifExportPlaybackSpeed = playbackSpeed;
+        Properties.Default.GifExportWidth = width;
+        Properties.Default.GifExportHeight = height;
+        Properties.Default.GifExportScalingMode = (int)scalingMode;
         Properties.Default.Save();
 
         Options = new KAnimGifExportOptions(

@@ -95,5 +95,53 @@ namespace KAnimGui {
             }
         }
 
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public double GifExportPlaybackSpeed {
+            get {
+                return ((double)(this["GifExportPlaybackSpeed"]));
+            }
+            set {
+                this["GifExportPlaybackSpeed"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("768")]
+        public int GifExportWidth {
+            get {
+                return ((int)(this["GifExportWidth"]));
+            }
+            set {
+                this["GifExportWidth"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("768")]
+        public int GifExportHeight {
+            get {
+                return ((int)(this["GifExportHeight"]));
+            }
+            set {
+                this["GifExportHeight"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int GifExportScalingMode {
+            get {
+                return ((int)(this["GifExportScalingMode"]));
+            }
+            set {
+                this["GifExportScalingMode"] = value;
+            }
+        }
+
     }
 }

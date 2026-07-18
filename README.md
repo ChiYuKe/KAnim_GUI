@@ -26,7 +26,7 @@ https://github.com/user-attachments/assets/b1877eb9-6db7-4561-a3bf-86b44f2fe261
 本工具内置了 KAnim 解码、诊断、`KAnim -> SCML` 和 `SCML -> KAnim` 导出内核；如果找到 [kanimal-SE](https://github.com/skairunner/kanimal-SE) 的 `kanimal-cli.exe`，仍会优先沿用 CLI 输出。
 如果未找到 `kanimal-cli.exe`，两种转换都会自动回退到内置内核。当前内置 `SCML -> KAnim` 不支持插值和去骨骼选项；需要这些高级处理时请配置 `kanimal-cli.exe`。
 
-GIF 动画导出内置 FFmpeg 8.1.2，并使用 `palettegen` / `paletteuse` 和可选缩放算法（Lanczos、Bicubic、Spline、Nearest）改善颜色、抖动和边缘质量。FFmpeg 压缩包会随发布包复制到 `Resources/ffmpeg`，首次导出时解压到当前用户的 KAnimGui 工具缓存；导出的临时 PNG 和调色板会在完成后自动删除。FFmpeg 的许可证见 `KAnimGui/Resources/ffmpeg/LICENSE-FFMPEG.txt`。
+GIF 动画导出内置 FFmpeg 8.1.2，并使用 `palettegen` / `paletteuse` 和可选缩放算法（Lanczos、Bicubic、Spline、Nearest）改善颜色、抖动和边缘质量。播放速度、输出尺寸、缩放算法和完成通知选项会持久化到用户配置。FFmpeg 压缩包会随发布包复制到 `Resources/ffmpeg`，首次导出时解压到当前用户的 KAnimGui 工具缓存；导出的临时 PNG 和调色板会在完成后自动删除。FFmpeg 的许可证见 `KAnimGui/Resources/ffmpeg/LICENSE-FFMPEG.txt`。
 
 程序会按以下顺序查找 `kanimal-cli.exe`：
 
