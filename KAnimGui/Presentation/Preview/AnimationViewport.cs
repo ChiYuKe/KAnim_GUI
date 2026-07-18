@@ -14,6 +14,9 @@ namespace KAnimGui.Presentation.Preview;
 public sealed class AnimationViewport : Grid
 {
     private const double CanvasSize = 768;
+    // Keep the 768-unit animation canvas centered, but leave more surrounding
+    // coordinate space visible in the default viewport.
+    private const double DefaultViewSize = 1024;
     // KAnim preview coordinates use 100-unit sub-cells, while one ONI world
     // cell spans 2 x 2 of those sub-cells.
     private const double GridSubCellSize = 100;
@@ -133,7 +136,7 @@ public sealed class AnimationViewport : Grid
     {
         double width = Math.Max(1, ActualWidth);
         double height = Math.Max(1, ActualHeight);
-        double fit = Math.Max(0.001, Math.Min(width / CanvasSize, height / CanvasSize));
+        double fit = Math.Max(0.001, Math.Min(width / DefaultViewSize, height / DefaultViewSize));
         fitTransform.ScaleX = fit;
         fitTransform.ScaleY = fit;
 
