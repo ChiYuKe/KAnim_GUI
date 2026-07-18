@@ -76,14 +76,22 @@ public sealed class KAnimPreviewWindowBinding
         };
         root.PreviewKeyDown += (_, e) =>
         {
-            if (!IsResetViewKey(e) || e.IsRepeat || IsTextInputFocused())
+            if (e.IsRepeat || IsTextInputFocused())
             {
                 return;
             }
 
-            viewport.ResetTransform();
-            viewport.Focus();
-            e.Handled = true;
+            if (IsResetViewKey(e))
+            {
+                viewport.ResetTransform();
+                viewport.Focus();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Space)
+            {
+                playback.OnPlayPause();
+                e.Handled = true;
+            }
         };
         previous.Click += (_, _) => playback.OnPreviousFrame();
         playPause.Click += (_, _) => playback.OnPlayPause();
