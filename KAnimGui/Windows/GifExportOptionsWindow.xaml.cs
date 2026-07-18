@@ -11,6 +11,7 @@ public partial class GifExportOptionsWindow : Window
     {
         InitializeComponent();
         PlaybackSpeedTextBox.Text = defaultPlaybackSpeed.ToString("0.##", CultureInfo.CurrentCulture);
+        ScalingModeComboBox.SelectedIndex = 0;
         WidthTextBox.Text = defaultWidth.ToString(CultureInfo.InvariantCulture);
         HeightTextBox.Text = defaultHeight.ToString(CultureInfo.InvariantCulture);
         ShowCompletionNotificationCheckBox.IsChecked =
@@ -43,6 +44,13 @@ public partial class GifExportOptionsWindow : Window
         }
 
         bool showCompletionNotification = ShowCompletionNotificationCheckBox.IsChecked == true;
+        KAnimGifScalingMode scalingMode = ScalingModeComboBox.SelectedIndex switch
+        {
+            1 => KAnimGifScalingMode.Bicubic,
+            2 => KAnimGifScalingMode.Spline,
+            3 => KAnimGifScalingMode.Nearest,
+            _ => KAnimGifScalingMode.Lanczos
+        };
         Properties.Default.ShowGifExportCompletionNotification = showCompletionNotification;
         Properties.Default.Save();
 
@@ -50,7 +58,8 @@ public partial class GifExportOptionsWindow : Window
             playbackSpeed,
             width,
             height,
-            showCompletionNotification);
+            showCompletionNotification,
+            scalingMode);
         DialogResult = true;
     }
 

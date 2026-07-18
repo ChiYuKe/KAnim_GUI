@@ -5,11 +5,20 @@ using System.Windows.Media.Imaging;
 
 namespace KAnimGui.Presentation.Preview;
 
+public enum KAnimGifScalingMode
+{
+    Lanczos,
+    Bicubic,
+    Spline,
+    Nearest
+}
+
 public sealed record KAnimGifExportOptions(
     double PlaybackSpeed,
     int Width,
     int Height,
-    bool ShowCompletionNotification = true)
+    bool ShowCompletionNotification = true,
+    KAnimGifScalingMode ScalingMode = KAnimGifScalingMode.Lanczos)
 {
     public double GetEffectiveFramesPerSecond(double animationFramesPerSecond)
     {
@@ -93,6 +102,7 @@ public sealed class KAnimPreviewGifExportService
             string palettePath = Path.Combine(temporaryDirectory, "palette.png");
             string temporaryOutputPath = Path.Combine(temporaryDirectory, "output.gif");
             double effectiveFramesPerSecond = options.GetEffectiveFramesPerSecond(animationFramesPerSecond);
+            string scalingFlag = GetScalingFlag(options.ScalingMode);
 
             await RunFfmpegAsync(
                 ffmpegPath,
@@ -101,7 +111,8 @@ public sealed class KAnimPreviewGifExportService
                     palettePath,
                     effectiveFramesPerSecond,
                     options.Width,
-                    options.Height),
+                    options.Height,
+                    scalingFlag),
                 cancellationToken).ConfigureAwait(false);
 
             await RunFfmpegAsync(
@@ -112,7 +123,8 @@ public sealed class KAnimPreviewGifExportService
                     temporaryOutputPath,
                     effectiveFramesPerSecond,
                     options.Width,
-                    options.Height),
+                    options.Height,
+                    scalingFlag),
                 cancellationToken).ConfigureAwait(false);
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -129,7 +141,8 @@ public sealed class KAnimPreviewGifExportService
         string palettePath,
         double framesPerSecond,
         int width,
-        int height)
+        int height,
+        string scalingFlag)
     {
         return new[]
         {
@@ -139,7 +152,7 @@ public sealed class KAnimPreviewGifExportService
             "-framerate", FormatFramesPerSecond(framesPerSecond),
             "-start_number", "0",
             "-i", framePattern,
-            "-vf", $"scale={width}:{height}:flags=lanczos,palettegen=max_colors=256:reserve_transparent=1:stats_mode=full",
+            "-vf", $"scale={width}:{height}:flags={scalingFlag},palettegen=max_colors=256:reserve_transparent=1:stats_mode=full",
             palettePath
         };
     }
@@ -150,7 +163,8 @@ public sealed class KAnimPreviewGifExportService
         string outputPath,
         double framesPerSecond,
         int width,
-        int height)
+        int height,
+        string scalingFlag)
     {
         return new[]
         {
@@ -162,7 +176,7 @@ public sealed class KAnimPreviewGifExportService
             "-i", framePattern,
             "-i", palettePath,
             "-filter_complex",
-            $"[0:v]scale={width}:{height}:flags=lanczos:force_original_aspect_ratio=disable[scaled];[scaled][1:v]paletteuse=dither=sierra2_4a:diff_mode=rectangle:alpha_threshold=128",
+            $"[0:v]scale={width}:{height}:flags={scalingFlag}:force_original_aspect_ratio=disable[scaled];[scaled][1:v]paletteuse=dither=sierra2_4a:diff_mode=rectangle:alpha_threshold=128",
             "-loop", "0",
             "-f", "gif",
             outputPath
@@ -232,6 +246,15 @@ public sealed class KAnimPreviewGifExportService
     private static string FormatFramesPerSecond(double value) =>
         value.ToString("0.###", CultureInfo.InvariantCulture);
 
+    private static string GetScalingFlag(KAnimGifScalingMode scalingMode) => scalingMode switch
+    {
+        KAnimGifScalingMode.Lanczos => "lanczos",
+        KAnimGifScalingMode.Bicubic => "bicubic",
+        KAnimGifScalingMode.Spline => "spline",
+        KAnimGifScalingMode.Nearest => "neighbor",
+        _ => throw new ArgumentOutOfRangeException(nameof(scalingMode), scalingMode, "不支持的 GIF 缩放算法。")
+    };
+
     private static void ValidateOptions(KAnimGifExportOptions options)
     {
         if (double.IsNaN(options.PlaybackSpeed) ||
@@ -244,6 +267,11 @@ public sealed class KAnimPreviewGifExportService
         if (options.Width is < 16 or > 4096 || options.Height is < 16 or > 4096)
         {
             throw new ArgumentOutOfRangeException(nameof(options), "GIF 尺寸必须在 16 到 4096 像素之间。");
+        }
+
+        if (!Enum.IsDefined(options.ScalingMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), "不支持的 GIF 缩放算法。");
         }
     }
 

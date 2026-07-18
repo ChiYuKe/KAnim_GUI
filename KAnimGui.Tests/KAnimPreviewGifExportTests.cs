@@ -23,6 +23,7 @@ public sealed class KAnimPreviewGifExportTests
         var options = new KAnimGifExportOptions(1.0, 768, 768);
 
         Assert.True(options.ShowCompletionNotification);
+        Assert.Equal(KAnimGifScalingMode.Lanczos, options.ScalingMode);
     }
 
     [Theory]

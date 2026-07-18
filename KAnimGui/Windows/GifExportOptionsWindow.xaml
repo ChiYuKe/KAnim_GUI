@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="导出 GIF"
     Width="380"
-    Height="390"
+    Height="450"
     FontFamily="{DynamicResource AppFontFamily}"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
@@ -12,6 +12,7 @@
     <Border Padding="20" Background="White">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -63,20 +64,34 @@
                 <TextBox x:Name="HeightTextBox" Grid.Column="1" Padding="6,4" />
             </Grid>
 
+            <Grid Grid.Row="5" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock VerticalAlignment="Center" Text="缩放算法 (抗锯齿)" />
+                <ComboBox x:Name="ScalingModeComboBox" Grid.Column="1" Padding="6,4">
+                    <ComboBoxItem Content="Lanczos（推荐，平滑）" />
+                    <ComboBoxItem Content="Bicubic（柔和）" />
+                    <ComboBoxItem Content="Spline（细腻）" />
+                    <ComboBoxItem Content="Nearest（像素风格）" />
+                </ComboBox>
+            </Grid>
+
             <CheckBox
                 x:Name="ShowCompletionNotificationCheckBox"
-                Grid.Row="5"
+                Grid.Row="6"
                 Margin="0,0,0,10"
                 Content="导出完成后显示通知" />
 
             <TextBlock
                 x:Name="ErrorTextBlock"
-                Grid.Row="6"
+                Grid.Row="7"
                 Foreground="#FFB3261E"
                 TextWrapping="Wrap" />
 
             <StackPanel
-                Grid.Row="7"
+                Grid.Row="8"
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
                 <Button
