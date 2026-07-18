@@ -30,7 +30,8 @@ public sealed class KAnimPreviewWindowComposition : IDisposable
         KAnimPreviewLoadService loadService,
         KAnimPreviewRenderService renderService,
         KAnimPreviewImageService imageService,
-        KAnimPreviewExportService exportService)
+        KAnimPreviewExportService exportService,
+        KAnimPreviewGifExportService gifExportService)
     {
         this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
         this.root = root ?? throw new ArgumentNullException(nameof(root));
@@ -71,7 +72,10 @@ public sealed class KAnimPreviewWindowComposition : IDisposable
             fileController,
             exportService,
             imageService,
+            renderService,
+            gifExportService,
             () => sessionController.Data,
+            () => playbackCoordinator.CurrentBank,
             treeController.GetSelectedValue,
             StopPlayback,
             () => sessionController.CancelLoading(),

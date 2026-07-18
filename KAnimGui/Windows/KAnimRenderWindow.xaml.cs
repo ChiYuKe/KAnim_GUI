@@ -12,7 +12,8 @@ public partial class KAnimRenderWindow : Window
         KAnimPreviewLoadService previewLoadService,
         KAnimPreviewRenderService previewRenderService,
         KAnimPreviewImageService previewImageService,
-        KAnimPreviewExportService previewExportService)
+        KAnimPreviewExportService previewExportService,
+        KAnimPreviewGifExportService previewGifExportService)
     {
         InitializeComponent();
         composition = new KAnimPreviewWindowComposition(
@@ -21,7 +22,8 @@ public partial class KAnimRenderWindow : Window
             previewLoadService,
             previewRenderService,
             previewImageService,
-            previewExportService);
+            previewExportService,
+            previewGifExportService);
         Closed += KAnimRenderWindow_Closed;
     }
 

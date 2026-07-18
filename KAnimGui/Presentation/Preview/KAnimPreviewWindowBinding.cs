@@ -91,6 +91,7 @@ public sealed class KAnimPreviewWindowBinding
             }
         };
         Find<MenuItem>("MenuExportPng").Click += (_, _) => commands.ExportTexture();
+        Find<MenuItem>("MenuExportGif").Click += async (_, _) => await commands.ExportAnimationGifAsync();
         Find<MenuItem>("MenuExit").Click += (_, _) => close();
         Find<MenuItem>("MenuBackgroundBlack").Click += (_, _) => setDarkBackground();
         Find<MenuItem>("MenuBackgroundWhite").Click += (_, _) => setLightBackground();

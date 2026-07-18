@@ -1,9 +1,12 @@
 using System.Drawing;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using KanimLib;
 using KAnimGui.KAnimCore;
+using KAnimGui.Windows;
 
 namespace KAnimGui.Presentation.Preview;
 
@@ -19,13 +22,17 @@ public sealed class KAnimPreviewCommandController
     private readonly KAnimPreviewFileController fileController;
     private readonly KAnimPreviewExportService exportService;
     private readonly KAnimPreviewImageService imageService;
+    private readonly KAnimPreviewRenderService renderService;
+    private readonly KAnimPreviewGifExportService gifExportService;
     private readonly Func<KAnimPackage?> getData;
+    private readonly Func<KAnimBank?> getCurrentBank;
     private readonly Func<object?> getSelectedObject;
     private readonly Action stopPlayback;
     private readonly Action cancelLoad;
     private readonly Action clearRenderData;
     private readonly Action<BitmapImage?, Rectangle[]?, PointF[]?> updateTexture;
     private readonly Action<KAnimPreviewFileSelection> openCompleteSelection;
+    private bool isExportingGif;
 
     public bool HasAnyFile => fileController.HasAnyFile;
 
@@ -36,7 +43,10 @@ public sealed class KAnimPreviewCommandController
         KAnimPreviewFileController fileController,
         KAnimPreviewExportService exportService,
         KAnimPreviewImageService imageService,
+        KAnimPreviewRenderService renderService,
+        KAnimPreviewGifExportService gifExportService,
         Func<KAnimPackage?> getData,
+        Func<KAnimBank?> getCurrentBank,
         Func<object?> getSelectedObject,
         Action stopPlayback,
         Action cancelLoad,
@@ -50,7 +60,10 @@ public sealed class KAnimPreviewCommandController
         this.fileController = fileController ?? throw new ArgumentNullException(nameof(fileController));
         this.exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
         this.imageService = imageService ?? throw new ArgumentNullException(nameof(imageService));
+        this.renderService = renderService ?? throw new ArgumentNullException(nameof(renderService));
+        this.gifExportService = gifExportService ?? throw new ArgumentNullException(nameof(gifExportService));
         this.getData = getData ?? throw new ArgumentNullException(nameof(getData));
+        this.getCurrentBank = getCurrentBank ?? throw new ArgumentNullException(nameof(getCurrentBank));
         this.getSelectedObject = getSelectedObject ?? throw new ArgumentNullException(nameof(getSelectedObject));
         this.stopPlayback = stopPlayback ?? throw new ArgumentNullException(nameof(stopPlayback));
         this.cancelLoad = cancelLoad ?? throw new ArgumentNullException(nameof(cancelLoad));
@@ -164,6 +177,91 @@ public sealed class KAnimPreviewCommandController
         }
     }
 
+    public async Task ExportAnimationGifAsync()
+    {
+        if (isExportingGif)
+        {
+            return;
+        }
+
+        KAnimBank? bank = getCurrentBank();
+        if (bank is null || bank.Frames.Count == 0)
+        {
+            MessageBox.Show("当前没有可导出的动画。", "导出 GIF", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        double defaultFps = bank.Rate > 0 ? Math.Min(bank.Rate, 100) : 30;
+        var optionsWindow = new GifExportOptionsWindow(defaultFps, 768, 768)
+        {
+            Owner = Window.GetWindow(treeView)
+        };
+        if (optionsWindow.ShowDialog() != true || optionsWindow.Options is not { } options)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "GIF 动画|*.gif",
+            FileName = $"{SanitizeFileName(bank.Name)}.gif",
+            DefaultExt = ".gif",
+            AddExtension = true
+        };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        isExportingGif = true;
+        Window? owner = Window.GetWindow(treeView);
+        string originalTitle = owner?.Title ?? string.Empty;
+        Mouse.OverrideCursor = Cursors.Wait;
+        try
+        {
+            var progress = new Progress<int>(completed =>
+            {
+                if (owner is not null)
+                {
+                    owner.Title = $"导出 GIF：{completed}/{bank.Frames.Count}";
+                }
+            });
+            stopPlayback();
+            await gifExportService.ExportAsync(
+                bank.Frames.Count,
+                index => renderService.RenderAnimationFrame(
+                    bank,
+                    index,
+                    new PreviewRenderOptions(false, false, false, -1)),
+                options,
+                dialog.FileName,
+                progress).ConfigureAwait(true);
+            MessageBox.Show(
+                $"GIF 导出成功！\n\n{dialog.FileName}",
+                "导出 GIF",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"GIF 导出失败：{ex.Message}",
+                "导出 GIF",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
+            if (owner is not null)
+            {
+                owner.Title = originalTitle;
+            }
+
+            isExportingGif = false;
+        }
+    }
+
     public void ReplaceSelectedImage()
     {
         KAnimPackage? data = getData();
@@ -200,6 +298,17 @@ public sealed class KAnimPreviewCommandController
         {
             MessageBox.Show("替换失败：" + ex.Message);
         }
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        string name = string.IsNullOrWhiteSpace(value) ? "animation" : value.Trim();
+        foreach (char invalid in Path.GetInvalidFileNameChars())
+        {
+            name = name.Replace(invalid, '_');
+        }
+
+        return name;
     }
 
     public void Diagnose()

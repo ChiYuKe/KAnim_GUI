@@ -54,6 +54,7 @@ namespace KAnimGui
             services.AddTransient<KAnimPreviewRenderService>();
             services.AddTransient<KAnimPreviewImageService>();
             services.AddTransient<KAnimPreviewExportService>();
+            services.AddTransient<KAnimPreviewGifExportService>();
             services.AddTransient<KAnimRenderWindow>();
             services.AddSingleton<MainWindow>();
 
