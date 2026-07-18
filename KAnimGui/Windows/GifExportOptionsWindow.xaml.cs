@@ -1,6 +1,7 @@
 using System.Globalization;
+using System.IO;
 using System.Windows;
-
+using Ookii.Dialogs.Wpf;
 using KAnimGui.Presentation.Preview;
 
 namespace KAnimGui.Windows;
@@ -31,9 +32,11 @@ public partial class GifExportOptionsWindow : Window
         ScalingModeComboBox.SelectedIndex = Math.Clamp(Properties.Default.GifExportScalingMode, 0, 3);
         ShowCompletionNotificationCheckBox.IsChecked =
             Properties.Default.ShowGifExportCompletionNotification;
+        OutputDirectoryTextBox.Text = KAnimGifExportPathResolver.GetConfiguredDirectory();
     }
 
     public KAnimGifExportOptions? Options { get; private set; }
+    public string OutputDirectory { get; private set; } = string.Empty;
 
     private void ExportButton_Click(object sender, RoutedEventArgs e)
     {
@@ -58,6 +61,24 @@ public partial class GifExportOptionsWindow : Window
             return;
         }
 
+        string outputDirectory = OutputDirectoryTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            ShowError("请选择 GIF 输出目录。");
+            return;
+        }
+
+        try
+        {
+            outputDirectory = Path.GetFullPath(outputDirectory);
+            Directory.CreateDirectory(outputDirectory);
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException or NotSupportedException or PathTooLongException)
+        {
+            ShowError($"输出目录不可用：{ex.Message}");
+            return;
+        }
+
         bool showCompletionNotification = ShowCompletionNotificationCheckBox.IsChecked == true;
         KAnimGifScalingMode scalingMode = ScalingModeComboBox.SelectedIndex switch
         {
@@ -71,7 +92,9 @@ public partial class GifExportOptionsWindow : Window
         Properties.Default.GifExportWidth = width;
         Properties.Default.GifExportHeight = height;
         Properties.Default.GifExportScalingMode = (int)scalingMode;
+        Properties.Default.GifExportOutputDirectory = outputDirectory;
         Properties.Default.Save();
+        OutputDirectory = outputDirectory;
 
         Options = new KAnimGifExportOptions(
             playbackSpeed,
@@ -90,6 +113,19 @@ public partial class GifExportOptionsWindow : Window
     private void ShowError(string message)
     {
         ErrorTextBlock.Text = message;
+    }
+
+    private void BrowseOutputDirectoryButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new VistaFolderBrowserDialog
+        {
+            SelectedPath = OutputDirectoryTextBox.Text.Trim(),
+            Description = "选择 GIF 输出目录"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            OutputDirectoryTextBox.Text = dialog.SelectedPath;
+        }
     }
 
     private static bool TryParseDouble(string? value, out double result)

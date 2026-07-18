@@ -201,17 +201,10 @@ public sealed class KAnimPreviewCommandController
             return;
         }
 
-        var dialog = new Microsoft.Win32.SaveFileDialog
-        {
-            Filter = "GIF 动画|*.gif",
-            FileName = $"{SanitizeFileName(bank.Name)}.gif",
-            DefaultExt = ".gif",
-            AddExtension = true
-        };
-        if (dialog.ShowDialog() != true)
-        {
-            return;
-        }
+        string kanimName = GetKAnimName();
+        string outputPath = Path.Combine(
+            KAnimGifExportPathResolver.GetSingleExportDirectory(optionsWindow.OutputDirectory),
+            KAnimGifExportPathResolver.BuildGifFileName(kanimName, bank.Name));
 
         isExportingGif = true;
         Window? owner = Window.GetWindow(treeView);
@@ -235,12 +228,12 @@ public sealed class KAnimPreviewCommandController
                     index,
                     new PreviewRenderOptions(false, false, false, -1)),
                 options,
-                dialog.FileName,
+                outputPath,
                 progress).ConfigureAwait(true);
             if (options.ShowCompletionNotification)
             {
                 var messageBox = new CustomMessageBox(
-                    $"GIF 导出成功！\n\n{dialog.FileName}",
+                    $"GIF 导出成功！\n\n{outputPath}",
                     "导出 GIF",
                     PackIconKind.CheckCircle);
                 if (owner is not null)
@@ -258,6 +251,109 @@ public sealed class KAnimPreviewCommandController
                 "导出 GIF",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
+            if (owner is not null)
+            {
+                owner.Title = originalTitle;
+            }
+
+            isExportingGif = false;
+        }
+    }
+
+    public async Task ExportAllAnimationsGifAsync()
+    {
+        if (isExportingGif)
+        {
+            return;
+        }
+
+        KAnimPackage? data = getData();
+        IReadOnlyList<KAnimBank> banks = data?.Anim?.Banks
+            .Where(candidate => candidate.Frames.Count > 0)
+            .ToList() ?? [];
+        if (banks.Count == 0)
+        {
+            MessageBox.Show("当前没有可导出的动画。", "批量导出 GIF", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var optionsWindow = new GifExportOptionsWindow(1.0, 768, 768)
+        {
+            Owner = Window.GetWindow(treeView)
+        };
+        if (optionsWindow.ShowDialog() != true || optionsWindow.Options is not { } options)
+        {
+            return;
+        }
+
+        string kanimName = GetKAnimName();
+        string outputDirectory = KAnimGifExportPathResolver.GetBatchExportDirectory(
+            optionsWindow.OutputDirectory,
+            kanimName);
+        Directory.CreateDirectory(outputDirectory);
+
+        isExportingGif = true;
+        Window? owner = Window.GetWindow(treeView);
+        string originalTitle = owner?.Title ?? string.Empty;
+        Mouse.OverrideCursor = Cursors.Wait;
+        stopPlayback();
+        var failures = new List<string>();
+        try
+        {
+            for (int index = 0; index < banks.Count; index++)
+            {
+                KAnimBank currentBank = banks[index];
+                string outputPath = Path.Combine(
+                    outputDirectory,
+                    KAnimGifExportPathResolver.BuildGifFileName(kanimName, currentBank.Name));
+                if (owner is not null)
+                {
+                    owner.Title = $"批量导出 GIF：{index + 1}/{banks.Count}";
+                }
+
+                try
+                {
+                    var progress = new Progress<int>(completed =>
+                    {
+                        if (owner is not null)
+                        {
+                            owner.Title = $"批量导出 GIF：{index + 1}/{banks.Count}（{completed}/{currentBank.Frames.Count}）";
+                        }
+                    });
+                    await gifExportService.ExportAsync(
+                        currentBank.Frames.Count,
+                        currentBank.Rate,
+                        frameIndex => renderService.RenderAnimationFrame(
+                            currentBank,
+                            frameIndex,
+                            new PreviewRenderOptions(false, false, false, -1)),
+                        options,
+                        outputPath,
+                        progress).ConfigureAwait(true);
+                }
+                catch (Exception ex)
+                {
+                    failures.Add($"{currentBank.Name}: {ex.Message}");
+                }
+            }
+
+            int succeeded = banks.Count - failures.Count;
+            if (options.ShowCompletionNotification)
+            {
+                string detail = failures.Count == 0
+                    ? $"已导出 {succeeded} 个动画。\n\n输出目录：{outputDirectory}"
+                    : $"成功 {succeeded} 个，失败 {failures.Count} 个。\n\n输出目录：{outputDirectory}\n\n" +
+                      string.Join("\n", failures);
+                var messageBox = new CustomMessageBox(detail, "批量导出 GIF", PackIconKind.CheckCircle)
+                {
+                    Owner = owner
+                };
+                messageBox.ShowDialog();
+            }
         }
         finally
         {
@@ -318,6 +414,17 @@ public sealed class KAnimPreviewCommandController
         }
 
         return name;
+    }
+
+    private string GetKAnimName()
+    {
+        string fileName = Path.GetFileNameWithoutExtension(fileController.Selection.AnimFile ?? string.Empty);
+        if (fileName.EndsWith("_anim", StringComparison.OrdinalIgnoreCase))
+        {
+            fileName = fileName[..^5];
+        }
+
+        return SanitizeFileName(fileName);
     }
 
     public void Diagnose()

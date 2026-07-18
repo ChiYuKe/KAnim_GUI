@@ -39,4 +39,22 @@ public sealed class KAnimPreviewGifExportTests
 
         Assert.Equal(expectedFps, options.GetEffectiveFramesPerSecond(animationFps));
     }
+
+    [Fact]
+    public void GifPath_BuildsKAnimAndAnimationFileName()
+    {
+        Assert.Equal(
+            "anim_bionic_vomit_loop.gif",
+            KAnimGifExportPathResolver.BuildGifFileName("anim_bionic", "vomit_loop"));
+    }
+
+    [Fact]
+    public void GifPath_UsesKAnimSubdirectoryForBatchExports()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "KAnimGuiTests");
+
+        Assert.Equal(
+            Path.Combine(root, "anim_bionic"),
+            KAnimGifExportPathResolver.GetBatchExportDirectory(root, "anim_bionic"));
+    }
 }

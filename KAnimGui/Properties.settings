@@ -32,6 +32,9 @@
     <Setting Name="GifExportScalingMode" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
+    <Setting Name="GifExportOutputDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
     <Setting Name="PreviewResetViewShortcut" Type="System.String" Scope="User">
       <Value Profile="(Default)">H</Value>
     </Setting>

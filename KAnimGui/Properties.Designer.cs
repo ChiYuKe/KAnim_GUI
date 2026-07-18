@@ -145,6 +145,18 @@ namespace KAnimGui {
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string GifExportOutputDirectory {
+            get {
+                return ((string)(this["GifExportOutputDirectory"]));
+            }
+            set {
+                this["GifExportOutputDirectory"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("H")]
         public string PreviewResetViewShortcut {
             get {

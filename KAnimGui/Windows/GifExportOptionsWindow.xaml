@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="导出 GIF"
     Width="380"
-    Height="450"
+    Height="530"
     FontFamily="{DynamicResource AppFontFamily}"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
@@ -12,6 +12,7 @@
     <Border Padding="20" Background="White">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -78,20 +79,40 @@
                 </ComboBox>
             </Grid>
 
+            <Grid Grid.Row="6" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock VerticalAlignment="Center" Text="输出目录" />
+                <TextBox
+                    x:Name="OutputDirectoryTextBox"
+                    Grid.Column="1"
+                    Padding="6,4"
+                    ToolTip="单个导出使用此目录；批量导出会在此目录下按 KAnim 名称建立子目录" />
+                <Button
+                    Grid.Column="2"
+                    Margin="8,0,0,0"
+                    Padding="10,4"
+                    Click="BrowseOutputDirectoryButton_Click"
+                    Content="浏览" />
+            </Grid>
+
             <CheckBox
                 x:Name="ShowCompletionNotificationCheckBox"
-                Grid.Row="6"
+                Grid.Row="7"
                 Margin="0,0,0,10"
                 Content="导出完成后显示通知" />
 
             <TextBlock
                 x:Name="ErrorTextBlock"
-                Grid.Row="7"
+                Grid.Row="8"
                 Foreground="#FFB3261E"
                 TextWrapping="Wrap" />
 
             <StackPanel
-                Grid.Row="8"
+                Grid.Row="9"
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
                 <Button
