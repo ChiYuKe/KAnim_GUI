@@ -34,7 +34,7 @@ public sealed class AnimationViewport : Grid
     private static readonly Color LightGameGridLine = Color.FromArgb(145, 70, 70, 70);
     private static readonly Color LightOriginLine = Color.FromArgb(210, 126, 54, 82);
 
-    private readonly Grid surface;
+    private readonly Canvas surface;
     private readonly PreviewGridLayer gridLayer;
     private readonly Image image;
     private readonly ScaleTransform fitTransform;
@@ -57,7 +57,7 @@ public sealed class AnimationViewport : Grid
         Focusable = false;
         FocusVisualStyle = null;
 
-        surface = new Grid
+        surface = new Canvas
         {
             Width = CanvasSize,
             Height = CanvasSize,
@@ -86,9 +86,9 @@ public sealed class AnimationViewport : Grid
         {
             Width = CanvasSize,
             Height = CanvasSize,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Stretch = Stretch.Uniform,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Stretch = Stretch.Fill,
             IsHitTestVisible = false,
             Focusable = false,
             FocusVisualStyle = null,
@@ -122,11 +122,11 @@ public sealed class AnimationViewport : Grid
         set
         {
             image.Source = value;
-            // Keep every source, including non-square online textures, inside
-            // the same complete preview canvas. Stretch=Uniform then scales
-            // the entire bitmap without cropping it in compact layouts.
-            image.Width = CanvasSize;
-            image.Height = CanvasSize;
+            // Lay the source out explicitly inside the fixed canvas. Using a
+            // Canvas with a pixel-derived destination rectangle avoids the
+            // WPF Image/Uniform arrangement path dropping the left edge of
+            // wide atlas textures in compact windows.
+            UpdateImageLayout();
             UpdateSurfaceLayout();
         }
     }
@@ -183,6 +183,25 @@ public sealed class AnimationViewport : Grid
         surface.Width = CanvasSize;
         surface.Height = CanvasSize;
         UpdateGridTransform();
+    }
+
+    private void UpdateImageLayout()
+    {
+        if (image.Source is not BitmapSource source ||
+            source.PixelWidth <= 0 ||
+            source.PixelHeight <= 0)
+        {
+            image.Width = CanvasSize;
+            image.Height = CanvasSize;
+            Canvas.SetLeft(image, 0);
+            Canvas.SetTop(image, 0);
+            return;
+        }
+
+        image.Width = CanvasSize;
+        image.Height = CanvasSize * source.PixelHeight / source.PixelWidth;
+        Canvas.SetLeft(image, 0);
+        Canvas.SetTop(image, (CanvasSize - image.Height) / 2);
     }
 
     private void UpdateGridTransform()
