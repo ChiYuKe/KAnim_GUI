@@ -5,6 +5,7 @@ using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using KAnimGui.Application.ResourceBridge;
+using KAnimGui.Core;
 
 namespace KAnimGui.Presentation.ResourceBridge;
 
@@ -59,6 +60,14 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
     public IReadOnlyList<BridgeResourceRowViewModel> SelectedResources { get; private set; } = [];
 
     public string ExportDirectory => paths.ResourceBridgeExportDirectory;
+
+    public string ConnectedBridgeVersion { get; private set; } = string.Empty;
+
+    public string BundledBridgeVersion => OniResourceBridgeModInstaller.BundledVersion;
+
+    public bool IsBridgeUpdateAvailable { get; private set; }
+
+    public event EventHandler? BridgeUpdateAvailable;
 
     public IAsyncRelayCommand RefreshCommand { get; }
 
@@ -275,6 +284,10 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             SetExportLayoutText(state.ExportLayout);
             snapshot = await client.GetSnapshotAsync(refreshOperation.Token).ConfigureAwait(true);
             ConnectionText = $"已加载资源 {snapshot.Status.AnimationCount} / 游戏资源包 {snapshot.Status.ResourcePackageCount}";
+            ConnectedBridgeVersion = snapshot.Status.Version;
+            IsBridgeUpdateAvailable = OniResourceBridgeModInstaller.IsOlderVersion(
+                ConnectedBridgeVersion,
+                BundledBridgeVersion);
 
             var rows = snapshot.AllResources
                 .OrderBy(resource => resource.Key.Name, StringComparer.OrdinalIgnoreCase)
@@ -282,10 +295,16 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
                 .ToList();
             ReconcileRows(rows);
             ApplyFilter();
-            StatusText = snapshot.Status.AssetsReady
-                ? $"在线资源已就绪，可导出 {AllRows.Count(row => row.CanExport)} 个资源。"
-                : $"资源桥已连接，但游戏资源可能还在加载：已加载 {snapshot.Animations.Count}，离线 {snapshot.OfflineAnimations.Count}";
+            StatusText = IsBridgeUpdateAvailable
+                ? $"检测到资源桥旧版本 {ConnectedBridgeVersion}，内置版本为 {BundledBridgeVersion}。"
+                : snapshot.Status.AssetsReady
+                    ? $"在线资源已就绪，可导出 {AllRows.Count(row => row.CanExport)} 个资源。"
+                    : $"资源桥已连接，但游戏资源可能还在加载：已加载 {snapshot.Animations.Count}，离线 {snapshot.OfflineAnimations.Count}";
             StartThumbnailLoads(FilteredResources.Take(128).ToList());
+            if (IsBridgeUpdateAvailable)
+            {
+                BridgeUpdateAvailable?.Invoke(this, EventArgs.Empty);
+            }
         }
         catch (OperationCanceledException) when (refreshOperation.IsCancellationRequested)
         {
@@ -296,6 +315,8 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             snapshot = null;
             FilteredResources.Clear();
             ConnectionText = "未连接";
+            ConnectedBridgeVersion = string.Empty;
+            IsBridgeUpdateAvailable = false;
             StatusText = "连接资源桥超时，请确认缺氧正在运行且已启用 ONI Resource Bridge 模组，然后点击刷新资源重试。";
             NotifyExportStateChanged();
         }
@@ -304,6 +325,8 @@ public partial class OniResourceBridgeViewModel : ObservableObject, IDisposable
             snapshot = null;
             FilteredResources.Clear();
             ConnectionText = "未连接";
+            ConnectedBridgeVersion = string.Empty;
+            IsBridgeUpdateAvailable = false;
             StatusText = ex.Message;
             NotifyExportStateChanged();
         }

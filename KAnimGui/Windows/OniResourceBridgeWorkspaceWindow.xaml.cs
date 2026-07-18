@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using KAnimGui.Application.Platform;
 using KAnimGui.Application.ResourceBridge;
+using KAnimGui.Core;
 using KAnimGui.Presentation.ResourceBridge;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,7 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
     private readonly IExternalLauncher externalLauncher;
     private readonly IServiceProvider services;
     private KAnimRenderWindow? previewWindow;
+    private bool updatePromptShown;
 
     public OniResourceBridgeWorkspaceWindow(
         OniResourceBridgeViewModel viewModel,
@@ -27,6 +29,7 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
         this.services = services ?? throw new ArgumentNullException(nameof(services));
         InitializeComponent();
         DataContext = viewModel;
+        viewModel.BridgeUpdateAvailable += ViewModel_BridgeUpdateAvailable;
         Loaded += Window_Loaded;
         Closed += Window_Closed;
     }
@@ -34,11 +37,56 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         await viewModel.InitializeAsync();
+        PromptBridgeUpdateIfNeeded();
+    }
+
+    private void PromptBridgeUpdateIfNeeded()
+    {
+        if (updatePromptShown || !viewModel.IsBridgeUpdateAvailable)
+        {
+            return;
+        }
+
+        updatePromptShown = true;
+        MessageBoxResult result = MessageBox.Show(
+            $"检测到 ONI Resource Bridge 版本 {viewModel.ConnectedBridgeVersion}。\n" +
+            $"KAnimGUI 内置版本为 {viewModel.BundledBridgeVersion}。\n\n" +
+            "是否自动更新模组？更新后需要重启缺氧才能生效。",
+            "ONI Resource Bridge 更新",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Information);
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!OniResourceBridgeModInstaller.CanInstallBundledMod(out string zipPath))
+            {
+                viewModel.StatusText = $"找不到内置资源桥安装包：{zipPath}";
+                return;
+            }
+
+            OniResourceBridgeModInstaller.InstallBundledMod();
+            viewModel.StatusText =
+                $"资源桥已更新到 {viewModel.BundledBridgeVersion}，请重启缺氧后点击刷新资源。";
+        }
+        catch (Exception ex)
+        {
+            viewModel.StatusText = $"资源桥更新失败：{ex.Message}";
+        }
     }
 
     private void Window_Closed(object? sender, EventArgs e)
     {
+        viewModel.BridgeUpdateAvailable -= ViewModel_BridgeUpdateAvailable;
         viewModel.Dispose();
+    }
+
+    private void ViewModel_BridgeUpdateAvailable(object? sender, EventArgs e)
+    {
+        PromptBridgeUpdateIfNeeded();
     }
 
     private void ResourceListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

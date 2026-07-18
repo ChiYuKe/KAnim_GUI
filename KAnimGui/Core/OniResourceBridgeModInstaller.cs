@@ -11,6 +11,7 @@ namespace KAnimGui.Core
         private const string ModFolderName = "ONIResourceBridge";
         private const string ModDllName = "ONIResourceBridge.dll";
         private const string BundledZipName = "ONIResourceBridge-clean.zip";
+        private static readonly Lazy<string> BundledVersionValue = new(ReadBundledVersion);
 
         public static string ModsRootDirectory => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -21,6 +22,15 @@ namespace KAnimGui.Core
         public static string LocalModsDirectory => Path.Combine(ModsRootDirectory, "Local");
 
         public static string TargetModDirectory => Path.Combine(LocalModsDirectory, ModFolderName);
+
+        public static string BundledVersion => BundledVersionValue.Value;
+
+        public static bool IsOlderVersion(string currentVersion, string bundledVersion)
+        {
+            return Version.TryParse(currentVersion, out Version? current) &&
+                Version.TryParse(bundledVersion, out Version? bundled) &&
+                current < bundled;
+        }
 
         public static bool IsInstalled()
         {
@@ -63,22 +73,78 @@ namespace KAnimGui.Core
 
         private static Stream? OpenBundledZipStream()
         {
-            Stream? embedded = Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("KAnimGui.ONIResourceBridge-clean.zip");
-            if (embedded != null)
+            Assembly?[] assemblies =
             {
-                return embedded;
+                Assembly.GetExecutingAssembly(),
+                Assembly.GetEntryAssembly()
+            };
+            foreach (Assembly assembly in assemblies
+                .Where(assembly => assembly != null)
+                .Cast<Assembly>()
+                .Distinct())
+            {
+                Stream? embedded = assembly.GetManifestResourceStream("KAnimGui.ONIResourceBridge-clean.zip");
+                if (embedded != null)
+                {
+                    return embedded;
+                }
             }
 
             string devPath = GetBundledZipPath();
             return File.Exists(devPath) ? File.OpenRead(devPath) : null;
         }
 
+        private static string ReadBundledVersion()
+        {
+            try
+            {
+                using Stream? zipStream = OpenBundledZipStream();
+                if (zipStream == null)
+                {
+                    return string.Empty;
+                }
+
+                using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+                ZipArchiveEntry? entry = archive.Entries.FirstOrDefault(item =>
+                    item.FullName.EndsWith("mod_info.yaml", StringComparison.OrdinalIgnoreCase));
+                if (entry == null)
+                {
+                    return string.Empty;
+                }
+
+                using var reader = new StreamReader(entry.Open());
+                while (reader.ReadLine() is { } line)
+                {
+                    const string prefix = "version:";
+                    if (line.TrimStart().StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return line[(line.IndexOf(':') + 1)..].Trim();
+                    }
+                }
+            }
+            catch (InvalidDataException)
+            {
+            }
+            catch (IOException)
+            {
+            }
+
+            return string.Empty;
+        }
+
         private static bool HasEmbeddedBundledZip()
         {
-            return Assembly.GetExecutingAssembly()
-                .GetManifestResourceNames()
-                .Contains("KAnimGui.ONIResourceBridge-clean.zip", StringComparer.Ordinal);
+            Assembly?[] assemblies =
+            {
+                Assembly.GetExecutingAssembly(),
+                Assembly.GetEntryAssembly()
+            };
+            return assemblies
+                .Where(assembly => assembly != null)
+                .Cast<Assembly>()
+                .Distinct()
+                .Any(assembly => assembly.GetManifestResourceNames()
+                    .Contains("KAnimGui.ONIResourceBridge-clean.zip", StringComparer.Ordinal));
         }
 
         private static string GetBundledZipPath()
