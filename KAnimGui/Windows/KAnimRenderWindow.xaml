@@ -129,8 +129,8 @@
                     <MenuItem Header="文件" Foreground="White">
                         <MenuItem Header="打开..." Name="MenuOpen" />
                         <MenuItem Header="导出 PNG" Name="MenuExportPng" />
-                        <MenuItem Header="导出 GIF..." Name="MenuExportGif" />
-                        <MenuItem Header="批量导出 GIF..." Name="MenuExportAllGif" />
+                        <MenuItem Header="导出 GIF（设置）..." Name="MenuExportGif" />
+                        <MenuItem Header="批量导出 GIF（设置）..." Name="MenuExportAllGif" />
                         <Separator />
                         <MenuItem Header="退出" Name="MenuExit" />
                     </MenuItem>

@@ -2,12 +2,13 @@
     x:Class="KAnimGui.Windows.GifExportOptionsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="导出 GIF"
+    Title="GIF 导出设置"
     Width="380"
     Height="530"
     FontFamily="{DynamicResource AppFontFamily}"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
+    ShowActivated="True"
     WindowStartupLocation="CenterOwner">
     <Border Padding="20" Background="White">
         <Grid>
