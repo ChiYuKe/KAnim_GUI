@@ -6,7 +6,8 @@ namespace KAnimGui.Presentation.Preview;
 public sealed record KAnimGifExportOptions(
     double PlaybackSpeed,
     int Width,
-    int Height)
+    int Height,
+    bool ShowCompletionNotification = true)
 {
     public int GetDelayCentiseconds(double animationFramesPerSecond)
     {

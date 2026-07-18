@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using MaterialDesignThemes.Wpf;
 using KanimLib;
 using KAnimGui.KAnimCore;
 using KAnimGui.Windows;
@@ -236,11 +237,19 @@ public sealed class KAnimPreviewCommandController
                 options,
                 dialog.FileName,
                 progress).ConfigureAwait(true);
-            MessageBox.Show(
-                $"GIF 导出成功！\n\n{dialog.FileName}",
-                "导出 GIF",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            if (options.ShowCompletionNotification)
+            {
+                var messageBox = new CustomMessageBox(
+                    $"GIF 导出成功！\n\n{dialog.FileName}",
+                    "导出 GIF",
+                    PackIconKind.CheckCircle);
+                if (owner is not null)
+                {
+                    messageBox.Owner = owner;
+                }
+
+                messageBox.ShowDialog();
+            }
         }
         catch (Exception ex)
         {

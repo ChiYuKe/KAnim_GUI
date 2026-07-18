@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="导出 GIF"
     Width="380"
-    Height="350"
+    Height="390"
     FontFamily="{DynamicResource AppFontFamily}"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
@@ -12,6 +12,7 @@
     <Border Padding="20" Background="White">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -62,14 +63,20 @@
                 <TextBox x:Name="HeightTextBox" Grid.Column="1" Padding="6,4" />
             </Grid>
 
+            <CheckBox
+                x:Name="ShowCompletionNotificationCheckBox"
+                Grid.Row="5"
+                Margin="0,0,0,10"
+                Content="导出完成后显示通知" />
+
             <TextBlock
                 x:Name="ErrorTextBlock"
-                Grid.Row="5"
+                Grid.Row="6"
                 Foreground="#FFB3261E"
                 TextWrapping="Wrap" />
 
             <StackPanel
-                Grid.Row="6"
+                Grid.Row="7"
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
                 <Button

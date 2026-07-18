@@ -16,4 +16,12 @@ public sealed class KAnimPreviewGifExportTests
 
         Assert.Equal(expectedDelayCentiseconds, options.GetDelayCentiseconds(animationFps));
     }
+
+    [Fact]
+    public void GifOptions_ShowsCompletionNotificationByDefault()
+    {
+        var options = new KAnimGifExportOptions(1.0, 768, 768);
+
+        Assert.True(options.ShowCompletionNotification);
+    }
 }
