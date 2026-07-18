@@ -119,8 +119,10 @@ public sealed class KAnimPreviewWindowComposition : IDisposable
             dropController,
             () => SetPreviewBackground(true),
             () => SetPreviewBackground(false),
+            OpenSettings,
             owner.Close,
             RenderCurrentAnimationFrame);
+        ApplySettings();
     }
 
     public void OpenFiles(string textureFile, string buildFile, string animFile) =>
@@ -144,6 +146,32 @@ public sealed class KAnimPreviewWindowComposition : IDisposable
 
     private void SetPreviewBackground(bool dark) =>
         Find<AnimationViewport>("PreviewViewport").SetBackground(dark);
+
+    private void OpenSettings()
+    {
+        var settings = new KAnimGui.Windows.KAnimPreviewSettingsWindow
+        {
+            Owner = owner
+        };
+        if (settings.ShowDialog() == true)
+        {
+            ApplySettings();
+        }
+    }
+
+    private void ApplySettings()
+    {
+        Find<CheckBox>("ShowOriginCheckBox").IsChecked = Properties.Default.PreviewShowOrigin;
+        Find<CheckBox>("ShowBoundsCheckBox").IsChecked = Properties.Default.PreviewShowBounds;
+        Find<CheckBox>("HighlightElementCheckBox").IsChecked = Properties.Default.PreviewHighlightElement;
+        SetPreviewBackground(Properties.Default.PreviewDarkBackground);
+        if (!Properties.Default.PreviewAutoPlayAnimation)
+        {
+            StopPlayback();
+        }
+
+        RenderCurrentAnimationFrame();
+    }
 
     private void StopPlayback() => playbackCoordinator.Stop();
 

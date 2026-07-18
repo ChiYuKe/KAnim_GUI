@@ -145,6 +145,7 @@
                     <MenuItem Header="诊断" Foreground="White">
                         <MenuItem x:Name="MenuDiagnosePackage" Header="诊断当前包" />
                     </MenuItem>
+                    <MenuItem x:Name="MenuSettings" Header="设置" Foreground="White" />
                 </Menu>
             </DockPanel>
         </Border>

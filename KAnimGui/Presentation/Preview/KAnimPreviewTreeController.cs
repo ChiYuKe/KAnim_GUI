@@ -174,7 +174,7 @@ public sealed class KAnimPreviewTreeController
         if (!ReferenceEquals(getCurrentBank(), nodeTag.Bank))
         {
             selectBank(nodeTag.Bank);
-            if (nodeTag.FrameIndex < 0)
+            if (nodeTag.FrameIndex < 0 && Properties.Default.PreviewAutoPlayAnimation)
             {
                 startPlayback();
             }

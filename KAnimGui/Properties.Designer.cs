@@ -143,5 +143,101 @@ namespace KAnimGui {
             }
         }
 
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("H")]
+        public string PreviewResetViewShortcut {
+            get {
+                return ((string)(this["PreviewResetViewShortcut"]));
+            }
+            set {
+                this["PreviewResetViewShortcut"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Space")]
+        public string PreviewPlayPauseShortcut {
+            get {
+                return ((string)(this["PreviewPlayPauseShortcut"]));
+            }
+            set {
+                this["PreviewPlayPauseShortcut"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool PreviewWheelAnimationSwitch {
+            get {
+                return ((bool)(this["PreviewWheelAnimationSwitch"]));
+            }
+            set {
+                this["PreviewWheelAnimationSwitch"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool PreviewAutoPlayAnimation {
+            get {
+                return ((bool)(this["PreviewAutoPlayAnimation"]));
+            }
+            set {
+                this["PreviewAutoPlayAnimation"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool PreviewShowOrigin {
+            get {
+                return ((bool)(this["PreviewShowOrigin"]));
+            }
+            set {
+                this["PreviewShowOrigin"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool PreviewShowBounds {
+            get {
+                return ((bool)(this["PreviewShowBounds"]));
+            }
+            set {
+                this["PreviewShowBounds"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool PreviewHighlightElement {
+            get {
+                return ((bool)(this["PreviewHighlightElement"]));
+            }
+            set {
+                this["PreviewHighlightElement"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool PreviewDarkBackground {
+            get {
+                return ((bool)(this["PreviewDarkBackground"]));
+            }
+            set {
+                this["PreviewDarkBackground"] = value;
+            }
+        }
+
     }
 }

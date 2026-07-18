@@ -134,7 +134,7 @@ public sealed class KAnimPreviewPlaybackCoordinator : IDisposable
         if (animationComboBox.SelectedItem is KAnimBank bank)
         {
             SetCurrentBank(bank);
-            if (!isInitializingAnimationSelection)
+            if (!isInitializingAnimationSelection && Properties.Default.PreviewAutoPlayAnimation)
             {
                 Start();
             }

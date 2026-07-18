@@ -1,0 +1,157 @@
+<Window
+    x:Class="KAnimGui.Windows.KAnimPreviewSettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="预览器设置"
+    Width="500"
+    Height="600"
+    FontFamily="{DynamicResource AppFontFamily}"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    WindowStartupLocation="CenterOwner">
+    <Border Padding="24" Background="White">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock
+                Margin="0,0,0,6"
+                FontSize="20"
+                FontWeight="SemiBold"
+                Text="预览器设置" />
+            <TextBlock
+                Grid.Row="1"
+                Margin="0,0,0,16"
+                Foreground="#777777"
+                Text="设置会保存到用户配置，下次打开预览器时自动恢复。"
+                TextWrapping="Wrap" />
+
+            <ScrollViewer
+                Grid.Row="2"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Text="快捷键" />
+                    <Border
+                        Margin="0,0,0,16"
+                        Padding="12"
+                        BorderBrush="#FFE0D2DA"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="150" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="回到原点视角" />
+                                    <TextBlock
+                                        Foreground="#777777"
+                                        Text="按键后重置缩放和拖动位置"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <TextBox
+                                    x:Name="ResetViewShortcutTextBox"
+                                    Grid.Column="1"
+                                    IsReadOnly="True"
+                                    Padding="8,5"
+                                    PreviewKeyDown="ShortcutTextBox_PreviewKeyDown" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="150" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="播放 / 暂停" />
+                                    <TextBlock
+                                        Foreground="#777777"
+                                        Text="切换当前动画播放状态"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <TextBox
+                                    x:Name="PlayPauseShortcutTextBox"
+                                    Grid.Column="1"
+                                    IsReadOnly="True"
+                                    Padding="8,5"
+                                    PreviewKeyDown="ShortcutTextBox_PreviewKeyDown" />
+                            </Grid>
+                            <TextBlock
+                                Margin="0,10,0,0"
+                                Foreground="#777777"
+                                Text="点击输入框后按下按键即可设置；Delete 可禁用该快捷键。"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Text="预览行为" />
+                    <Border
+                        Padding="12"
+                        BorderBrush="#FFE0D2DA"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <StackPanel>
+                            <CheckBox
+                                x:Name="WheelAnimationSwitchCheckBox"
+                                Margin="0,0,0,10"
+                                Content="鼠标滚轮切换动画" />
+                            <CheckBox
+                                x:Name="AutoPlayAnimationCheckBox"
+                                Margin="0,0,0,10"
+                                Content="选择动画后自动播放" />
+                            <CheckBox
+                                x:Name="ShowOriginCheckBox"
+                                Margin="0,0,0,10"
+                                Content="显示动画原点" />
+                            <CheckBox
+                                x:Name="ShowBoundsCheckBox"
+                                Margin="0,0,0,10"
+                                Content="显示当前帧边界" />
+                            <CheckBox
+                                x:Name="HighlightElementCheckBox"
+                                Margin="0,0,0,10"
+                                Content="高亮选中的元素" />
+                            <CheckBox
+                                x:Name="DarkBackgroundCheckBox"
+                                Content="使用深色预览背景" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel
+                Grid.Row="3"
+                Margin="0,16,0,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <Button
+                    Width="100"
+                    Margin="0,0,8,0"
+                    Click="ResetButton_Click"
+                    Content="恢复默认" />
+                <Button
+                    Width="80"
+                    Margin="0,0,8,0"
+                    Click="CancelButton_Click"
+                    Content="取消" />
+                <Button
+                    Width="80"
+                    Click="SaveButton_Click"
+                    Content="保存" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

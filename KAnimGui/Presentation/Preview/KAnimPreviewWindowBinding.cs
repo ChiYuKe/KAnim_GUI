@@ -26,6 +26,7 @@ public sealed class KAnimPreviewWindowBinding
         KAnimPreviewDropController drop,
         Action setDarkBackground,
         Action setLightBackground,
+        Action openSettings,
         Action close,
         Action renderCurrentFrame)
     {
@@ -71,6 +72,12 @@ public sealed class KAnimPreviewWindowBinding
         animation.SelectionChanged += (_, _) => playback.OnAnimationSelectionChanged();
         animation.PreviewMouseWheel += (_, e) =>
         {
+            if (!KAnimGui.Properties.Default.PreviewWheelAnimationSwitch)
+            {
+                e.Handled = true;
+                return;
+            }
+
             playback.OnAnimationMouseWheel(e.Delta);
             e.Handled = true;
         };
@@ -81,13 +88,20 @@ public sealed class KAnimPreviewWindowBinding
                 return;
             }
 
-            if (IsResetViewKey(e))
+            PreviewShortcut resetViewShortcut = PreviewShortcut.Parse(
+                Properties.Default.PreviewResetViewShortcut,
+                new PreviewShortcut(Key.H, ModifierKeys.None));
+            PreviewShortcut playPauseShortcut = PreviewShortcut.Parse(
+                Properties.Default.PreviewPlayPauseShortcut,
+                new PreviewShortcut(Key.Space, ModifierKeys.None));
+
+            if (resetViewShortcut.Matches(e))
             {
                 viewport.ResetTransform();
                 viewport.Focus();
                 e.Handled = true;
             }
-            else if (e.Key == Key.Space)
+            else if (playPauseShortcut.Matches(e))
             {
                 playback.OnPlayPause();
                 e.Handled = true;
@@ -125,6 +139,7 @@ public sealed class KAnimPreviewWindowBinding
         Find<MenuItem>("MenuPreviousFrame").Click += (_, _) => playback.OnPreviousFrame();
         Find<MenuItem>("MenuNextFrame").Click += (_, _) => playback.OnNextFrame();
         Find<MenuItem>("MenuDiagnosePackage").Click += (_, _) => commands.Diagnose();
+        Find<MenuItem>("MenuSettings").Click += (_, _) => openSettings();
         if (treeView.Resources["TreeViewItemContextMenu"] is ContextMenu contextMenu)
         {
             ((MenuItem)contextMenu.Items[0]).Click += (_, _) => commands.ExportSelectedImage();
@@ -146,10 +161,6 @@ public sealed class KAnimPreviewWindowBinding
             }
         }
     }
-
-    private static bool IsResetViewKey(KeyEventArgs e) =>
-        e.Key == Key.H ||
-        (e.Key == Key.ImeProcessed && e.ImeProcessedKey == Key.H);
 
     private static bool IsTextInputFocused() =>
         Keyboard.FocusedElement is TextBoxBase or PasswordBox or RichTextBox;
