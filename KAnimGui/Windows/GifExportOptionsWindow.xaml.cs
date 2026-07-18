@@ -13,7 +13,8 @@ public partial class GifExportOptionsWindow : Window
         PlaybackSpeedTextBox.Text = defaultPlaybackSpeed.ToString("0.##", CultureInfo.CurrentCulture);
         WidthTextBox.Text = defaultWidth.ToString(CultureInfo.InvariantCulture);
         HeightTextBox.Text = defaultHeight.ToString(CultureInfo.InvariantCulture);
-        ShowCompletionNotificationCheckBox.IsChecked = true;
+        ShowCompletionNotificationCheckBox.IsChecked =
+            Properties.Default.ShowGifExportCompletionNotification;
     }
 
     public KAnimGifExportOptions? Options { get; private set; }
@@ -41,11 +42,15 @@ public partial class GifExportOptionsWindow : Window
             return;
         }
 
+        bool showCompletionNotification = ShowCompletionNotificationCheckBox.IsChecked == true;
+        Properties.Default.ShowGifExportCompletionNotification = showCompletionNotification;
+        Properties.Default.Save();
+
         Options = new KAnimGifExportOptions(
             playbackSpeed,
             width,
             height,
-            ShowCompletionNotificationCheckBox.IsChecked == true);
+            showCompletionNotification);
         DialogResult = true;
     }
 

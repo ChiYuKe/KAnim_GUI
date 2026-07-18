@@ -83,5 +83,17 @@ namespace KAnimGui {
             }
         }
 
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ShowGifExportCompletionNotification {
+            get {
+                return ((bool)(this["ShowGifExportCompletionNotification"]));
+            }
+            set {
+                this["ShowGifExportCompletionNotification"] = value;
+            }
+        }
+
     }
 }
