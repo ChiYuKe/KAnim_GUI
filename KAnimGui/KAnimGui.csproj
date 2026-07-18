@@ -14,28 +14,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="home.ico" />
     <EmbeddedResource Include="Resources\ONIResourceBridge-clean.zip">
       <LogicalName>KAnimGui.ONIResourceBridge-clean.zip</LogicalName>
     </EmbeddedResource>
-    <Content Include="Resources\ffmpeg\ffmpeg.exe.zip">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="Resources\ffmpeg\LICENSE-FFMPEG.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
+    <EmbeddedResource Include="Resources\ffmpeg\ffmpeg.exe.zip">
+      <LogicalName>KAnimGui.ffmpeg.exe.zip</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\ffmpeg\LICENSE-FFMPEG.txt">
+      <LogicalName>KAnimGui.LICENSE-FFMPEG.txt</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
     <None Remove="Fonts\HarmonyOS_Sans_SC\**" />
     <Resource Include="Fonts\HarmonyOS_Sans_SC\HarmonyOS_Sans_SC_Regular.ttf" />
     <Resource Include="Fonts\HarmonyOS_Sans_SC\HarmonyOS_Sans_SC_Bold.ttf" />
-    <Content Include="Fonts\HarmonyOS_Sans_SC\LICENSE.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>

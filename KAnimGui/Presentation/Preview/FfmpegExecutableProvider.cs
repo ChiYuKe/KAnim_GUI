@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.IO;
+using System.Reflection;
 
 namespace KAnimGui.Presentation.Preview;
 
@@ -12,6 +13,7 @@ internal sealed class FfmpegExecutableProvider
     private const string BundledVersion = "8.1.2";
     private const string BundledArchiveRelativePath = "Resources\\ffmpeg\\ffmpeg.exe.zip";
     private const string BundledExecutableRelativePath = "Resources\\ffmpeg\\ffmpeg.exe";
+    private const string BundledArchiveResourceName = "KAnimGui.ffmpeg.exe.zip";
 
     public string Resolve()
     {
@@ -26,6 +28,15 @@ internal sealed class FfmpegExecutableProvider
         if (File.Exists(archive))
         {
             return ExtractBundledExecutable(archive);
+        }
+
+        Stream? embeddedArchive = OpenEmbeddedArchive();
+        if (embeddedArchive is not null)
+        {
+            using (embeddedArchive)
+            {
+                return ExtractBundledExecutable(embeddedArchive);
+            }
         }
 
         string applicationDirectoryExecutable = Path.Combine(baseDirectory, "ffmpeg.exe");
@@ -47,6 +58,12 @@ internal sealed class FfmpegExecutableProvider
 
     private static string ExtractBundledExecutable(string archivePath)
     {
+        using FileStream archiveStream = File.OpenRead(archivePath);
+        return ExtractBundledExecutable(archiveStream);
+    }
+
+    private static string ExtractBundledExecutable(Stream archiveStream)
+    {
         string toolsDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "KAnimGui",
@@ -62,7 +79,7 @@ internal sealed class FfmpegExecutableProvider
         string temporaryPath = Path.Combine(toolsDirectory, $"ffmpeg-{Guid.NewGuid():N}.tmp");
         try
         {
-            using var archive = ZipFile.OpenRead(archivePath);
+            using var archive = new ZipArchive(archiveStream, ZipArchiveMode.Read, leaveOpen: false);
             ZipArchiveEntry? entry = archive.GetEntry("ffmpeg.exe") ??
                 archive.Entries.FirstOrDefault(item =>
                     string.Equals(item.Name, "ffmpeg.exe", StringComparison.OrdinalIgnoreCase));
@@ -92,6 +109,29 @@ internal sealed class FfmpegExecutableProvider
         {
             TryDelete(temporaryPath);
         }
+    }
+
+    private static Stream? OpenEmbeddedArchive()
+    {
+        Assembly?[] assemblies =
+        {
+            Assembly.GetExecutingAssembly(),
+            Assembly.GetEntryAssembly()
+        };
+
+        foreach (Assembly assembly in assemblies
+            .Where(item => item is not null)
+            .Cast<Assembly>()
+            .Distinct())
+        {
+            Stream? stream = assembly.GetManifestResourceStream(BundledArchiveResourceName);
+            if (stream is not null)
+            {
+                return stream;
+            }
+        }
+
+        return null;
     }
 
     private static string? FindOnPath()
