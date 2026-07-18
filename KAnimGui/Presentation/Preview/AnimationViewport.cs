@@ -94,8 +94,13 @@ public sealed class AnimationViewport : Grid
             FocusVisualStyle = null,
             Clip = null
         };
-        RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.LowQuality);
-        RenderOptions.SetCachingHint(image, CachingHint.Cache);
+        // The atlas contains very thin white outlines. LowQuality sampling
+        // drops those lines as the window crosses fractional scale factors,
+        // which looks like the texture is being cropped during resize.
+        RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.HighQuality);
+        // Do not keep a size-specific bitmap cache while the viewport is
+        // resizing; let WPF resample the complete source for each layout size.
+        RenderOptions.SetCachingHint(image, CachingHint.Unspecified);
 
         surface.Children.Add(image);
         Children.Add(gridLayer);
