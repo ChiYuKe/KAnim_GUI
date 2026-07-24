@@ -1,154 +1,185 @@
-﻿<Window
+﻿<UserControl
     x:Class="KAnimGui.Windows.KAnimRenderWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:preview="clr-namespace:KAnimGui.Presentation.Preview"
-    Title="Anim Render Window"
-    Width="1280"
-    Height="800"
+    AllowDrop="True"
+    Focusable="True"
     FontFamily="{DynamicResource AppFontFamily}"
-    SizeToContent="Manual"
     SnapsToDevicePixels="True"
-    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    TextElement.Foreground="{DynamicResource PanelTitleBrush}"
     TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="ClearType"
-    UseLayoutRounding="True"
-    WindowStartupLocation="CenterOwner">
+    UseLayoutRounding="True">
     <!--  MouseDown 拖动事件  -->
 
-    <Window.Resources>
+    <UserControl.Resources>
         <!--  复制 MainWindow 的资源  -->
-        <SolidColorBrush x:Key="PrimaryColor" Color="#FF6750A4" />
-        <SolidColorBrush x:Key="SecondaryColor" Color="#FFE8DEF8" />
-        <SolidColorBrush x:Key="AccentColor" Color="#FF7E5260" />
-        <SolidColorBrush x:Key="AppBarBrush" Color="#FF94435D" />
-        <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#FF90455D" />
-        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFFFF" />
-        <SolidColorBrush x:Key="PanelBorderBrush" Color="#FFE7CED8" />
-        <SolidColorBrush x:Key="PreviewBackgroundBrush" Color="#FF969696" />
-        <SolidColorBrush x:Key="PreviewBorderBrush" Color="#FFF2DDE6" />
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#FF6B2742" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#FF6750A4" />
-        <SolidColorBrush x:Key="SoftAccentBrush" Color="#FFFFF7FA" />
-        <SolidColorBrush x:Key="GridLineBrush" Color="#FFE8DCE2" />
-        <SolidColorBrush x:Key="PanelTitleBrush" Color="#FF4F2033" />
-        <SolidColorBrush x:Key="SubtleTextBrush" Color="#FF8A5B6C" />
-        <Style BasedOn="{StaticResource MaterialDesignNavigationRailTabItem}" TargetType="TabItem">
+        <SolidColorBrush x:Key="PrimaryColor" Color="{DynamicResource ThemePrimaryColor}" />
+        <SolidColorBrush x:Key="SecondaryColor" Color="{DynamicResource ThemeSecondaryColor}" />
+        <SolidColorBrush x:Key="AccentColor" Color="{DynamicResource ThemeAccentColor}" />
+        <SolidColorBrush x:Key="AppBarBrush" Color="{DynamicResource ThemeAppBarColor}" />
+        <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="{DynamicResource ThemeWorkspaceColor}" />
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{DynamicResource ThemePanelColor}" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="{DynamicResource ThemePanelBorderColor}" />
+        <SolidColorBrush x:Key="PreviewBackgroundBrush" Color="{DynamicResource ThemePreviewColor}" />
+        <SolidColorBrush x:Key="PreviewBorderBrush" Color="{DynamicResource ThemePreviewBorderColor}" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="{DynamicResource ThemeMutedColor}" />
+        <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource ThemePrimaryColor}" />
+        <SolidColorBrush x:Key="SoftAccentBrush" Color="{DynamicResource ThemeSoftAccentColor}" />
+        <SolidColorBrush x:Key="GridLineBrush" Color="{DynamicResource ThemeGridLineColor}" />
+        <SolidColorBrush x:Key="PanelTitleBrush" Color="{DynamicResource ThemePanelTitleColor}" />
+        <SolidColorBrush x:Key="SubtleTextBrush" Color="{DynamicResource ThemeSubtleColor}" />
+        <Style BasedOn="{StaticResource WorkspaceTabItemStyle}" TargetType="TabItem" />
+
+        <Style x:Key="PreviewIconButton" TargetType="Button" BasedOn="{StaticResource AppButtonBase}">
+            <Setter Property="Width" Value="38" />
+            <Setter Property="MinWidth" Value="38" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryActionBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
+            <Setter Property="Effect" Value="{StaticResource ButtonShadow}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryActionHoverBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryActionPressedBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PreviewPrimaryIconButton" TargetType="Button" BasedOn="{StaticResource PrimaryActionButton}">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="MinWidth" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <Style x:Key="PreviewSectionTitleText" TargetType="TextBlock" BasedOn="{StaticResource SectionTitleText}">
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+
+        <Style
+            x:Key="PreviewTopMenuItemStyle"
+            TargetType="MenuItem"
+            BasedOn="{StaticResource {x:Type MenuItem}}">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="16,12" />
-            <Setter Property="Margin" Value="0,0,4,0" />
             <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryHueLightBrush}" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TabItem}">
-                        <Grid>
-                            <Border
-                                Name="Border"
-                                Margin="{TemplateBinding Margin}"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="0,0,0,2"
-                                CornerRadius="4 4 0 0">
-                                <ContentPresenter
-                                    x:Name="ContentSite"
-                                    Margin="{TemplateBinding Padding}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    ContentSource="Header" />
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
-                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Foreground" Value="{DynamicResource AppBarForegroundBrush}" />
+            <Setter
+                Property="materialDesign:MenuItemAssist.HighlightedBackground"
+                Value="{DynamicResource SelectedBrush}" />
         </Style>
 
-        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
-            <Setter Property="Margin" Value="5" />
-            <Setter Property="Width" Value="100" />
-        </Style>
-
-        <Style x:Key="SectionTitleText" TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{StaticResource PanelTitleBrush}" />
-        </Style>
-
-        <Style x:Key="PanelCardStyle" TargetType="materialDesign:Card">
+        <Style x:Key="PreviewPanelCardStyle" TargetType="materialDesign:Card">
             <Setter Property="Background" Value="{StaticResource PanelBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Effect" Value="{StaticResource WorkspaceCardShadow}" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="UniformCornerRadius" Value="6" />
+            <Setter Property="UniformCornerRadius" Value="12" />
             <Setter Property="UseLayoutRounding" Value="True" />
             <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp0" />
         </Style>
-    </Window.Resources>
+    </UserControl.Resources>
 
 
 
     <DockPanel Background="{StaticResource WorkspaceBackgroundBrush}">
         <Border
             DockPanel.Dock="Top"
-            Height="48"
+            Height="72"
             Background="{StaticResource AppBarBrush}">
-            <DockPanel>
-                <TextBlock
-                    Margin="15,0"
+            <Grid Margin="16,0,12,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+                    Grid.Column="0"
                     VerticalAlignment="Center"
-                    DockPanel.Dock="Left"
-                    FontSize="16"
-                    FontWeight="SemiBold"
-                    Foreground="White"
-                    Text="KAnim 预览器" />
+                    Orientation="Horizontal">
+                    <Border
+                        Width="34"
+                        Height="34"
+                        Background="{DynamicResource SelectedBrush}"
+                        CornerRadius="9">
+                        <materialDesign:PackIcon
+                            Width="19"
+                            Height="19"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Foreground="{DynamicResource AccentBrush}"
+                            Kind="AnimationPlayOutline" />
+                    </Border>
+                    <TextBlock
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource AppBarForegroundBrush}"
+                        Text="KAnim 预览器" />
+                </StackPanel>
+
+                <Border
+                    Grid.Column="1"
+                    Width="1"
+                    Height="24"
+                    Margin="18,0,10,0"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource PanelBorderBrush}" />
+
                 <Menu
-                    DockPanel.Dock="Left"
-                    Padding="6,4"
+                    Grid.Column="2"
+                    Height="44"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
                     Background="Transparent">
                     <Menu.Resources>
                         <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
-                            <Setter Property="Foreground" Value="#FF222222" />
+                            <Setter Property="Foreground" Value="{DynamicResource PanelTitleBrush}" />
                             <Setter Property="FontSize" Value="14" />
                         </Style>
                     </Menu.Resources>
-                    <MenuItem Header="文件" Foreground="White">
+                    <MenuItem Header="文件" Style="{StaticResource PreviewTopMenuItemStyle}">
                         <MenuItem Header="打开..." Name="MenuOpen" />
                         <MenuItem Header="导出 PNG" Name="MenuExportPng" />
                         <MenuItem Header="导出 GIF（设置）..." Name="MenuExportGif" />
                         <MenuItem Header="批量导出 GIF（设置）..." Name="MenuExportAllGif" />
                         <Separator />
-                        <MenuItem Header="退出" Name="MenuExit" />
+                        <MenuItem Header="返回转换" Name="MenuExit" />
                     </MenuItem>
-                    <MenuItem Header="视图" Foreground="White">
+                    <MenuItem Header="视图" Style="{StaticResource PreviewTopMenuItemStyle}">
                         <MenuItem x:Name="MenuBackgroundBlack" Header="背景颜色：黑色" />
                         <MenuItem x:Name="MenuBackgroundWhite" Header="背景颜色：白色" />
                     </MenuItem>
-                    <MenuItem Header="动画" Foreground="White">
+                    <MenuItem Header="动画" Style="{StaticResource PreviewTopMenuItemStyle}">
                         <MenuItem x:Name="MenuPlayPause" Header="播放/暂停" />
                         <MenuItem x:Name="MenuPreviousFrame" Header="上一帧" />
                         <MenuItem x:Name="MenuNextFrame" Header="下一帧" />
                     </MenuItem>
-                    <MenuItem Header="诊断" Foreground="White">
+                    <MenuItem Header="诊断" Style="{StaticResource PreviewTopMenuItemStyle}">
                         <MenuItem x:Name="MenuDiagnosePackage" Header="诊断当前包" />
                     </MenuItem>
-                    <MenuItem x:Name="MenuSettings" Header="设置" Foreground="White" />
+                    <MenuItem
+                        x:Name="MenuSettings"
+                        Header="设置"
+                        Style="{StaticResource PreviewTopMenuItemStyle}" />
                 </Menu>
-            </DockPanel>
+            </Grid>
         </Border>
 
         <Grid Margin="8">
@@ -162,7 +193,7 @@
                 Grid.Column="0"
                 Margin="0,0,10,0"
                 Padding="12"
-                Style="{StaticResource PanelCardStyle}">
+                Style="{StaticResource PreviewPanelCardStyle}">
                 <DockPanel FocusVisualStyle="{x:Null}">
                     <Border
                         Margin="0,0,0,8"
@@ -175,11 +206,11 @@
                                 Width="4"
                                 Height="18"
                                 Margin="0,0,8,0"
-                                Background="{StaticResource AppBarBrush}"
+                                Background="{StaticResource AccentBrush}"
                                 CornerRadius="2" />
                             <TextBlock
                                 FocusVisualStyle="{x:Null}"
-                                Style="{StaticResource SectionTitleText}"
+                                Style="{StaticResource PreviewSectionTitleText}"
                                 Text="资源索引" />
                         </DockPanel>
                     </Border>
@@ -235,9 +266,10 @@
                 Margin="0,0,10,0"
                 AllowDrop="True"
                 Background="{StaticResource PreviewBackgroundBrush}"
-                BorderBrush="{StaticResource PreviewBorderBrush}"
-                BorderThickness="3"
-                CornerRadius="8"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                CornerRadius="12"
+                Effect="{StaticResource WorkspaceCardShadow}"
                 SnapsToDevicePixels="True"
                 UseLayoutRounding="True">
                 <preview:AnimationViewport
@@ -259,7 +291,7 @@
                     Margin="0,0,0,10"
                     Padding="12"
                     AllowDrop="True"
-                    Style="{StaticResource PanelCardStyle}">
+                    Style="{StaticResource PreviewPanelCardStyle}">
                     <DockPanel>
                         <DockPanel
                             Margin="0,0,0,8"
@@ -268,10 +300,10 @@
                                 Width="4"
                                 Height="18"
                                 Margin="0,0,8,0"
-                                Background="{StaticResource AppBarBrush}"
+                                Background="{StaticResource AccentBrush}"
                                 CornerRadius="2" />
                             <TextBlock
-                                Style="{StaticResource SectionTitleText}"
+                                Style="{StaticResource PreviewSectionTitleText}"
                                 Text="文件" />
                         </DockPanel>
                         <StackPanel
@@ -303,7 +335,7 @@
                     Grid.Row="1"
                     Margin="0,0,0,10"
                     Padding="1"
-                    Style="{StaticResource PanelCardStyle}">
+                    Style="{StaticResource PreviewPanelCardStyle}">
                     <DockPanel>
                         <DockPanel
                             Margin="12,10,12,8"
@@ -313,10 +345,10 @@
                                 Width="4"
                                 Height="18"
                                 Margin="0,0,8,0"
-                                Background="{StaticResource AppBarBrush}"
+                                Background="{StaticResource AccentBrush}"
                                 CornerRadius="2" />
                             <TextBlock
-                                Style="{StaticResource SectionTitleText}"
+                                Style="{StaticResource PreviewSectionTitleText}"
                                 Text="属性" />
                         </DockPanel>
                         <TabControl Background="Transparent">
@@ -369,7 +401,7 @@
                 <materialDesign:Card
                     Grid.Row="2"
                     Padding="12"
-                    Style="{StaticResource PanelCardStyle}">
+                    Style="{StaticResource PreviewPanelCardStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -388,10 +420,10 @@
                                 Width="4"
                                 Height="18"
                                 Margin="0,0,8,0"
-                                Background="{StaticResource AppBarBrush}"
+                                Background="{StaticResource AccentBrush}"
                                 CornerRadius="2" />
                             <TextBlock
-                                Style="{StaticResource SectionTitleText}"
+                                Style="{StaticResource PreviewSectionTitleText}"
                                 Text="动画" />
                         </DockPanel>
 
@@ -400,7 +432,7 @@
                             Grid.Row="1"
                             Margin="0,0,0,8"
                             DisplayMemberPath="Name"
-                            Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                            Style="{StaticResource AppCompactComboBoxStyle}"
                             materialDesign:HintAssist.Hint="动画"
                             ToolTip="鼠标悬停后滚动切换动画" />
 
@@ -412,22 +444,19 @@
                                 x:Name="PreviousFrameButton"
                                 Content="{materialDesign:PackIcon Kind=SkipPrevious}"
                                 FocusVisualStyle="{x:Null}"
-                                Foreground="{StaticResource PrimaryColor}"
-                                Style="{StaticResource MaterialDesignIconButton}"
+                                Style="{StaticResource PreviewIconButton}"
                                 ToolTip="上一帧" />
                             <Button
                                 x:Name="PlayPauseButton"
                                 Content="{materialDesign:PackIcon Kind=Play}"
                                 FocusVisualStyle="{x:Null}"
-                                Foreground="{StaticResource PrimaryColor}"
-                                Style="{StaticResource MaterialDesignIconButton}"
+                                Style="{StaticResource PreviewPrimaryIconButton}"
                                 ToolTip="播放/暂停" />
                             <Button
                                 x:Name="NextFrameButton"
                                 Content="{materialDesign:PackIcon Kind=SkipNext}"
                                 FocusVisualStyle="{x:Null}"
-                                Foreground="{StaticResource PrimaryColor}"
-                                Style="{StaticResource MaterialDesignIconButton}"
+                                Style="{StaticResource PreviewIconButton}"
                                 ToolTip="下一帧" />
                         </StackPanel>
 
@@ -503,4 +532,4 @@
 
 
 
-</Window>
+</UserControl>

@@ -5,12 +5,14 @@
     Title="GIF 导出设置"
     Width="380"
     Height="530"
+    Background="{DynamicResource WorkspaceBackgroundBrush}"
     FontFamily="{DynamicResource AppFontFamily}"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
     ShowActivated="True"
+    TextElement.Foreground="{DynamicResource PanelTitleBrush}"
     WindowStartupLocation="CenterOwner">
-    <Border Padding="20" Background="White">
+    <Border Padding="20" Background="{DynamicResource PanelBackgroundBrush}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -35,7 +37,7 @@
             <TextBlock
                 Grid.Row="1"
                 Margin="0,0,0,10"
-                Foreground="#777777"
+                Foreground="{DynamicResource MutedTextBrush}"
                 Text="播放速度以动画原始速度为基准：1.0 倍为原速。"
                 TextWrapping="Wrap" />
 
@@ -95,9 +97,9 @@
                 <Button
                     Grid.Column="2"
                     Margin="8,0,0,0"
-                    Padding="10,4"
                     Click="BrowseOutputDirectoryButton_Click"
-                    Content="浏览" />
+                    Content="浏览"
+                    Style="{StaticResource DialogActionButton}" />
             </Grid>
 
             <CheckBox
@@ -109,7 +111,7 @@
             <TextBlock
                 x:Name="ErrorTextBlock"
                 Grid.Row="8"
-                Foreground="#FFB3261E"
+                Foreground="{DynamicResource ErrorBrush}"
                 TextWrapping="Wrap" />
 
             <StackPanel
@@ -120,12 +122,14 @@
                     Width="80"
                     Margin="0,10,8,0"
                     Click="CancelButton_Click"
-                    Content="取消" />
+                    Content="取消"
+                    Style="{StaticResource DialogActionButton}" />
                 <Button
                     Width="80"
                     Margin="0,10,0,0"
                     Click="ExportButton_Click"
-                    Content="导出" />
+                    Content="导出"
+                    Style="{StaticResource DialogPrimaryButton}" />
             </StackPanel>
         </Grid>
     </Border>

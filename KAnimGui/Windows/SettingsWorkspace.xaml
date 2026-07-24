@@ -1,0 +1,172 @@
+<UserControl
+    x:Class="KAnimGui.Windows.SettingsWorkspace"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:theme="clr-namespace:KAnimGui.Presentation.Theme"
+    Background="Transparent"
+    FontFamily="{DynamicResource AppFontFamily}"
+    TextElement.Foreground="{DynamicResource PanelTitleBrush}"
+    TextOptions.TextFormattingMode="Ideal"
+    TextOptions.TextRenderingMode="ClearType">
+    <Grid
+        MaxWidth="1040"
+        Margin="32,20,32,12"
+        HorizontalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock
+                Style="{StaticResource PageTitleText}"
+                Text="设置" />
+            <TextBlock
+                Margin="0,5,0,0"
+                Style="{StaticResource SupportingText}"
+                Text="管理外观、转换默认行为和本地工具路径。" />
+        </StackPanel>
+
+        <ScrollViewer
+            Grid.Row="1"
+            HorizontalContentAlignment="Center"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalContentAlignment="Center"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel
+                Width="720"
+                Margin="0,4"
+                VerticalAlignment="Center">
+                <StackPanel>
+                    <Border
+                        Padding="20"
+                        Style="{StaticResource WorkspaceCardStyle}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    Foreground="{DynamicResource AccentBrush}"
+                                    Kind="PaletteOutline" />
+                                <TextBlock
+                                    Style="{StaticResource SectionTitleText}"
+                                    Text="外观" />
+                            </StackPanel>
+                            <TextBlock
+                                Margin="0,7,0,14"
+                                Style="{StaticResource SupportingText}"
+                                Text="主题切换会立即应用并自动保存。"
+                                TextWrapping="Wrap" />
+                            <ComboBox
+                                x:Name="ThemeComboBox"
+                                ItemContainerStyle="{StaticResource AppComboBoxItemStyle}"
+                                SelectedValuePath="Tag"
+                                SelectionChanged="ThemeComboBox_SelectionChanged"
+                                Style="{StaticResource AppComboBoxStyle}">
+                                <ComboBoxItem
+                                    Content="明亮主题"
+                                    Style="{StaticResource AppComboBoxItemStyle}"
+                                    Tag="{x:Static theme:AppTheme.Light}" />
+                                <ComboBoxItem
+                                    Content="暗色主题"
+                                    Style="{StaticResource AppComboBoxItemStyle}"
+                                    Tag="{x:Static theme:AppTheme.Dark}" />
+                                <ComboBoxItem
+                                    Content="ONI 暖色主题"
+                                    Style="{StaticResource AppComboBoxItemStyle}"
+                                    Tag="{x:Static theme:AppTheme.Oni}" />
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Margin="0,16,0,0"
+                        Padding="20"
+                        Style="{StaticResource WorkspaceCardStyle}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    Foreground="{DynamicResource AccentBrush}"
+                                    Kind="SwapHorizontal" />
+                                <TextBlock
+                                    Style="{StaticResource SectionTitleText}"
+                                    Text="转换行为" />
+                            </StackPanel>
+                            <CheckBox
+                                x:Name="EnableFeatureCheckBox"
+                                Margin="0,16,0,0"
+                                Checked="SettingCheckBox_Changed"
+                                Content="转换完成打开目标文件夹"
+                                Unchecked="SettingCheckBox_Changed" />
+                            <CheckBox
+                                x:Name="NoSuccessPopupCheckBox"
+                                Margin="0,13,0,0"
+                                Checked="SettingCheckBox_Changed"
+                                Content="转换完成不弹出提示"
+                                Unchecked="SettingCheckBox_Changed" />
+                            <CheckBox
+                                x:Name="EnableTxtToBytesCheckBox"
+                                Margin="0,13,0,0"
+                                Checked="SettingCheckBox_Changed"
+                                Content="接受识别 .txt 转 .bytes"
+                                Unchecked="SettingCheckBox_Changed" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <Border
+                    Margin="0,16,0,0"
+                    Padding="20"
+                    Style="{StaticResource WorkspaceCardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="20"
+                                Height="20"
+                                Margin="0,0,10,0"
+                                Foreground="{DynamicResource AccentBrush}"
+                                Kind="ApplicationCogOutline" />
+                            <TextBlock
+                                Style="{StaticResource SectionTitleText}"
+                                Text="kanimal-cli 路径" />
+                        </StackPanel>
+                        <TextBlock
+                            Margin="0,7,0,16"
+                            Style="{StaticResource SupportingText}"
+                            Text="普通转换可使用内置内核；仅在需要高级 CLI 功能时指定可执行文件。"
+                            TextWrapping="Wrap" />
+                        <CheckBox
+                            x:Name="UseCustomKsePathCheckBox"
+                            Checked="SettingCheckBox_Changed"
+                            Content="使用指定 kanimal-cli.exe 路径"
+                            Unchecked="SettingCheckBox_Changed" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="104" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                x:Name="CustomKsePathTextBox"
+                                IsEnabled="{Binding IsChecked, ElementName=UseCustomKsePathCheckBox}"
+                                materialDesign:HintAssist.Hint="可执行文件路径"
+                                Style="{StaticResource AppTextBoxStyle}"
+                                TextChanged="CustomKsePathTextBox_TextChanged" />
+                            <Button
+                                Grid.Column="2"
+                                Click="BrowseKseButton_Click"
+                                Content="浏览"
+                                IsEnabled="{Binding IsChecked, ElementName=UseCustomKsePathCheckBox}"
+                                Style="{StaticResource BrowseActionButton}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -6,39 +6,44 @@ using KAnimGui.Application.Platform;
 using KAnimGui.Application.ResourceBridge;
 using KAnimGui.Core;
 using KAnimGui.Presentation.ResourceBridge;
-using Microsoft.Extensions.DependencyInjection;
+using MaterialDesignThemes.Wpf;
 
 namespace KAnimGui.Windows;
 
-public partial class OniResourceBridgeWorkspaceWindow : Window
+public partial class OniResourceBridgeWorkspaceWindow : UserControl, IDisposable
 {
     private readonly OniResourceBridgeViewModel viewModel;
     private readonly IFileSystemGateway fileSystem;
     private readonly IExternalLauncher externalLauncher;
-    private readonly IServiceProvider services;
-    private KAnimRenderWindow? previewWindow;
     private bool updatePromptShown;
+    private bool initialized;
+    private bool disposed;
 
     public OniResourceBridgeWorkspaceWindow(
         OniResourceBridgeViewModel viewModel,
         IFileSystemGateway fileSystem,
-        IExternalLauncher externalLauncher,
-        IServiceProvider services)
+        IExternalLauncher externalLauncher)
     {
         this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         this.fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         this.externalLauncher = externalLauncher ?? throw new ArgumentNullException(nameof(externalLauncher));
-        this.services = services ?? throw new ArgumentNullException(nameof(services));
         InitializeComponent();
         DataContext = viewModel;
         viewModel.FilteredResources.CollectionChanged += FilteredResources_CollectionChanged;
         viewModel.BridgeUpdateAvailable += ViewModel_BridgeUpdateAvailable;
-        Loaded += Window_Loaded;
-        Closed += Window_Closed;
+        Loaded += Workspace_Loaded;
     }
 
-    private async void Window_Loaded(object sender, RoutedEventArgs e)
+    public Func<string, string, string, Task>? PreviewRequestedAsync { get; set; }
+
+    private async void Workspace_Loaded(object sender, RoutedEventArgs e)
     {
+        if (initialized)
+        {
+            return;
+        }
+
+        initialized = true;
         await viewModel.InitializeAsync();
         PromptBridgeUpdateIfNeeded();
     }
@@ -51,13 +56,14 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
         }
 
         updatePromptShown = true;
-        MessageBoxResult result = MessageBox.Show(
+        MessageBoxResult result = CustomMessageBox.Show(
+            Window.GetWindow(this),
             $"检测到 ONI Resource Bridge 版本 {viewModel.ConnectedBridgeVersion}。\n" +
             $"KAnimGUI 内置版本为 {viewModel.BundledBridgeVersion}。\n\n" +
             "是否自动更新模组？更新后需要重启缺氧才能生效。",
             "ONI Resource Bridge 更新",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Information);
+            PackIconKind.Update,
+            MessageBoxButton.YesNo);
         if (result != MessageBoxResult.Yes)
         {
             return;
@@ -81,10 +87,18 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
         }
     }
 
-    private void Window_Closed(object? sender, EventArgs e)
+    public void Dispose()
     {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        Loaded -= Workspace_Loaded;
         viewModel.FilteredResources.CollectionChanged -= FilteredResources_CollectionChanged;
         viewModel.BridgeUpdateAvailable -= ViewModel_BridgeUpdateAvailable;
+        viewModel.CleanupAnimationPreviewCache();
         viewModel.Dispose();
     }
 
@@ -228,38 +242,27 @@ public partial class OniResourceBridgeWorkspaceWindow : Window
                 throw new InvalidOperationException("预览文件不完整，缺少 PNG、anim 或 build 文件。");
             }
 
-            if (previewWindow is null)
+            if (PreviewRequestedAsync is null)
             {
-                previewWindow = services.GetRequiredService<KAnimRenderWindow>();
-                previewWindow.Owner = this;
-                previewWindow.Closed += PreviewWindow_Closed;
-                previewWindow.Show();
-            }
-            else
-            {
-                previewWindow.Activate();
+                throw new InvalidOperationException("主窗口尚未连接预览工作区。");
             }
 
-            await previewWindow.OpenFilesAndPlayAsync(
-                artifact.PngPath,
-                artifact.BuildPath,
-                artifact.AnimPath);
+            try
+            {
+                await PreviewRequestedAsync(
+                    artifact.PngPath,
+                    artifact.BuildPath,
+                    artifact.AnimPath);
+            }
+            finally
+            {
+                viewModel.CleanupAnimationPreviewCache();
+            }
         }
         catch (Exception ex)
         {
             viewModel.StatusText = $"预览失败：{ex.Message}";
         }
-    }
-
-    private void PreviewWindow_Closed(object? sender, EventArgs e)
-    {
-        if (sender is KAnimRenderWindow window)
-        {
-            window.Closed -= PreviewWindow_Closed;
-        }
-
-        previewWindow = null;
-        viewModel.CleanupAnimationPreviewCache();
     }
 
     private void OpenExportFolder_Click(object sender, RoutedEventArgs e)

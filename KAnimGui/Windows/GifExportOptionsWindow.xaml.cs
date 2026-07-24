@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using Ookii.Dialogs.Wpf;
 using KAnimGui.Presentation.Preview;
+using KAnimGui.Presentation.Theme;
 
 namespace KAnimGui.Windows;
 
@@ -11,6 +12,7 @@ public partial class GifExportOptionsWindow : Window
     public GifExportOptionsWindow(double defaultPlaybackSpeed, int defaultWidth, int defaultHeight)
     {
         InitializeComponent();
+        WindowThemeAssist.ApplyNativeTitleBar(this, Properties.Default.Theme != AppTheme.Light);
         double savedPlaybackSpeed = Properties.Default.GifExportPlaybackSpeed;
         if (double.IsNaN(savedPlaybackSpeed) ||
             double.IsInfinity(savedPlaybackSpeed) ||

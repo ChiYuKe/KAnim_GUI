@@ -92,11 +92,10 @@ public sealed class KAnimPreviewCommandController
         }
         else
         {
-            MessageBox.Show(
+            ShowMessage(
                 "请同时选择 .png、_anim.bytes 和 _build.bytes 文件",
                 "缺少文件",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+                PackIconKind.AlertCircle);
         }
     }
 
@@ -117,13 +116,13 @@ public sealed class KAnimPreviewCommandController
         object? selected = getSelectedObject();
         if (data is null || selected is null)
         {
-            MessageBox.Show("请先选择一个节点");
+            ShowMessage("请先选择一个节点", "导出 PNG", PackIconKind.Information);
             return;
         }
 
         if (!exportService.TryResolveRegion(data, selected, out _, out var error))
         {
-            MessageBox.Show(error);
+            ShowMessage(error, "导出 PNG", PackIconKind.AlertCircle);
             return;
         }
 
@@ -140,11 +139,11 @@ public sealed class KAnimPreviewCommandController
         try
         {
             exportService.ExportRegion(data, selected, dialog.FileName);
-            MessageBox.Show("导出成功！");
+            ShowMessage("导出成功！", "导出 PNG", PackIconKind.CheckCircle);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("导出失败：" + ex.Message);
+            ShowMessage("导出失败：" + ex.Message, "导出 PNG", PackIconKind.AlertCircle);
         }
     }
 
@@ -153,7 +152,7 @@ public sealed class KAnimPreviewCommandController
         KAnimPackage? data = getData();
         if (data?.Texture is null)
         {
-            MessageBox.Show("当前没有可用的贴图");
+            ShowMessage("当前没有可用的贴图。", "导出贴图", PackIconKind.Information);
             return;
         }
 
@@ -170,11 +169,11 @@ public sealed class KAnimPreviewCommandController
         try
         {
             imageService.SavePng(data.Texture, dialog.FileName);
-            MessageBox.Show("整张贴图导出成功！");
+            ShowMessage("整张贴图导出成功！", "导出贴图", PackIconKind.CheckCircle);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("导出失败：" + ex.Message);
+            ShowMessage("导出失败：" + ex.Message, "导出贴图", PackIconKind.AlertCircle);
         }
     }
 
@@ -188,7 +187,7 @@ public sealed class KAnimPreviewCommandController
         KAnimBank? bank = getCurrentBank();
         if (bank is null || bank.Frames.Count == 0)
         {
-            MessageBox.Show("当前没有可导出的动画。", "导出 GIF", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowMessage("当前没有可导出的动画。", "导出 GIF", PackIconKind.Information);
             return;
         }
 
@@ -246,11 +245,10 @@ public sealed class KAnimPreviewCommandController
         }
         catch (Exception ex)
         {
-            MessageBox.Show(
+            ShowMessage(
                 $"GIF 导出失败：{ex.Message}",
                 "导出 GIF",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                PackIconKind.AlertCircle);
         }
         finally
         {
@@ -277,7 +275,7 @@ public sealed class KAnimPreviewCommandController
             .ToList() ?? [];
         if (banks.Count == 0)
         {
-            MessageBox.Show("当前没有可导出的动画。", "批量导出 GIF", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowMessage("当前没有可导出的动画。", "批量导出 GIF", PackIconKind.Information);
             return;
         }
 
@@ -373,13 +371,13 @@ public sealed class KAnimPreviewCommandController
         object? selected = getSelectedObject();
         if (data is null || selected is null)
         {
-            MessageBox.Show("请先选择一个节点");
+            ShowMessage("请先选择一个节点", "替换图片", PackIconKind.Information);
             return;
         }
 
         if (!exportService.TryResolveRegion(data, selected, out _, out var error))
         {
-            MessageBox.Show(error);
+            ShowMessage(error, "替换图片", PackIconKind.AlertCircle);
             return;
         }
 
@@ -397,11 +395,11 @@ public sealed class KAnimPreviewCommandController
         {
             data.Texture = exportService.ReplaceRegion(data, selected, dialog.FileName, out var region);
             updateTexture(data.Texture, new[] { region.Rectangle }, new[] { region.Pivot });
-            MessageBox.Show("替换成功！");
+            ShowMessage("替换成功！", "替换图片", PackIconKind.CheckCircle);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("替换失败：" + ex.Message);
+            ShowMessage("替换失败：" + ex.Message, "替换图片", PackIconKind.AlertCircle);
         }
     }
 
@@ -432,15 +430,23 @@ public sealed class KAnimPreviewCommandController
         KAnimPackage? data = getData();
         if (data is null || !data.HasAnyData)
         {
-            MessageBox.Show("请先打开一组 KAnim 文件。", "KAnim 诊断", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowMessage("请先打开一组 KAnim 文件。", "KAnim 诊断", PackIconKind.Information);
             return;
         }
 
         var diagnostics = KAnimDiagnostics.Analyze(data);
-        MessageBox.Show(
+        ShowMessage(
             KAnimDiagnostics.FormatReport(data, diagnostics),
             "KAnim 诊断",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
+            PackIconKind.Information);
+    }
+
+    private void ShowMessage(string? message, string title, PackIconKind iconKind)
+    {
+        CustomMessageBox.Show(
+            Window.GetWindow(treeView),
+            message ?? "操作未完成。",
+            title,
+            iconKind);
     }
 }

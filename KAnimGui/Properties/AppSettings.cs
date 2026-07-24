@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
+using KAnimGui.Presentation.Theme;
 
 namespace KAnimGui;
 
@@ -34,6 +35,14 @@ internal sealed class Properties
     }
 
     public static Properties Default => defaultInstance;
+
+    public AppTheme Theme
+    {
+        get => Enum.TryParse(values.Theme, ignoreCase: true, out AppTheme theme) && Enum.IsDefined(theme)
+            ? theme
+            : AppTheme.Light;
+        set => Set(value.ToString(), next => values.Theme = next);
+    }
 
     public bool OpenFolderAfterConvert
     {
@@ -345,6 +354,7 @@ internal sealed class Properties
 
     private sealed class SettingsData
     {
+        public string Theme { get; set; } = nameof(AppTheme.Light);
         public bool OpenFolderAfterConvert { get; set; }
         public bool EnableTxtToBytes { get; set; }
         public bool UseCustomKsePath { get; set; }

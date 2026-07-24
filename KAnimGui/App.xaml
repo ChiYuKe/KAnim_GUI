@@ -9,15 +9,15 @@
             <ResourceDictionary.MergedDictionaries>
                 <materialDesign:BundledTheme
                     BaseTheme="Light"
-                    PrimaryColor="DeepPurple"
-                    SecondaryColor="Lime" />
+                    PrimaryColor="Teal"
+                    SecondaryColor="Orange" />
 
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
 
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ProgressBar.xaml" />
+                <ResourceDictionary Source="/KAnimGui;component/Themes/Light.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Embedded HarmonyOS Sans SC; the fallback keeps the UI usable if the resource cannot load. -->
             <FontFamily x:Key="AppFontFamily">pack://application:,,,/KAnimGui;component/Fonts/HarmonyOS_Sans_SC/#HarmonyOS Sans SC</FontFamily>
 
             <Style TargetType="TextBlock">
@@ -34,12 +34,6 @@
                 <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
             </Style>
 
-            <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-                <Setter Property="FontSize" Value="15" />
-                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
-                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
-            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

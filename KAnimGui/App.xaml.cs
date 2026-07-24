@@ -14,6 +14,7 @@ using KAnimGui.Presentation.ResourceBridge;
 using KAnimGui.Presentation.Conversion;
 using KAnimGui.Presentation.Preview;
 using KAnimGui.Presentation.Settings;
+using KAnimGui.Presentation.Theme;
 using KAnimGui.Windows;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,6 +32,7 @@ namespace KAnimGui
             base.OnStartup(e);
 
             var services = new ServiceCollection();
+            services.AddSingleton<IThemeService>(_ => new ThemeService(this));
             services.AddSingleton<IApplicationPathProvider, LocalApplicationPathProvider>();
             services.AddSingleton<IFileSystemGateway, LocalFileSystemGateway>();
             services.AddSingleton<IExternalLauncher, ShellExternalLauncher>();
@@ -49,16 +51,17 @@ namespace KAnimGui
             services.AddSingleton<IConversionService, LegacyConversionServiceAdapter>();
             services.AddSingleton<ConversionWorkspaceViewModel>();
             services.AddTransient<OniResourceBridgeViewModel>();
-            services.AddTransient<OniResourceBridgeWorkspaceWindow>();
+            services.AddSingleton<OniResourceBridgeWorkspaceWindow>();
             services.AddTransient<KAnimPreviewLoadService>();
             services.AddTransient<KAnimPreviewRenderService>();
             services.AddTransient<KAnimPreviewImageService>();
             services.AddTransient<KAnimPreviewExportService>();
             services.AddTransient<KAnimPreviewGifExportService>();
-            services.AddTransient<KAnimRenderWindow>();
+            services.AddSingleton<KAnimRenderWindow>();
             services.AddSingleton<MainWindow>();
 
             serviceProvider = services.BuildServiceProvider();
+            serviceProvider.GetRequiredService<IThemeService>().Apply(KAnimGui.Properties.Default.Theme);
             MainWindow mainWindow = serviceProvider.GetRequiredService<MainWindow>();
             MainWindow = mainWindow;
             mainWindow.Show();

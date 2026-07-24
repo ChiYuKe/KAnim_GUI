@@ -7,6 +7,18 @@ namespace KAnimGui.Tests;
 public sealed class ConversionWorkspaceViewModelTests
 {
     [Fact]
+    public void Constructor_UsesDefaultOutputDirectories()
+    {
+        using var viewModel = new ConversionWorkspaceViewModel(
+            new FakeConversionService(),
+            new FakeInputFilePreparer(),
+            new LocalFileSystemGateway());
+
+        Assert.Equal(ConversionOutputPathResolver.KanimToScmlDirectory, viewModel.KanimOutputDirectory);
+        Assert.Equal(ConversionOutputPathResolver.ScmlToKanimDirectory, viewModel.ScmlOutputDirectory);
+    }
+
+    [Fact]
     public async Task ViewModel_BuildsTypedKanimRequestAndPublishesLog()
     {
         string root = Path.Combine(Path.GetTempPath(), "KAnimGuiTests", Guid.NewGuid().ToString("N"));

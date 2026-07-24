@@ -73,8 +73,16 @@ public sealed class MainWindowController : IDisposable
         pinButton = Find<Button>("PinButton");
 
         root.DataContext = conversionViewModel;
-        conversionViewModel.KanimLog.CollectionChanged += (_, _) => kanimLog.Text = conversionViewModel.KanimLogText;
-        conversionViewModel.ScmlLog.CollectionChanged += (_, _) => scmlLog.Text = conversionViewModel.ScmlLogText;
+        conversionViewModel.KanimLog.CollectionChanged += (_, _) =>
+        {
+            kanimLog.Text = conversionViewModel.KanimLogText;
+            kanimLog.ScrollToEnd();
+        };
+        conversionViewModel.ScmlLog.CollectionChanged += (_, _) =>
+        {
+            scmlLog.Text = conversionViewModel.ScmlLogText;
+            scmlLog.ScrollToEnd();
+        };
         conversionViewModel.PropertyChanged += ConversionViewModel_PropertyChanged;
         conversionViewModel.ConversionSucceeded += TryOpenFolder;
         owner.PreviewDragOver += OnDragOver;
@@ -167,13 +175,6 @@ public sealed class MainWindowController : IDisposable
             PackIconKind.Information);
     }
 
-    public void SettingsButton_Click(object sender, RoutedEventArgs e)
-    {
-        var settings = new SettingsWindow();
-        TrySetOwner(settings);
-        settings.Show();
-    }
-
     public void GithubButton_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -182,7 +183,7 @@ public sealed class MainWindowController : IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show("无法打开网页: " + ex.Message);
+            ShowMessage("无法打开网页：" + ex.Message, "打开失败", PackIconKind.AlertCircle);
         }
     }
 
@@ -194,11 +195,8 @@ public sealed class MainWindowController : IDisposable
         pinButton.ToolTip = owner.Topmost ? "取消置顶" : "窗口置顶";
     }
 
-    public void TestButton_Click(object sender, RoutedEventArgs e)
+    public void LoadCurrentPreview(KAnimRenderWindow previewWorkspace)
     {
-        var previewWindow = serviceProvider.GetRequiredService<KAnimRenderWindow>();
-        TrySetOwner(previewWindow);
-        previewWindow.Show();
         if (!TryGetCurrentKanimFileSet(out string png, out string anim, out string build))
         {
             return;
@@ -206,7 +204,7 @@ public sealed class MainWindowController : IDisposable
 
         try
         {
-            previewWindow.OpenFiles(png, build, anim);
+            previewWorkspace.OpenFiles(png, build, anim);
             conversionViewModel.AppendKanimMessage($"已在预览器打开: {Path.GetFileNameWithoutExtension(png)}");
             statusText.Text = "状态：预览器已加载当前 KAnim";
         }
@@ -216,39 +214,34 @@ public sealed class MainWindowController : IDisposable
         }
     }
 
-    public void OniBridgeButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (!EnsureOniResourceBridgeModInstalled())
-        {
-            return;
-        }
-
-        var existing = owner.OwnedWindows.OfType<OniResourceBridgeWorkspaceWindow>().FirstOrDefault();
-        if (existing != null)
-        {
-            existing.Activate();
-            return;
-        }
-
-        var bridgeWindow = serviceProvider.GetRequiredService<OniResourceBridgeWorkspaceWindow>();
-        TrySetOwner(bridgeWindow);
-        bridgeWindow.Show();
-    }
+    public bool PrepareOniResourceBridge() => EnsureOniResourceBridgeModInstalled();
 
     public void ClearButton_Click(object sender, RoutedEventArgs e)
     {
         pngPath.Clear();
         animPath.Clear();
         buildPath.Clear();
-        kanimLog.Clear();
-        conversionViewModel.KanimLog.Clear();
+        conversionViewModel.KanimOutputDirectory = ConversionOutputPathResolver.KanimToScmlDirectory;
+        ClearKanimLog();
         statusText.Text = "已重置";
     }
 
     public void ScmlClearButton_Click(object sender, RoutedEventArgs e)
     {
         scmlPath.Clear();
-        scmlOutputDirectory.Clear();
+        conversionViewModel.ScmlOutputDirectory = ConversionOutputPathResolver.ScmlToKanimDirectory;
+        ClearScmlLog();
+        statusText.Text = "已重置";
+    }
+
+    public void ClearKanimLog()
+    {
+        kanimLog.Clear();
+        conversionViewModel.KanimLog.Clear();
+    }
+
+    public void ClearScmlLog()
+    {
         scmlLog.Clear();
         conversionViewModel.ScmlLog.Clear();
     }
@@ -289,6 +282,11 @@ public sealed class MainWindowController : IDisposable
 
     private void OnDragOver(object sender, DragEventArgs e)
     {
+        if (Find<FrameworkElement>("ConversionWorkspace").Visibility != Visibility.Visible)
+        {
+            return;
+        }
+
         e.Effects = TryGetDroppedFiles(e, out string[] files) &&
             (mainTabs.SelectedItem == scmlTab ? IsScml(files) : IsKanim(files))
             ? DragDropEffects.Copy
@@ -298,6 +296,11 @@ public sealed class MainWindowController : IDisposable
 
     private void OnDrop(object sender, DragEventArgs e)
     {
+        if (Find<FrameworkElement>("ConversionWorkspace").Visibility != Visibility.Visible)
+        {
+            return;
+        }
+
         if (!TryGetDroppedFiles(e, out string[] files))
         {
             return;
@@ -370,24 +373,8 @@ public sealed class MainWindowController : IDisposable
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"打开文件夹失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowMessage($"打开文件夹失败：{ex.Message}", "错误", PackIconKind.AlertCircle);
             }
-        }
-    }
-
-    private async Task SyncPreviewWindowAsync(KAnimRenderWindow preview, string png, string anim, string build)
-    {
-        try
-        {
-            statusText.Text = "状态：正在同步到预览器";
-            await preview.OpenFilesAndPlayAsync(png, build, anim);
-            conversionViewModel.AppendKanimMessage("已同步到 KAnim 预览器并开始播放。");
-            statusText.Text = "状态：已同步到预览器";
-        }
-        catch (Exception ex)
-        {
-            conversionViewModel.AppendKanimMessage($"同步到 KAnim 预览器失败：{ex.Message}", true);
-            statusText.Text = "状态：预览器同步失败";
         }
     }
 
@@ -404,13 +391,14 @@ public sealed class MainWindowController : IDisposable
             return false;
         }
 
-        var result = MessageBox.Show(
+        MessageBoxResult result = CustomMessageBox.Show(
+            owner,
             "没有在缺氧 Mods 目录中找到 ONI Resource Bridge 模组。\n\n" +
             $"是否将内置模组解压到：\n{OniResourceBridgeModInstaller.TargetModDirectory}\n\n" +
             "安装后需要重启缺氧，并在模组列表中启用它。",
             "安装 ONI Resource Bridge 模组",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+            PackIconKind.HelpCircleOutline,
+            MessageBoxButton.YesNo);
         if (result != MessageBoxResult.Yes)
         {
             return false;
@@ -465,11 +453,17 @@ public sealed class MainWindowController : IDisposable
 
     private void SetDefaultOutputDirectory()
     {
-        string baseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "KSE_Output");
-        outputDirectory.Text = Path.Combine(baseDirectory, "KSE_Scml");
-        scmlOutputDirectory.Text = Path.Combine(baseDirectory, "KSE_Kanim");
-        fileSystem.EnsureDirectory(outputDirectory.Text);
-        fileSystem.EnsureDirectory(scmlOutputDirectory.Text);
+        if (string.IsNullOrWhiteSpace(conversionViewModel.KanimOutputDirectory))
+        {
+            conversionViewModel.KanimOutputDirectory = ConversionOutputPathResolver.KanimToScmlDirectory;
+        }
+        if (string.IsNullOrWhiteSpace(conversionViewModel.ScmlOutputDirectory))
+        {
+            conversionViewModel.ScmlOutputDirectory = ConversionOutputPathResolver.ScmlToKanimDirectory;
+        }
+
+        fileSystem.EnsureDirectory(conversionViewModel.KanimOutputDirectory);
+        fileSystem.EnsureDirectory(conversionViewModel.ScmlOutputDirectory);
     }
 
     private void SelectSingleFile(string filter, TextBox target)

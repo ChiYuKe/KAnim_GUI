@@ -1,701 +1,1271 @@
-﻿<Window
+<Window
     x:Class="KAnimGui.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-    Title="Kanim Spriter Exporter"
-    Width="900"
-    Height="750"
-    Background="{DynamicResource MaterialDesignPaper}"
+    xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+    xmlns:windows="clr-namespace:KAnimGui.Windows"
+    Title="KAnim Studio"
+    Width="1388"
+    Height="848"
+    MinWidth="1148"
+    MinHeight="748"
+    AllowsTransparency="True"
+    AllowDrop="True"
+    Background="Transparent"
     FontFamily="{DynamicResource AppFontFamily}"
-    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    ResizeMode="CanResize"
+    SnapsToDevicePixels="True"
+    StateChanged="Window_StateChanged"
+    TextElement.Foreground="{DynamicResource PanelTitleBrush}"
     TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="ClearType"
-    SnapsToDevicePixels="True"
     UseLayoutRounding="True"
-    WindowStartupLocation="CenterScreen">
+    WindowStartupLocation="CenterScreen"
+    WindowStyle="None">
 
-    <Window.Resources>
-        <!--  自定义颜色  -->
-        <SolidColorBrush x:Key="PrimaryColor" Color="#FF6750A4" />
-        <SolidColorBrush x:Key="SecondaryColor" Color="#FFE8DEF8" />
-        <SolidColorBrush x:Key="AccentColor" Color="#FF7E5260" />
-
-        <!--  样式调整  -->
-        <Style BasedOn="{StaticResource MaterialDesignNavigationRailTabItem}" TargetType="TabItem">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="16,12" />
-            <Setter Property="Margin" Value="0,0,4,0" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryHueLightBrush}" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-
-            <!--  鼠标悬停效果  -->
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TabItem}">
-                        <Grid>
-                            <Border
-                                Name="Border"
-                                Margin="{TemplateBinding Margin}"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="0,0,0,2"
-                                CornerRadius="4 4 0 0">
-                                <ContentPresenter
-                                    x:Name="ContentSite"
-                                    Margin="{TemplateBinding Padding}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    ContentSource="Header" />
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <!--  选中状态  -->
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
-                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}" />
-                            </Trigger>
-
-                            <!--  鼠标悬停  -->
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryHueLightBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkBrush}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-
-
-
-
-
-
-
-        </Style>
-
-        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
-            <Setter Property="Margin" Value="5" />
-            <Setter Property="Width" Value="100" />
-        </Style>
-
-        <Style
-            x:Key="PrimaryActionButton"
-            BasedOn="{StaticResource MaterialDesignRaisedButton}"
-            TargetType="Button">
-            <Setter Property="Width" Value="Auto" />
-            <Setter Property="MinWidth" Value="112" />
-            <Setter Property="Height" Value="36" />
-            <Setter Property="Margin" Value="8,0,0,0" />
-            <Setter Property="Padding" Value="16,0" />
-            <Setter Property="Background" Value="#FF6750A4" />
-            <Setter Property="BorderBrush" Value="#FF4B2394" />
-            <Setter Property="Foreground" Value="White" />
-        </Style>
-
-        <Style
-            x:Key="SecondaryActionButton"
-            BasedOn="{StaticResource MaterialDesignRaisedButton}"
-            TargetType="Button">
-            <Setter Property="Width" Value="Auto" />
-            <Setter Property="MinWidth" Value="92" />
-            <Setter Property="Height" Value="36" />
-            <Setter Property="Margin" Value="8,0,0,0" />
-            <Setter Property="Padding" Value="14,0" />
-            <Setter Property="Background" Value="#FFFFF7FA" />
-            <Setter Property="BorderBrush" Value="#FFFFF7FA" />
-            <Setter Property="Foreground" Value="#FF6B2742" />
-        </Style>
-
-
-
-
-
-
-
-
-    </Window.Resources>
-
-
-
-
-
-
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome
+            CaptionHeight="64"
+            CornerRadius="0"
+            GlassFrameThickness="0"
+            ResizeBorderThickness="16"
+            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <!--  顶部应用栏 (App Bar)  -->
         <Border
-            Grid.ColumnSpan="2"
-            Height="48"
-            VerticalAlignment="Center"
-            Background="#FF94435D">
-            <DockPanel>
-                <!--  应用标题  -->
-                <TextBlock
-                    Margin="15,0"
-                    VerticalAlignment="Center"
-                    DockPanel.Dock="Left"
-                    FontSize="18"
-                    FontWeight="SemiBold"
-                    Foreground="White"
-                    Text="Kanim Spriter Exporter" />
-
-                <!--  菜单按钮  -->
-                <Grid Margin="0,0,10,0" DockPanel.Dock="Right">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <!--  占位撑开  -->
-                        <ColumnDefinition Width="Auto" />
-                        <!--  PinButton 靠右  -->
-                    </Grid.ColumnDefinitions>
-
-                    <Button
-                        x:Name="SettingsButton"
-                        Grid.Column="0"
-                        Click="SettingsButton_Click"
-                        Content="{materialDesign:PackIcon Kind=Cog}"
-                        Cursor="Hand"
-                        FocusVisualStyle="{x:Null}"
-                        Foreground="White"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="设置" />
-                    <Button
-                        x:Name="HelpButton"
-                        Grid.Column="1"
-                        Click="HelpButton_Click"
-                        Content="{materialDesign:PackIcon Kind=HelpCircle}"
-                        FocusVisualStyle="{x:Null}"
-                        Foreground="White"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="帮助" />
-                    <Button
-                        x:Name="GithubButton"
-                        Grid.Column="2"
-                        Click="GithubButton_Click"
-                        Content="{materialDesign:PackIcon Kind=Github}"
-                        FocusVisualStyle="{x:Null}"
-                        Foreground="White"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="Github" />
-                    <Button
-                        x:Name="TestButton"
-                        Grid.Column="3"
-                        Click="TestButton_Click"
-                        Content="{materialDesign:PackIcon Kind=TestTube}"
-                        FocusVisualStyle="{x:Null}"
-                        Foreground="White"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="实验功能" />
-                    <Button
-                        x:Name="OniBridgeButton"
-                        Grid.Column="4"
-                        Click="OniBridgeButton_Click"
-                        Content="{materialDesign:PackIcon Kind=AccessPointNetwork}"
-                        FocusVisualStyle="{x:Null}"
-                        Foreground="White"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="连接游戏资源桥" />
-
-                    <!--  PinButton 靠右  -->
-                    <Button
-                        x:Name="PinButton"
-                        Grid.Column="6"
-                        Click="PinButton_Click"
-                        Content="{materialDesign:PackIcon Kind=Pin}"
-                        FocusVisualStyle="{x:Null}"
-                        Foreground="White"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="窗口置顶" />
-                </Grid>
-
-
-            </DockPanel>
+            x:Name="WindowShadow"
+            Margin="14"
+            Background="{DynamicResource AppBarBrush}"
+            CornerRadius="12"
+            IsHitTestVisible="False">
+            <Border.Effect>
+                <DropShadowEffect
+                    BlurRadius="26"
+                    Color="#000000"
+                    Opacity="0.30"
+                    ShadowDepth="4" />
+            </Border.Effect>
         </Border>
 
+    <Border
+        x:Name="WindowSurface"
+        Margin="14"
+        Background="{DynamicResource WorkspaceBackgroundBrush}"
+        BorderBrush="Transparent"
+        BorderThickness="0"
+        CornerRadius="12"
+        SnapsToDevicePixels="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="64" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="36" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
+            <!--  Custom title bar  -->
+            <Border
+                x:Name="TitleBarSurface"
+                Grid.Row="0"
+                Grid.ColumnSpan="2"
+                Background="{DynamicResource AppBarBrush}"
+                BorderBrush="{DynamicResource PanelBorderBrush}"
+                BorderThickness="0,0,0,1"
+                CornerRadius="12,12,0,0"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Margin="26,0,14,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
+                    <StackPanel
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <Viewbox
+                            Width="28"
+                            Height="32"
+                            Margin="0,0,16,0">
+                            <Canvas Width="28" Height="34">
+                                <Path
+                                    Data="M 2,2 L 8,2 L 8,32 L 2,32 Z"
+                                    Fill="{DynamicResource AccentBrush}" />
+                                <Path
+                                    Data="M 8,16 L 21,2 L 28,2 L 14,17 Z"
+                                    Fill="{DynamicResource AccentBrush}" />
+                                <Path
+                                    Data="M 12,18 L 28,32 L 20,32 L 8,21 Z"
+                                    Fill="{DynamicResource AccentBrush}" />
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="20"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource AppBarForegroundBrush}"
+                            Text="KAnim Studio" />
+                        <TextBlock
+                            Margin="14,2,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            Text="动画资源工作台" />
+                    </StackPanel>
 
-        <!--  主内容区  -->
-        <TabControl
-            x:Name="MainTabControl"
-            Grid.Row="1"
-            Grid.ColumnSpan="2"
-            Margin="10,10,10,10"
-            materialDesign:ColorZoneAssist.Mode="PrimaryMid"
-            Background="Transparent">
-            <!--  Kanim转SCML标签页  -->
-            <TabItem
-                x:Name="KanimToScmlTab"
-                materialDesign:ColorZoneAssist.Mode="PrimaryMid"
-                Header="Kanim → SCML"
-                Style="{StaticResource MaterialDesignTabItem}">
+                    <StackPanel
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <Button
+                            x:Name="GithubButton"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="GithubButton_Click"
+                            Style="{StaticResource AppBarActionButton}"
+                            ToolTip="项目主页">
+                            <materialDesign:PackIcon
+                                Width="18"
+                                Height="18"
+                                Kind="Github" />
+                        </Button>
+                        <Button
+                            x:Name="HelpButton"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="HelpButton_Click"
+                            Style="{StaticResource AppBarActionButton}"
+                            ToolTip="帮助">
+                            <materialDesign:PackIcon
+                                Width="19"
+                                Height="19"
+                                Kind="HelpCircleOutline" />
+                        </Button>
+                        <Button
+                            x:Name="PinButton"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="PinButton_Click"
+                            Style="{StaticResource AppBarActionButton}"
+                            ToolTip="窗口置顶">
+                            <materialDesign:PackIcon
+                                Width="18"
+                                Height="18"
+                                Kind="Pin" />
+                        </Button>
+                        <Button
+                            x:Name="SettingsButton"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="SettingsButton_Click"
+                            Style="{StaticResource AppBarActionButton}"
+                            ToolTip="设置">
+                            <materialDesign:PackIcon
+                                Width="19"
+                                Height="19"
+                                Kind="CogOutline" />
+                        </Button>
+                        <Border
+                            Width="1"
+                            Height="22"
+                            Margin="10,0"
+                            Background="{DynamicResource PanelBorderBrush}" />
+                        <Button
+                            x:Name="MinimizeButton"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="MinimizeWindow_Click"
+                            Style="{StaticResource WindowControlButtonStyle}"
+                            ToolTip="最小化">
+                            <materialDesign:PackIcon
+                                Width="16"
+                                Height="16"
+                                Kind="WindowMinimize" />
+                        </Button>
+                        <Button
+                            x:Name="MaximizeButton"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="MaximizeWindow_Click"
+                            Style="{StaticResource WindowControlButtonStyle}"
+                            ToolTip="最大化">
+                            <materialDesign:PackIcon
+                                Width="15"
+                                Height="15"
+                                Kind="WindowMaximize" />
+                        </Button>
+                        <Button
+                            x:Name="CloseButton"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="CloseWindow_Click"
+                            Style="{StaticResource WindowCloseButtonStyle}"
+                            ToolTip="关闭">
+                            <materialDesign:PackIcon
+                                Width="17"
+                                Height="17"
+                                Kind="Close" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
+            <!--  Navigation rail  -->
+            <Border
+                Grid.Row="1"
+                Grid.Column="0"
+                Background="{DynamicResource AppBarBrush}"
+                BorderBrush="{DynamicResource PanelBorderBrush}"
+                BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                <Border
-                    Margin="5"
-                    Padding="10"
-                    Background="#FF90455D"
-                    CornerRadius="5">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+                    <Button
+                        x:Name="ConversionNavButton"
+                        Grid.Row="0"
+                        Margin="20,36,16,4"
+                        Background="{DynamicResource SelectedBrush}"
+                        Click="ConversionNavButton_Click"
+                        Foreground="{DynamicResource AccentBrush}"
+                        Style="{StaticResource NavButtonStyle}"
+                        ToolTip="返回转换工作台">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="20"
+                                Height="20"
+                                Kind="SwapHorizontal" />
+                            <TextBlock
+                                Margin="13,0,0,0"
+                                VerticalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Text="转换" />
+                        </StackPanel>
+                    </Button>
 
-                        <!--  文件选择卡片  -->
-                        <materialDesign:Card
-                            Grid.Row="0"
-                            Margin="0,0,0,10"
-                            Padding="10"
-                            UniformCornerRadius="5">
-                            <StackPanel>
+                    <Button
+                        x:Name="PreviewNavButton"
+                        Grid.Row="1"
+                        Click="PreviewNavButton_Click"
+                        Style="{StaticResource NavButtonStyle}"
+                        ToolTip="打开预览器">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="20"
+                                Height="20"
+                                Kind="PlayBoxOutline" />
+                            <TextBlock
+                                Margin="13,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="预览" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button
+                        x:Name="OniBridgeButton"
+                        Grid.Row="2"
+                        Click="ResourceBridgeNavButton_Click"
+                        Style="{StaticResource NavButtonStyle}"
+                        ToolTip="连接资源桥">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="20"
+                                Height="20"
+                                Kind="AccessPointNetwork" />
+                            <TextBlock
+                                Margin="13,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="资源桥" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button
+                        x:Name="LogNavButton"
+                        Grid.Row="3"
+                        Click="LogNavButton_Click"
+                        Style="{StaticResource NavButtonStyle}"
+                        ToolTip="查看转换日志">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="20"
+                                Height="20"
+                                Kind="ConsoleLine" />
+                            <TextBlock
+                                Margin="13,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="日志" />
+                        </StackPanel>
+                    </Button>
+
+                    <Border
+                        Grid.Row="5"
+                        Margin="20,0,16,8"
+                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                        BorderThickness="0,1,0,0">
+                        <Button
+                            x:Name="SettingsNavButton"
+                            Margin="0,12,0,0"
+                            Click="SettingsButton_Click"
+                            Style="{StaticResource NavButtonStyle}"
+                            ToolTip="设置">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon
+                                    Width="20"
+                                    Height="20"
+                                    Kind="CogOutline" />
                                 <TextBlock
-                                    Margin="0,0,0,5"
-                                    FontWeight="Bold"
-                                    Text="文件选择" />
-
-                                <!--  文件输入框组  -->
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!--  PNG文件  -->
-                                    <TextBox
-                                        x:Name="PngPathTextBox"
-                                        Grid.Row="0"
-                                        Grid.Column="0"
-                                        Margin="0,0,5,5"
-                                        Text="{Binding PngPath, UpdateSourceTrigger=PropertyChanged}"
-                                        materialDesign:HintAssist.Hint="PNG文件路径"
-                                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
-                                    <Button
-                                        x:Name="BrowsePngButton"
-                                        Grid.Row="0"
-                                        Grid.Column="1"
-                                        Margin="0,0,0,5"
-                                        Click="Browse_Click"
-                                        Content="浏览"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-
-                                    <!--  Anim文件  -->
-                                    <TextBox
-                                        x:Name="AnimPathTextBox"
-                                        Grid.Row="1"
-                                        Grid.Column="0"
-                                        Margin="0,0,5,5"
-                                        Text="{Binding AnimPath, UpdateSourceTrigger=PropertyChanged}"
-                                        materialDesign:HintAssist.Hint="Anim文件路径"
-                                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
-                                    <Button
-                                        x:Name="BrowseAnimButton"
-                                        Grid.Row="1"
-                                        Grid.Column="1"
-                                        Margin="0,0,0,5"
-                                        Click="Browse_Click"
-                                        Content="浏览"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-
-                                    <!--  Build文件  -->
-                                    <TextBox
-                                        x:Name="BuildPathTextBox"
-                                        Grid.Row="2"
-                                        Grid.Column="0"
-                                        Margin="0,0,5,0"
-                                        Text="{Binding BuildPath, UpdateSourceTrigger=PropertyChanged}"
-                                        materialDesign:HintAssist.Hint="Build文件路径"
-                                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
-                                    <Button
-                                        x:Name="BrowseBuildButton"
-                                        Grid.Row="2"
-                                        Grid.Column="1"
-                                        Click="Browse_Click"
-                                        Content="浏览"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-                                </Grid>
+                                    Margin="13,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Text="设置" />
                             </StackPanel>
-                        </materialDesign:Card>
+                        </Button>
+                    </Border>
+                </Grid>
+            </Border>
 
-                        <!--  选项卡片  -->
-                        <materialDesign:Card
-                            Grid.Row="1"
-                            Margin="0,0,0,10"
-                            Padding="10"
-                            UniformCornerRadius="5">
-                            <StackPanel>
-                                <TextBlock
-                                    Margin="0,0,0,5"
-                                    FontWeight="Bold"
-                                    Text="转换选项" />
+            <!--  Main workspace  -->
+            <Grid
+                x:Name="ConversionWorkspace"
+                Grid.Row="1"
+                Grid.Column="1"
+                MaxWidth="1240"
+                Margin="32,20,32,12"
+                HorizontalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="64" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="350" />
+                </Grid.ColumnDefinitions>
 
-                                <StackPanel Orientation="Horizontal">
-                                    <CheckBox
-                                        x:Name="StrictModeCheckBox"
-                                        Margin="0,0,15,0"
-                                        Content="严格模式"
-                                        IsChecked="{Binding StrictMode}"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignCheckBox}"
-                                        ToolTip="强制转换过程遵循更严格的规范检查，确保输出文件完全符合Klei官方标准。" />
-                                    <CheckBox
-                                        x:Name="StrictOrderCheckBox"
-                                        Content="严格文件顺序"
-                                        IsChecked="{Binding StrictOrder}"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignCheckBox}"
-                                        ToolTip="为真PNG 文件 → Build 文件 → Anim 文件&#10;否则PNG 文件 → Anim 文件 → Build 文件" />
-                                </StackPanel>
+                <Grid Grid.Row="0" Grid.Column="0">
+                    <StackPanel>
+                        <TextBlock
+                            Style="{StaticResource PageTitleText}"
+                            Text="转换工作台" />
+                        <TextBlock
+                            Margin="0,5,0,0"
+                            Style="{StaticResource SupportingText}"
+                            Text="准备资源、检查输入并导出可用动画文件。" />
+                    </StackPanel>
+                </Grid>
 
-                                <Grid Margin="0,10,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <!--  标签宽度自适应  -->
-                                        <ColumnDefinition Width="*" />
-                                        <!--  TextBox 占剩余  -->
-                                        <ColumnDefinition Width="Auto" />
-                                        <!--  按钮固定宽度  -->
-                                    </Grid.ColumnDefinitions>
+                <TabControl
+                    x:Name="MainTabControl"
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    ItemContainerStyle="{StaticResource WorkspaceTabItemStyle}"
+                    Style="{StaticResource WorkspaceTabControlStyle}">
 
-                                    <TextBlock
-                                        Grid.Column="0"
+                    <!--  KAnim to SCML  -->
+                    <TabItem
+                        x:Name="KanimToScmlTab"
+                        Header="KAnim → SCML">
+                        <ScrollViewer
+                            Padding="0,12,0,4"
+                            HorizontalScrollBarVisibility="Disabled"
+                            TextElement.Foreground="{DynamicResource PanelTitleBrush}"
+                            VerticalScrollBarVisibility="Auto">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Border
+                                    Grid.Row="0"
+                                    Padding="18,16"
+                                    Style="{StaticResource WorkspaceCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock
+                                            Style="{StaticResource SectionTitleText}"
+                                            Text="添加 KAnim 文件" />
+                                        <TextBlock
+                                            Margin="0,5,0,0"
+                                            Style="{StaticResource SupportingText}"
+                                            Text="拖入 PNG、_anim.bytes、_build.bytes，或选择文件。" />
+
+                                        <Grid Margin="0,14,0,0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="44" />
+                                                <RowDefinition Height="10" />
+                                                <RowDefinition Height="44" />
+                                                <RowDefinition Height="10" />
+                                                <RowDefinition Height="44" />
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="44" />
+                                                <ColumnDefinition Width="12" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="12" />
+                                                <ColumnDefinition Width="104" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border
+                                                Grid.Row="0"
+                                                Grid.Column="0"
+                                                Background="{DynamicResource SelectedBrush}"
+                                                CornerRadius="8">
+                                                <materialDesign:PackIcon
+                                                    Width="22"
+                                                    Height="22"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource AccentBrush}"
+                                                    Kind="FileImageOutline" />
+                                            </Border>
+                                            <TextBox
+                                                x:Name="PngPathTextBox"
+                                                Grid.Row="0"
+                                                Grid.Column="2"
+                                                materialDesign:HintAssist.Hint="PNG 纹理文件"
+                                                Style="{StaticResource AppTextBoxStyle}"
+                                                Text="{Binding PngPath, UpdateSourceTrigger=PropertyChanged}"
+                                                ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                            <Button
+                                                x:Name="BrowsePngButton"
+                                                Grid.Row="0"
+                                                Grid.Column="4"
+                                                Click="Browse_Click"
+                                                Content="浏览"
+                                                Style="{StaticResource BrowseActionButton}" />
+
+                                            <Border
+                                                Grid.Row="2"
+                                                Grid.Column="0"
+                                                Background="{DynamicResource SelectedBrush}"
+                                                CornerRadius="8">
+                                                <materialDesign:PackIcon
+                                                    Width="22"
+                                                    Height="22"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource AccentBrush}"
+                                                    Kind="FileDocumentOutline" />
+                                            </Border>
+                                            <TextBox
+                                                x:Name="AnimPathTextBox"
+                                                Grid.Row="2"
+                                                Grid.Column="2"
+                                                materialDesign:HintAssist.Hint="_anim.bytes 文件"
+                                                Style="{StaticResource AppTextBoxStyle}"
+                                                Text="{Binding AnimPath, UpdateSourceTrigger=PropertyChanged}"
+                                                ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                            <Button
+                                                x:Name="BrowseAnimButton"
+                                                Grid.Row="2"
+                                                Grid.Column="4"
+                                                Click="Browse_Click"
+                                                Content="浏览"
+                                                Style="{StaticResource BrowseActionButton}" />
+
+                                            <Border
+                                                Grid.Row="4"
+                                                Grid.Column="0"
+                                                Background="{DynamicResource SelectedBrush}"
+                                                CornerRadius="8">
+                                                <materialDesign:PackIcon
+                                                    Width="22"
+                                                    Height="22"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource AccentBrush}"
+                                                    Kind="FileTreeOutline" />
+                                            </Border>
+                                            <TextBox
+                                                x:Name="BuildPathTextBox"
+                                                Grid.Row="4"
+                                                Grid.Column="2"
+                                                materialDesign:HintAssist.Hint="_build.bytes 文件"
+                                                Style="{StaticResource AppTextBoxStyle}"
+                                                Text="{Binding BuildPath, UpdateSourceTrigger=PropertyChanged}"
+                                                ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                            <Button
+                                                x:Name="BrowseBuildButton"
+                                                Grid.Row="4"
+                                                Grid.Column="4"
+                                                Click="Browse_Click"
+                                                Content="浏览"
+                                                Style="{StaticResource BrowseActionButton}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border
+                                    Grid.Row="1"
+                                    Margin="0,10,0,0"
+                                    Padding="14"
+                                    Style="{StaticResource WorkspaceCardStyle}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="104" />
+                                        </Grid.ColumnDefinitions>
+                                        <materialDesign:PackIcon
+                                            Width="20"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource AccentBrush}"
+                                            Kind="FolderOutline" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
+                                            Text="输出到" />
+                                        <TextBox
+                                            x:Name="OutputDirTextBox"
+                                            Grid.Column="4"
+                                            Style="{StaticResource AppTextBoxStyle}"
+                                            Text="{Binding KanimOutputDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                        <Button
+                                            x:Name="BrowseOutputDirButton"
+                                            Grid.Column="6"
+                                            Click="Browse_Click"
+                                            Content="更改"
+                                            Style="{StaticResource BrowseActionButton}" />
+                                    </Grid>
+                                </Border>
+
+                                <Border
+                                    x:Name="KanimOptionsPanel"
+                                    Grid.Row="2"
+                                    Margin="0,10,0,0"
+                                    Padding="16,12"
+                                    Style="{StaticResource WorkspaceCardStyle}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="28" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <materialDesign:PackIcon
+                                            Width="20"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource AccentBrush}"
+                                            Kind="TuneVariant" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
+                                            Text="转换选项" />
+                                        <WrapPanel
+                                            Grid.Column="4"
+                                            VerticalAlignment="Center">
+                                        <CheckBox
+                                            x:Name="StrictModeCheckBox"
+                                            Margin="0,0,24,0"
+                                            Content="严格模式"
+                                            IsChecked="{Binding StrictMode}" />
+                                        <CheckBox
+                                            x:Name="StrictOrderCheckBox"
+                                            Content="严格文件顺序"
+                                            IsChecked="{Binding StrictOrder}" />
+                                        </WrapPanel>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel
+                                    Grid.Row="3"
+                                    Margin="0,12,0,0"
+                                    HorizontalAlignment="Right"
+                                    Orientation="Horizontal">
+                                    <Button
+                                        x:Name="BatchConvertButton"
+                                        Width="112"
                                         Margin="0,0,10,0"
-                                        VerticalAlignment="Center"
-                                        Text="输出目录:" />
-                                    <TextBox
-                                        x:Name="OutputDirTextBox"
-                                        Grid.Column="1"
-                                        Text="{Binding KanimOutputDirectory, UpdateSourceTrigger=PropertyChanged}"
-                                        materialDesign:HintAssist.Hint="选择输出目录"
-                                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+                                        Click="BatchConvertButton_Click"
+                                        Content="批量转换"
+                                        Style="{StaticResource SecondaryActionButton}" />
                                     <Button
-                                        x:Name="BrowseOutputDirButton"
-                                        Grid.Column="2"
-                                        Width="60"
-                                        Margin="5,0,0,0"
-                                        Click="Browse_Click"
-                                        Content="浏览"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-                                </Grid>
-
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <!--  日志输出卡片  -->
-                        <materialDesign:Card
-                            Grid.Row="3"
-                            Margin="0,0,0,10"
-                            Padding="0"
-                            UniformCornerRadius="5">
-                            <DockPanel>
-                                <TextBlock
-                                    Margin="10,10,10,5"
-                                    DockPanel.Dock="Top"
-                                    FontWeight="Bold"
-                                    Text="转换日志" />
-                                <ScrollViewer DockPanel.Dock="Bottom" VerticalScrollBarVisibility="Auto">
-                                    <TextBox
-                                        x:Name="LogTextBox"
-                                        Padding="10"
-                                        AcceptsReturn="True"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        FontFamily="Consolas"
-                                        IsReadOnly="True" />
-                                </ScrollViewer>
-                            </DockPanel>
-                        </materialDesign:Card>
-
-                        <!--  操作按钮  -->
-                        <DockPanel
-                            Grid.Row="4"
-                            LastChildFill="False">
-                            <Button
-                                x:Name="BatchConvertButton"
-                                Click="BatchConvertButton_Click"
-                                Content="批量转换"
-                                DockPanel.Dock="Left"
-                                FocusVisualStyle="{x:Null}"
-                                Style="{StaticResource SecondaryActionButton}" />
-                            <StackPanel
-                                HorizontalAlignment="Right"
-                                DockPanel.Dock="Right"
-                                Orientation="Horizontal">
-                                <Button
-                                    x:Name="ClearButton"
-                                    Click="ClearButton_Click"
-                                    Content="清除"
-                                    FocusVisualStyle="{x:Null}"
-                                    Style="{StaticResource SecondaryActionButton}" />
-                                <Button
-                                    x:Name="CancelKanimButton"
-                                    Command="{Binding CancelKanimCommand}"
-                                    Content="取消"
-                                    FocusVisualStyle="{x:Null}"
-                                    Style="{StaticResource SecondaryActionButton}" />
-                                <Button
-                                    x:Name="ConvertButton"
-                                    Command="{Binding ConvertKanimCommand}"
-                                    Content="开始转换"
-                                    FocusVisualStyle="{x:Null}"
-                                    Style="{StaticResource PrimaryActionButton}" />
-                            </StackPanel>
-                        </DockPanel>
-                    </Grid>
-                </Border>
-            </TabItem>
-
-            <!--  SCML转Kanim标签页  -->
-            <TabItem
-                x:Name="ScmlToKanimTab"
-                Header="SCML → Kanim"
-                Style="{StaticResource MaterialDesignTabItem}">
-                <Border
-                    Margin="5"
-                    Padding="10"
-                    Background="#FF90455D"
-                    CornerRadius="5">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <!--  SCML文件选择  -->
-                        <materialDesign:Card
-                            Grid.Row="0"
-                            Margin="0,0,0,10"
-                            Padding="10"
-                            UniformCornerRadius="5">
-                            <StackPanel>
-                                <TextBlock
-                                    Margin="0,0,0,5"
-                                    FontWeight="Bold"
-                                    Text="SCML文件选择" />
-                                <!--  用 Grid 替换 DockPanel  -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <!--  TextBox 占据剩余空间  -->
-                                        <ColumnDefinition Width="Auto" />
-                                        <!--  Button 尺寸自适应  -->
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBox
-                                        x:Name="ScmlPathTextBox"
-                                        Grid.Column="0"
-                                        Margin="0"
-                                        Text="{Binding ScmlPath, UpdateSourceTrigger=PropertyChanged}"
-                                        VerticalAlignment="Center"
-                                        materialDesign:HintAssist.Hint="SCML文件路径 (.scml)"
-                                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
-
-                                    <Button
-                                        x:Name="BrowseScmlButton"
-                                        Grid.Column="1"
-                                        MinWidth="60"
-                                        Margin="8,0,0,0"
-                                        Click="Browse_Click"
-                                        Content="浏览"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-                                </Grid>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <!--  转换选项  -->
-                        <materialDesign:Card
-                            Grid.Row="1"
-                            Margin="0,0,0,10"
-                            Padding="10"
-                            UniformCornerRadius="5">
-                            <StackPanel>
-                                <TextBlock
-                                    Margin="0,0,0,5"
-                                    FontWeight="Bold"
-                                    Text="转换选项" />
-                                <StackPanel Orientation="Horizontal">
-                                    <CheckBox
-                                        x:Name="InterpolateCheckBox"
-                                        Margin="0,0,15,0"
-                                        Content="启用插值"
-                                        IsChecked="{Binding Interpolate}"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignCheckBox}"
-                                        ToolTip="启用Spriter关键帧插值" />
-                                    <CheckBox
-                                        x:Name="DeboneCheckBox"
-                                        Content="去骨骼"
-                                        IsChecked="{Binding Debone}"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignCheckBox}"
-                                        ToolTip="启用Spriter去骨骼操作" />
-                                </StackPanel>
-
-
-
-                                <Grid Margin="0,10,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <!--  Label  -->
-                                        <ColumnDefinition Width="*" />
-                                        <!--  TextBox  -->
-                                        <ColumnDefinition Width="Auto" />
-                                        <!--  Button  -->
-                                    </Grid.ColumnDefinitions>
-
-                                    <!--  标签  -->
-                                    <TextBlock
-                                        Grid.Column="0"
+                                        x:Name="ClearButton"
+                                        Width="96"
                                         Margin="0,0,10,0"
-                                        VerticalAlignment="Center"
-                                        Text="输出目录:" />
-
-                                    <!--  文本框  -->
-                                    <TextBox
-                                        x:Name="ScmlOutputDirTextBox"
-                                        Grid.Column="1"
-                                        Text="{Binding ScmlOutputDirectory, UpdateSourceTrigger=PropertyChanged}"
-                                        VerticalAlignment="Center"
-                                        materialDesign:HintAssist.Hint="选择输出目录"
-                                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
-
-                                    <!--  浏览按钮  -->
+                                        Click="ClearButton_Click"
+                                        Content="清除"
+                                        Style="{StaticResource SecondaryActionButton}" />
                                     <Button
-                                        x:Name="BrowseScmlOutputDirButton"
-                                        Grid.Column="2"
-                                        MinWidth="60"
-                                        Margin="8,0,0,0"
-                                        Click="Browse_Click"
-                                        Content="浏览"
-                                        FocusVisualStyle="{x:Null}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" />
-                                </Grid>
+                                        x:Name="CancelKanimButton"
+                                        Width="96"
+                                        Margin="0,0,10,0"
+                                        Command="{Binding CancelKanimCommand}"
+                                        Content="取消"
+                                        Style="{StaticResource SecondaryActionButton}" />
+                                    <Button
+                                        x:Name="ConvertButton"
+                                        Width="144"
+                                        Command="{Binding ConvertKanimCommand}"
+                                        Content="开始转换"
+                                        Style="{StaticResource PrimaryActionButton}" />
+                                </StackPanel>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
 
-                            </StackPanel>
-                        </materialDesign:Card>
+                    <!--  SCML to KAnim  -->
+                    <TabItem
+                        x:Name="ScmlToKanimTab"
+                        Header="SCML → KAnim">
+                        <ScrollViewer
+                            Padding="0,12,0,4"
+                            HorizontalScrollBarVisibility="Disabled"
+                            TextElement.Foreground="{DynamicResource PanelTitleBrush}"
+                            VerticalScrollBarVisibility="Auto">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-                        <!--  日志输出  -->
-                        <materialDesign:Card
-                            Grid.Row="2"
-                            Margin="0,0,0,10"
-                            Padding="0"
-                            UniformCornerRadius="5">
-                            <DockPanel>
-                                <TextBlock
-                                    Margin="10,10,10,5"
-                                    DockPanel.Dock="Top"
-                                    FontWeight="Bold"
-                                    Text="转换日志" />
-                                <ScrollViewer DockPanel.Dock="Bottom" VerticalScrollBarVisibility="Auto">
-                                    <TextBox
-                                        x:Name="ScmlLogTextBox"
-                                        Padding="10"
-                                        AcceptsReturn="True"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        FontFamily="Consolas"
-                                        IsReadOnly="True" />
-                                </ScrollViewer>
-                            </DockPanel>
-                        </materialDesign:Card>
+                                <Border
+                                    Grid.Row="0"
+                                    Padding="18,16"
+                                    Style="{StaticResource WorkspaceCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock
+                                            Style="{StaticResource SectionTitleText}"
+                                            Text="添加 SCML 文件" />
+                                        <TextBlock
+                                            Margin="0,5,0,18"
+                                            Style="{StaticResource SupportingText}"
+                                            Text="选择一个 SCML 文件，或直接拖入窗口。" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="44" />
+                                                <ColumnDefinition Width="12" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="12" />
+                                                <ColumnDefinition Width="104" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border
+                                                Grid.Column="0"
+                                                Background="{DynamicResource SelectedBrush}"
+                                                CornerRadius="8">
+                                                <materialDesign:PackIcon
+                                                    Width="22"
+                                                    Height="22"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource AccentBrush}"
+                                                    Kind="FileDocumentOutline" />
+                                            </Border>
+                                            <TextBox
+                                                x:Name="ScmlPathTextBox"
+                                                Grid.Column="2"
+                                                materialDesign:HintAssist.Hint="SCML 文件"
+                                                Style="{StaticResource AppTextBoxStyle}"
+                                                Text="{Binding ScmlPath, UpdateSourceTrigger=PropertyChanged}"
+                                                ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                            <Button
+                                                x:Name="BrowseScmlButton"
+                                                Grid.Column="4"
+                                                Click="Browse_Click"
+                                                Content="浏览"
+                                                Style="{StaticResource BrowseActionButton}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
 
-                        <!--  操作按钮  -->
-                        <DockPanel
-                            Grid.Row="3"
-                            LastChildFill="False">
-                            <Button
-                                x:Name="BatchConvertScmlButton"
-                                Click="BatchConvertScmlButton_Click"
-                                Content="批量转换"
-                                DockPanel.Dock="Left"
-                                FocusVisualStyle="{x:Null}"
-                                Style="{StaticResource SecondaryActionButton}" />
-                            <StackPanel
-                                HorizontalAlignment="Right"
-                                DockPanel.Dock="Right"
-                                Orientation="Horizontal">
-                                <Button
-                                    x:Name="ScmlClearButton"
-                                    Click="ScmlClearButton_Click"
-                                    Content="清除"
-                                    FocusVisualStyle="{x:Null}"
-                                    Style="{StaticResource SecondaryActionButton}" />
-                                <Button
-                                    x:Name="CancelScmlButton"
-                                    Command="{Binding CancelScmlCommand}"
-                                    Content="取消"
-                                    FocusVisualStyle="{x:Null}"
-                                    Style="{StaticResource SecondaryActionButton}" />
-                                <Button
-                                    x:Name="ConvertScmlButton"
-                                    Command="{Binding ConvertScmlCommand}"
-                                    Content="开始转换"
-                                    FocusVisualStyle="{x:Null}"
-                                    Style="{StaticResource PrimaryActionButton}" />
-                            </StackPanel>
-                        </DockPanel>
-                    </Grid>
-                </Border>
-            </TabItem>
+                                <Border
+                                    Grid.Row="1"
+                                    Margin="0,10,0,0"
+                                    Padding="14"
+                                    Style="{StaticResource WorkspaceCardStyle}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="104" />
+                                        </Grid.ColumnDefinitions>
+                                        <materialDesign:PackIcon
+                                            Width="20"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource AccentBrush}"
+                                            Kind="FolderOutline" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
+                                            Text="输出到" />
+                                        <TextBox
+                                            x:Name="ScmlOutputDirTextBox"
+                                            Grid.Column="4"
+                                            Style="{StaticResource AppTextBoxStyle}"
+                                            Text="{Binding ScmlOutputDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                        <Button
+                                            x:Name="BrowseScmlOutputDirButton"
+                                            Grid.Column="6"
+                                            Click="Browse_Click"
+                                            Content="更改"
+                                            Style="{StaticResource BrowseActionButton}" />
+                                    </Grid>
+                                </Border>
 
+                                <Border
+                                    x:Name="ScmlOptionsPanel"
+                                    Grid.Row="2"
+                                    Margin="0,10,0,0"
+                                    Padding="16,12"
+                                    Style="{StaticResource WorkspaceCardStyle}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="28" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <materialDesign:PackIcon
+                                            Width="20"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource AccentBrush}"
+                                            Kind="TuneVariant" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
+                                            Text="转换选项" />
+                                        <WrapPanel
+                                            Grid.Column="4"
+                                            VerticalAlignment="Center">
+                                        <CheckBox
+                                            x:Name="InterpolateCheckBox"
+                                            Margin="0,0,24,0"
+                                            Content="启用插值"
+                                            IsChecked="{Binding Interpolate}" />
+                                        <CheckBox
+                                            x:Name="DeboneCheckBox"
+                                            Content="去骨骼"
+                                            IsChecked="{Binding Debone}" />
+                                        </WrapPanel>
+                                    </Grid>
+                                </Border>
 
+                                <StackPanel
+                                    Grid.Row="3"
+                                    Margin="0,12,0,0"
+                                    HorizontalAlignment="Right"
+                                    Orientation="Horizontal">
+                                    <Button
+                                        x:Name="BatchConvertScmlButton"
+                                        Width="112"
+                                        Margin="0,0,10,0"
+                                        Click="BatchConvertScmlButton_Click"
+                                        Content="批量转换"
+                                        Style="{StaticResource SecondaryActionButton}" />
+                                    <Button
+                                        x:Name="ScmlClearButton"
+                                        Width="96"
+                                        Margin="0,0,10,0"
+                                        Click="ScmlClearButton_Click"
+                                        Content="清除"
+                                        Style="{StaticResource SecondaryActionButton}" />
+                                    <Button
+                                        x:Name="CancelScmlButton"
+                                        Width="96"
+                                        Margin="0,0,10,0"
+                                        Command="{Binding CancelScmlCommand}"
+                                        Content="取消"
+                                        Style="{StaticResource SecondaryActionButton}" />
+                                    <Button
+                                        x:Name="ConvertScmlButton"
+                                        Width="144"
+                                        Command="{Binding ConvertScmlCommand}"
+                                        Content="开始转换"
+                                        Style="{StaticResource PrimaryActionButton}" />
+                                </StackPanel>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
 
-
-        </TabControl>
-
-        <!--  底部状态栏  -->
-        <StatusBar
-            Grid.Row="2"
-            Grid.ColumnSpan="2"
-            Background="#FF94435D">
-            <StatusBarItem>
-                <TextBlock x:Name="StatusText" Foreground="White">就绪</TextBlock>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
+                <!--  KAnim summary  -->
                 <Border
-                    Padding="2"
-                    Background="White"
-                    CornerRadius="3">
-                    <ProgressBar
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Margin="0,46,0,0"
+                    Padding="18"
+                    Style="{StaticResource WorkspaceCardStyle}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid x:Name="KanimSummaryPanel">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=MainTabControl}" Value="1">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="180" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Style="{StaticResource SectionTitleText}"
+                                    Text="资源预览" />
+
+                                <Border
+                                    Grid.Row="2"
+                                    Background="{DynamicResource PreviewBackgroundBrush}"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="9">
+                                    <Grid>
+                                        <Border
+                                            Height="1"
+                                            VerticalAlignment="Center"
+                                            Background="{DynamicResource GridLineBrush}" />
+                                        <Border
+                                            Width="1"
+                                            HorizontalAlignment="Center"
+                                            Background="{DynamicResource GridLineBrush}" />
+                                        <StackPanel
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                            <materialDesign:PackIcon
+                                                Width="46"
+                                                Height="46"
+                                                HorizontalAlignment="Center"
+                                                Foreground="{DynamicResource PreviewPlaceholderBrush}"
+                                                Kind="ImageMultipleOutline" />
+                                            <TextBlock
+                                                Margin="0,9,0,0"
+                                                HorizontalAlignment="Center"
+                                                FontSize="13"
+                                                Foreground="{DynamicResource MutedTextBrush}"
+                                                Text="当前未选择任何资源" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel Grid.Row="4">
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="待转换资源" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="PNG + Anim + Build" />
+                                        </Grid>
+                                    </Border>
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="转换方向" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="KAnim → SCML" />
+                                        </Grid>
+                                    </Border>
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="输入" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="3 个文件" />
+                                        </Grid>
+                                    </Border>
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="输出" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="SCML + 纹理" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Height="44">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="状态" />
+                                            <Border
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                Padding="10,6"
+                                                Background="{DynamicResource SelectedBrush}"
+                                                CornerRadius="8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse
+                                                        Width="7"
+                                                        Height="7"
+                                                        Margin="0,0,7,0"
+                                                        VerticalAlignment="Center"
+                                                        Fill="{DynamicResource StatusBrush}" />
+                                                    <TextBlock
+                                                        FontSize="12"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{DynamicResource StatusBrush}"
+                                                        Text="准备就绪" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid x:Name="ScmlSummaryPanel">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=MainTabControl}" Value="1">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="180" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Style="{StaticResource SectionTitleText}"
+                                    Text="KAnim 导出" />
+                                <Border
+                                    Grid.Row="2"
+                                    Background="{DynamicResource PreviewBackgroundBrush}"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="9">
+                                    <StackPanel
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                        <materialDesign:PackIcon
+                                            Width="46"
+                                            Height="46"
+                                            HorizontalAlignment="Center"
+                                            Foreground="{DynamicResource PreviewPlaceholderBrush}"
+                                            Kind="FileExportOutline" />
+                                        <TextBlock
+                                            Margin="0,9,0,0"
+                                            HorizontalAlignment="Center"
+                                            FontSize="13"
+                                            Foreground="{DynamicResource MutedTextBrush}"
+                                            Text="选择 SCML 后生成 KAnim 资源" />
+                                    </StackPanel>
+                                </Border>
+                                <StackPanel Grid.Row="4">
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="待转换资源" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="SCML 文件" />
+                                        </Grid>
+                                    </Border>
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="转换方向" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="SCML → KAnim" />
+                                        </Grid>
+                                    </Border>
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="输入" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="1 个文件" />
+                                        </Grid>
+                                    </Border>
+                                    <Border
+                                        Height="44"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="输出" />
+                                            <TextBlock Style="{StaticResource SummaryValueText}" Text="PNG + Anim + Build" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Height="44">
+                                        <Grid>
+                                            <TextBlock Style="{StaticResource SummaryLabelText}" Text="状态" />
+                                            <Border
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                Padding="10,6"
+                                                Background="{DynamicResource SelectedBrush}"
+                                                CornerRadius="8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse
+                                                        Width="7"
+                                                        Height="7"
+                                                        Margin="0,0,7,0"
+                                                        VerticalAlignment="Center"
+                                                        Fill="{DynamicResource StatusBrush}" />
+                                                    <TextBlock
+                                                        FontSize="12"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{DynamicResource StatusBrush}"
+                                                        Text="准备就绪" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!--  Dedicated log workspace  -->
+            <Grid
+                x:Name="LogWorkspace"
+                Grid.Row="1"
+                Grid.Column="1"
+                MaxWidth="1240"
+                Margin="32,20,32,12"
+                HorizontalAlignment="Stretch"
+                Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="64" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <StackPanel>
+                        <TextBlock
+                            Style="{StaticResource PageTitleText}"
+                            Text="日志控制台" />
+                        <TextBlock
+                            Margin="0,5,0,0"
+                            Style="{StaticResource SupportingText}"
+                            Text="查看转换过程、警告和错误信息。" />
+                    </StackPanel>
+                    <Button
+                        x:Name="ClearActiveLogButton"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Click="ClearActiveLogButton_Click"
+                        Style="{StaticResource ToolbarActionButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="17"
+                                Height="17"
+                                Margin="0,0,7,0"
+                                Kind="DeleteSweepOutline" />
+                            <TextBlock VerticalAlignment="Center" Text="清空日志" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <TabControl
+                    x:Name="LogTabControl"
+                    Grid.Row="1"
+                    ItemContainerStyle="{StaticResource WorkspaceTabItemStyle}"
+                    Style="{StaticResource WorkspaceTabControlStyle}">
+                    <TabItem Header="KAnim → SCML">
+                        <Border
+                            Margin="0,12,0,0"
+                            Padding="18"
+                            Style="{StaticResource WorkspaceCardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="14" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <TextBlock
+                                        Style="{StaticResource SectionTitleText}"
+                                        Text="KAnim → SCML 日志" />
+                                    <StackPanel
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                        <Ellipse
+                                            Width="7"
+                                            Height="7"
+                                            Margin="0,0,7,0"
+                                            Fill="{DynamicResource StatusBrush}" />
+                                        <TextBlock
+                                            Style="{StaticResource SupportingText}"
+                                            Text="实时更新" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBox
+                                    x:Name="LogTextBox"
+                                    Grid.Row="2"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    Style="{StaticResource LogConsoleStyle}"
+                                    TextWrapping="NoWrap" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Margin="16,14"
+                                    VerticalAlignment="Top"
+                                    IsHitTestVisible="False"
+                                    Text="暂无日志。开始转换后，输出会实时显示在这里。">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource SupportingText}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, ElementName=LogTextBox}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                    </TabItem>
+
+                    <TabItem Header="SCML → KAnim">
+                        <Border
+                            Margin="0,12,0,0"
+                            Padding="18"
+                            Style="{StaticResource WorkspaceCardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="14" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <TextBlock
+                                        Style="{StaticResource SectionTitleText}"
+                                        Text="SCML → KAnim 日志" />
+                                    <StackPanel
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                        <Ellipse
+                                            Width="7"
+                                            Height="7"
+                                            Margin="0,0,7,0"
+                                            Fill="{DynamicResource StatusBrush}" />
+                                        <TextBlock
+                                            Style="{StaticResource SupportingText}"
+                                            Text="实时更新" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBox
+                                    x:Name="ScmlLogTextBox"
+                                    Grid.Row="2"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    Style="{StaticResource LogConsoleStyle}"
+                                    TextWrapping="NoWrap" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Margin="16,14"
+                                    VerticalAlignment="Top"
+                                    IsHitTestVisible="False"
+                                    Text="暂无日志。开始转换后，输出会实时显示在这里。">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource SupportingText}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, ElementName=ScmlLogTextBox}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+
+            <!--  Embedded settings workspace  -->
+            <windows:SettingsWorkspace
+                x:Name="SettingsWorkspacePanel"
+                Grid.Row="1"
+                Grid.Column="1"
+                Visibility="Collapsed" />
+
+            <!--  Embedded preview and resource bridge workspaces  -->
+            <ContentControl
+                x:Name="PreviewWorkspaceHost"
+                Grid.Row="1"
+                Grid.Column="1"
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch"
+                Visibility="Collapsed" />
+
+            <ContentControl
+                x:Name="ResourceBridgeWorkspaceHost"
+                Grid.Row="1"
+                Grid.Column="1"
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch"
+                Visibility="Collapsed" />
+
+            <!--  Footer  -->
+            <Border
+                x:Name="FooterSurface"
+                Grid.Row="2"
+                Grid.ColumnSpan="2"
+                Padding="20,0"
+                Background="{DynamicResource AppBarBrush}"
+                BorderBrush="{DynamicResource PanelBorderBrush}"
+                BorderThickness="0,1,0,0"
+                CornerRadius="0,0,12,12">
+                <Grid>
+                    <TextBlock
+                        x:Name="StatusText"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="状态：内置内核就绪" />
+                    <TextBlock
                         x:Name="ProgressBar"
-                        Width="271"
-                        Height="16"
-                        Background="White"
-                        BorderBrush="White"
-                        Foreground="#FF452382"
-                        IsIndeterminate="False" />
-                </Border>
-            </StatusBarItem>
-
-        </StatusBar>
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{DynamicResource SubtleTextBrush}"
+                        Text="KAnim GUI 1.0.2" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
     </Grid>
 </Window>
