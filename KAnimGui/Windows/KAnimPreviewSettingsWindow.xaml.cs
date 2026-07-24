@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using KAnimGui.Presentation.Preview;
+using KAnimGui.Presentation.Theme;
 
 namespace KAnimGui.Windows;
 
@@ -13,6 +14,7 @@ public partial class KAnimPreviewSettingsWindow : Window
     public KAnimPreviewSettingsWindow()
     {
         InitializeComponent();
+        WindowThemeAssist.ApplyNativeTitleBar(this, Properties.Default.Theme != AppTheme.Light);
         LoadSettings();
     }
 

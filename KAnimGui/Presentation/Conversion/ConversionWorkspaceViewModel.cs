@@ -32,6 +32,8 @@ public partial class ConversionWorkspaceViewModel : ObservableObject, IDisposabl
         ConvertScmlCommand = new AsyncRelayCommand(ConvertScmlAsync, CanConvertScml);
         CancelKanimCommand = new RelayCommand(() => kanimCancellation?.Cancel(), () => IsKanimBusy);
         CancelScmlCommand = new RelayCommand(() => scmlCancellation?.Cancel(), () => IsScmlBusy);
+        KanimOutputDirectory = ConversionOutputPathResolver.KanimToScmlDirectory;
+        ScmlOutputDirectory = ConversionOutputPathResolver.ScmlToKanimDirectory;
     }
 
     public ObservableCollection<string> KanimLog { get; } = [];

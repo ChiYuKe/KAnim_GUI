@@ -31,7 +31,8 @@ public sealed class KAnimPreviewWindowComposition : IDisposable
         KAnimPreviewRenderService renderService,
         KAnimPreviewImageService imageService,
         KAnimPreviewExportService exportService,
-        KAnimPreviewGifExportService gifExportService)
+        KAnimPreviewGifExportService gifExportService,
+        Action? close = null)
     {
         this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
         this.root = root ?? throw new ArgumentNullException(nameof(root));
@@ -120,7 +121,7 @@ public sealed class KAnimPreviewWindowComposition : IDisposable
             () => SetPreviewBackground(true),
             () => SetPreviewBackground(false),
             OpenSettings,
-            owner.Close,
+            close ?? owner.Close,
             RenderCurrentAnimationFrame);
         ApplySettings();
     }

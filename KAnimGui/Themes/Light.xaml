@@ -1,0 +1,103 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/KAnimGui;component/Themes/ThemeStyles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#F7F9FB" />
+    <SolidColorBrush x:Key="AppBarBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AppBarForegroundBrush" Color="#22303A" />
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="PanelBorderBrush" Color="#E3E9ED" />
+    <SolidColorBrush x:Key="PanelTitleBrush" Color="#172638" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#617184" />
+    <SolidColorBrush x:Key="SubtleTextBrush" Color="#93A1AF" />
+    <SolidColorBrush x:Key="PrimaryColor" Color="#159A8C" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#159A8C" />
+    <LinearGradientBrush x:Key="PrimaryActionBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#21AA9B" />
+        <GradientStop Offset="1" Color="#0B8E84" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PrimaryActionHoverBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#29B5A5" />
+        <GradientStop Offset="1" Color="#0A988C" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PrimaryActionPressedBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#138F85" />
+        <GradientStop Offset="1" Color="#08776F" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#DCE5E9" />
+    <SolidColorBrush x:Key="ButtonTextBrush" Color="#172638" />
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#F1F5F6" />
+    <SolidColorBrush x:Key="ButtonPressedBrush" Color="#E7EFEF" />
+    <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#108C80" />
+    <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#0B786F" />
+    <SolidColorBrush x:Key="DisabledBrush" Color="#C9D2D8" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#93A1AF" />
+    <SolidColorBrush x:Key="SoftAccentBrush" Color="#F3F7F8" />
+    <SolidColorBrush x:Key="SelectedBrush" Color="#E5F4F2" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#F2F6F7" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="PopupBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="PreviewBackgroundBrush" Color="#F4F7F8" />
+    <SolidColorBrush x:Key="PreviewBorderBrush" Color="#DDE6E9" />
+    <SolidColorBrush x:Key="PreviewPlaceholderBrush" Color="#A7B5BC" />
+    <SolidColorBrush x:Key="GridLineBrush" Color="#E3ECEE" />
+    <SolidColorBrush x:Key="StatusBrush" Color="#21A585" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="#C34B4B" />
+    <SolidColorBrush x:Key="MaterialDesignPaper" Color="#F7F9FB" />
+    <SolidColorBrush x:Key="MaterialDesignBody" Color="#172638" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Background" Color="#F7F9FB" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Foreground" Color="#172638" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ForegroundLight" Color="#617184" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Card.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Card.Border" Color="#E3E9ED" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Border" Color="#DCE5E9" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Disabled" Color="#93A1AF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.FilledBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.HoverBackground" Color="#F2F6F7" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.HoverBorder" Color="#159A8C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.OutlineBorder" Color="#159A8C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.OutlineInactiveBorder" Color="#DCE5E9" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Popup.DarkBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Popup.DarkForeground" Color="#172638" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Popup.LightBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Popup.LightForeground" Color="#172638" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.Border" Color="#DCE5E9" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.DisabledBackground" Color="#F1F4F6" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.FilledBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.HoverBackground" Color="#F7FAFA" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.HoverBorder" Color="#159A8C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.OutlineBorder" Color="#159A8C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.OutlineInactiveBorder" Color="#DCE5E9" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ListBoxItem.Selected" Color="#E5F4F2" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ListView.Hover" Color="#F2F6F7" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ListView.Selected" Color="#E5F4F2" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ListView.Separator" Color="#E3E9ED" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Separator.Background" Color="#E3E9ED" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ScrollBar.ActiveBackground" Color="#E7EFEF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ScrollBar.Foreground" Color="#93A1AF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ScrollBar.RepeatButtonBackground" Color="#F7F9FB" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ToolTip.Background" Color="#263746" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ToolBar.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.CheckBox.Off" Color="#617184" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.CheckBox.UncheckedBorder" Color="#93A1AF" />
+    <Color x:Key="ThemePrimaryColor">#159A8C</Color>
+    <Color x:Key="ThemeSecondaryColor">#DCEEEF</Color>
+    <Color x:Key="ThemeAccentColor">#D7774C</Color>
+    <Color x:Key="ThemeAppBarColor">#FFFFFF</Color>
+    <Color x:Key="ThemeWorkspaceColor">#F7F9FB</Color>
+    <Color x:Key="ThemePanelColor">#FFFFFF</Color>
+    <Color x:Key="ThemePanelBorderColor">#E3E9ED</Color>
+    <Color x:Key="ThemePreviewColor">#F4F7F8</Color>
+    <Color x:Key="ThemeBridgePreviewSurfaceColor">#E1E6E9</Color>
+    <Color x:Key="ThemePreviewBorderColor">#DDE6E9</Color>
+    <Color x:Key="ThemeMutedColor">#617184</Color>
+    <Color x:Key="ThemeSoftAccentColor">#F3F7F8</Color>
+    <Color x:Key="ThemeGridLineColor">#E3ECEE</Color>
+    <Color x:Key="ThemePanelTitleColor">#172638</Color>
+    <Color x:Key="ThemeSubtleColor">#93A1AF</Color>
+    <Color x:Key="ThemePreviewPlaceholderColor">#A7B5BC</Color>
+</ResourceDictionary>
